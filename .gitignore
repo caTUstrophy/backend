@@ -22,3 +22,8 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+# Project specific stuff
+*.sqlite
+*.sqlite3
+*.sublime-*
