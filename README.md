@@ -8,7 +8,7 @@ This project provides the backend for a platform connecting people in a region s
 
 ## Get it running
 
-**1)** You have to have a working [Go installation](https://golang.org/doc/install) on your system.
+**1)** You have to have a working [Go installation](https://golang.org/doc/install) on your system. Preferably via your system's package manager.
 
 **2)** Initially run
 ```bash
