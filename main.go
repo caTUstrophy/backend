@@ -17,6 +17,14 @@ func DatabaseMiddleware(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+func CORSMiddleware() gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		c.Next()
+	}
+}
+
 func GetUsers(c *gin.Context) {
 
 	var Users []db.User
@@ -82,7 +90,10 @@ func main() {
 
 	// Open connection to database and insert middleware.
 	db := db.InitDB("sqlite3", "caTUstrophy.sqlite")
+
+	// Add custom middleware to call stack.
 	router.Use(DatabaseMiddleware(db))
+	router.Use(CORSMiddleware())
 
 	// Define routes.
 	router.GET("/users", GetUsers)
@@ -90,5 +101,5 @@ func main() {
 	router.POST("/users", CreateUser)
 
 	// Run our application.
-	router.Run(":8080")
+	router.Run(":3001")
 }
