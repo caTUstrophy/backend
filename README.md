@@ -36,30 +36,127 @@ $ go build
 $ ./backend
 ```
 
+Afterwards, the backend is reachable at `http://localhost:3001`.
+
+
 ## API documentation
 
-Three roles are present in this model:
-* unregistered user (U): not yet present in our system
-* not-logged-in user (N): registered, but not authorized user
-* logged-in user (L): registered and successfully authorized user
-* admin (A): registered, successfully authorized and privileged user
+Four roles are present in this model:
+* unregistered user **(U)**: not yet present in our system
+* not-logged-in user **(N)**: registered, but not authorized user
+* logged-in user **(L)**: registered and authorized user
+* admin **(A)**: registered, authorized and privileged user
 
-| Functionality | Needed privilege | HTTP verb | Endpoint | API version |
-| ------------- | ---------------- | --------- | -------- | ----------- |
-| Registration  | U                | POST      | /users   | MVP         |
-| Login         | N                | POST      | /auth    | MVP         |
-| Renew auth token | L             | GET       | /auth    | MVP         |
-| Logout        | L                | DELETE    | /auth    | MVP         |
-| Own profile   | L                | GET       | /me      | 2.0         |
-| List offers   | A                | GET       | /offers  |  MVP        |
-| List own offers | L              | GET       | /me/offers |  2.0      |
-| List requests | A                | GET       | /requests  | MVP       |
-| List own requests | L            | GET       | /me/requests | 2.0     |
-| Create offer  | L                | POST      | /offers  | MVP         |
-| Create request | L               | POST      | /requests  | MVP       |
-| Update offer x | L               | PUT       | /me/offers/x | 2.0     |
-| Update request x | L             | PUT       | /me/requests/x | 2.0   |
-| Create matching | A              | POST      | /matchings | MVP       |
-| Get matching x | L               | GET       | /matchings/x | MVP     |
+| Functionality     | Minimum needed privilege | HTTP verb | Endpoint       | API version |
+| ----------------- | ------------------------ | --------- | -------------- | ----------- |
+| Registration      | U                        | POST      | /users         | MVP         |
+| Login             | N                        | POST      | /auth          | MVP         |
+| Renew auth token  | L                        | GET       | /auth          | MVP         |
+| Logout            | L                        | DELETE    | /auth          | MVP         |
+| Own profile       | L                        | GET       | /me            | 2.0         |
+| List offers       | A                        | GET       | /offers        |  MVP        |
+| List own offers   | L                        | GET       | /me/offers     |  2.0        |
+| List requests     | A                        | GET       | /requests      | MVP         |
+| List own requests | L                        | GET       | /me/requests   | 2.0         |
+| Create offer      | L                        | POST      | /offers        | MVP         |
+| Create request    | L                        | POST      | /requests      | MVP         |
+| Update offer x    | L                        | PUT       | /me/offers/x   | 2.0         |
+| Update request x  | L                        | PUT       | /me/requests/x | 2.0         |
+| Create matching   | A                        | POST      | /matchings     | MVP         |
+| Get matching x    | L                        | GET       | /matchings/x   | MVP         |
+
 
 ### Detailed request information
+
+#### Registration
+
+**Request:**
+
+```json
+POST /users
+
+{
+    "FirstName": "USER'S FIRST NAME",
+    "LastName": "USER'S LAST NAME",
+    "Mail": "USER'S MAIL ADDRESS",
+    "Password": "USER'S LOGIN PASSWORD"
+}
+```
+
+**Response:**
+
+```json
+201 Created
+
+{
+    "ID": "USER'S ID IN THE SYSTEM"
+}
+```
+
+#### Login
+
+**Request:**
+
+```json
+POST /auth
+
+{
+    "Mail": "USER'S MAIL ADDRESS",
+    "Password": "USER'S LOGIN PASSWORD"
+}
+```
+
+**Response:**
+
+```json
+200 OK
+
+{
+    "AccessToken": "JWT SIMILAR(?) TO BEARER AUTHENTICATION TOKEN",
+    "ExpiresIn": 1800
+}
+```
+
+#### Renew auth token
+
+**Request:**
+
+```json
+GET /auth
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+```json
+200 OK
+
+{
+    "AccessToken": "RENEWED JWT",
+    "ExpiresIn": 1800
+}
+```
+
+Or - if an expired token was presented:
+
+```json
+401 Unauthorized
+WWW-Authenticate: Bearer realm="<FQDN>",
+                  error="invalid_token",
+                  error_description="The access token expired"
+```
+
+#### Logout
+
+**Request:**
+
+```json
+DELETE /auth
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+```json
+200 OK
+```
