@@ -35,3 +35,5 @@ $ go build
 ```bash
 $ ./backend
 ```
+
+The backend is now available at `localhost:3001`.
