@@ -90,5 +90,5 @@ func main() {
 	router.POST("/users", CreateUser)
 
 	// Run our application.
-	router.Run(":8080")
+	router.Run(":3001")
 }
