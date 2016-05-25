@@ -76,10 +76,10 @@ Four roles are present in this model:
 POST /users
 
 {
-    "FirstName": "USER'S FIRST NAME",
-    "LastName": "USER'S LAST NAME",
-    "Mail": "USER'S MAIL ADDRESS",
-    "Password": "USER'S LOGIN PASSWORD"
+    "FirstName": string,
+    "LastName": string,
+    "Mail": string/email,
+    "Password": string
 }
 ```
 
@@ -89,7 +89,7 @@ POST /users
 201 Created
 
 {
-    "ID": "USER'S ID IN THE SYSTEM"
+    "ID": int
 }
 ```
 
@@ -101,8 +101,8 @@ POST /users
 POST /auth
 
 {
-    "Mail": "USER'S MAIL ADDRESS",
-    "Password": "USER'S LOGIN PASSWORD"
+    "Mail": string/email,
+    "Password": string
 }
 ```
 
