@@ -1,22 +1,27 @@
 package main
 
 import (
-	"log"
-
-	//"github.com/caTUstrophy/backend/cache"
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
 	"github.com/jinzhu/gorm"
 )
 
-// Work around until we get a proper context file.
-func DatabaseMiddleware(db *gorm.DB) gin.HandlerFunc {
+// Structs
 
-	return func(c *gin.Context) {
-		c.Set("db", db)
-		c.Next()
-	}
+type App struct {
+	DB        *gorm.DB
+	Validator *validator.Validate
 }
+
+type CreateUserPayload struct {
+	Name          string `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	PreferredName string `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Mail          string `conform:"trim,email" validate:"required,email"`
+	Password      string `validate:"required,min=16,containsany=0123456789,containsany=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+}
+
+// Functions
 
 func CORSMiddleware() gin.HandlerFunc {
 
@@ -26,89 +31,36 @@ func CORSMiddleware() gin.HandlerFunc {
 	}
 }
 
-/**
- * new endpoints
- */
-func CreateUser(c *gin.Context) {
-
-	var User db.User
-
-	// Check for existence of mail attribute in user supplied data
-    if User.Mail
-
-	db, ok := c.MustGet("db").(*gorm.DB)
-	if !ok {
-		log.Fatal("[CreateUser] Could not retrieve database connection from gin context.")
-	}
-
-	// Expect user struct fields in JSON request body.
-	c.BindJSON(&User)
-
-	// IMPORTANT CHECKS HAVE TO HAPPEN HERE:
-	// * Validity checks (certain fields not null etc.)
-	// * Security checks (filter out malicious input)
-
-	// Create user object in database.
-	db.Create(&User)
-
-	// On success: return newly created user.
-	c.JSON(201, User)
-}
-
-func Login(c *gin.Context) {
-
-}
-
-func RenewToken(c *gin.Context) {
-
-}
-
-func Logout(c *gin.Context) {
-
-}
-
-func ListOffers(c *gin.Context) {
-
-}
-
-func ListRequests(c *gin.Context) {
-
-}
-
-func CreateRequest(c *gin.Context) {
-
-}
-
-func CreateMatching(c *gin.Context) {
-
-}
-
-func GetMatching(c *gin.Context) {
-	//matchingID := c.Params.ByName("matchingID")
-}
+// Main
 
 func main() {
 
 	// Create new gin instance with default functionalities.
 	router := gin.Default()
 
+	// Make space for a application struct containing our global context.
+	app := new(App)
+
 	// Open connection to database and insert middleware.
-	db := db.InitDB("sqlite3", "caTUstrophy.sqlite")
+	app.DB = db.InitDB("sqlite3", "caTUstrophy.sqlite")
+
+	// Initialize the validator instance to validate fields with tag 'validate'
+	validatorConfig := &validator.Config{TagName: "validate"}
+	app.Validator = validator.New(validatorConfig)
 
 	// Add custom middleware to call stack.
-	router.Use(DatabaseMiddleware(db))
 	router.Use(CORSMiddleware())
 
 	// Define endpoint to handler mapping
-	router.POST("/users", CreateUser)
-	router.POST("/auth", Login)
-	router.GET("/auth", RenewToken)
-	router.DELETE("/auth", Logout)
-	router.GET("/offers", ListOffers)
-	router.GET("/requests", ListRequests)
-	router.POST("/requests", CreateRequest)
-	router.POST("/matchings", CreateMatching)
-	router.GET("/matchings/:matchingID", GetMatching)
+	router.POST("/users", app.CreateUser)
+	router.POST("/auth", app.Login)
+	router.GET("/auth", app.RenewToken)
+	router.DELETE("/auth", app.Logout)
+	router.GET("/offers", app.ListOffers)
+	router.GET("/requests", app.ListRequests)
+	router.POST("/requests", app.CreateRequest)
+	router.POST("/matchings", app.CreateMatching)
+	router.GET("/matchings/:matchingID", app.GetMatching)
 
 	// Run our application.
 	router.Run(":3001")
