@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	//"github.com/caTUstrophy/backend/cache"
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -24,7 +25,6 @@ func CORSMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
-
 
 /**
  * new endpoints
@@ -55,7 +55,7 @@ func CreateUser(c *gin.Context) {
 	c.JSON(201, User)
 }
 
-func Login (c *gin.Context) {
+func Login(c *gin.Context) {
 
 }
 
@@ -84,7 +84,7 @@ func CreateMatching(c *gin.Context) {
 }
 
 func GetMatching(c *gin.Context) {
-	matchingID := c.Params.ByName("matchingID")
+	//matchingID := c.Params.ByName("matchingID")
 }
 
 func main() {
