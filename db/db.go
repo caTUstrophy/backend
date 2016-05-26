@@ -6,68 +6,74 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/leebenson/conform"
 )
 
 // Models
 
 // Users and permissions
+
 type Permission struct {
-	ID          uint   `gorm:"primary_key"`
+	gorm.Model
+
 	AccessRight string `gorm:"index;not null;unique"`
 	Description string
 }
 
 type Group struct {
-	ID          uint   `gorm:"primary_key"`
+	gorm.Model
+
 	Location    string `gorm:"index"`
 	Permissions []Permission
 }
 
 type User struct {
-	ID            uint `gorm:"primary_key"`
+	gorm.Model
+
 	Name          string
 	PreferredName string
-	Mail          string `gorm:"index;not null;unique"`
-	MailVerified  bool
-	PasswordHash  string
-	PasswordSalt  string `gorm:"unique"`
-	Groups        []Group
-	Enabled       bool
+
+	Mail         string `gorm:"index;not null;unique"`
+	MailVerified bool
+
+	PasswordHash string `gorm:"unique"`
+
+	Groups []Group
+
+	Enabled bool
 }
 
-// Offer, Requests and Matchings
+// Offer, Request and Matching
 
 type Tag struct {
 	gorm.Model
-	Name string
+	Name string `gorm:"index;not null;unique"`
 }
 
 type Matching struct {
-	ID      uint `gorm:"primary_key"`
+	gorm.Model
 	Offer   Offer
 	Request Request
 }
 
 type Offer struct {
-	ID uint `gorm:"primary_key"`
+	gorm.Model
 
-	Tags []Tag `gorm:"index"`
+	Tags []Tag
 	Name string
 
-	User User `gorm:"index"`
+	User User
 
 	ValidityPeriod time.Time
 	Expired        bool
 }
 
 type Request struct {
-	ID uint `gorm:"primary_key"`
+	gorm.Model
 
-	Tags []Tag `gorm:"index"`
+	Tags []Tag
 	Name string
 
-	User User `gorm:"index"`
+	User User
 
 	ValidityPeriod time.Time
 	Expired        bool
@@ -75,7 +81,7 @@ type Request struct {
 
 // Set Expired-flag for all requests and offers
 func CheckForExpired(db *gorm.DB) {
-	//TODO
+	// TODO
 }
 
 // Create connection to our database.
@@ -94,7 +100,6 @@ func InitDB(databaseType string, databaseName string) *gorm.DB {
 	}
 
 	// Check if our tables are present, otherwise create them.
-
 	db.CreateTable(&Permission{})
 	db.CreateTable(&Group{})
 	db.CreateTable(&User{})
@@ -104,4 +109,14 @@ func InitDB(databaseType string, databaseName string) *gorm.DB {
 	db.CreateTable(&Request{})
 
 	return db
+}
+
+// Insert default data into Permissions table
+func InsertDefaultPermissions(db *gorm.DB) {
+	// TODO
+}
+
+// Insert default data into Groups table
+func InsertDefaultGroups(db *gorm.DB) {
+	// TODO
 }
