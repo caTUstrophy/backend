@@ -22,13 +22,15 @@ type Group struct {
 }
 
 type User struct {
-	ID           uint `gorm:"primary_key"`
-	FirstName    string
-	LastName     string
-	Mail         string `gorm:"index;not null;unique"`
-	PasswordHash string
-	PasswordSalt string `gorm:"unique"`
-	Groups       []Group
+	ID            uint `gorm:"primary_key"`
+	Name          string
+	PreferredName string
+	Mail          string `gorm:"index;not null;unique"`
+	MailVerified  bool
+	PasswordHash  string
+	PasswordSalt  string `gorm:"unique"`
+	Groups        []Group
+	Enabled       bool
 }
 
 // Create connection to our database.
