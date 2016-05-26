@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/caTUstrophy/backend/cache"
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -47,6 +48,10 @@ func main() {
 	// Initialize the validator instance to validate fields with tag 'validate'
 	validatorConfig := &validator.Config{TagName: "validate"}
 	app.Validator = validator.New(validatorConfig)
+
+	// Initialize cache for jwts
+	jwts := cache.MapCache{make(map[string]bool)}
+	jwts.Set("test")
 
 	// Add custom middleware to call stack.
 	router.Use(CORSMiddleware())
