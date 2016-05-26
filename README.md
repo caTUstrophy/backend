@@ -54,8 +54,8 @@ Four roles are present in this model:
 | Renew auth token  | L                        | GET       | /auth          | MVP         |
 | Logout            | L                        | DELETE    | /auth          | MVP         |
 | Own profile       | L                        | GET       | /me            | 2.0         |
-| List offers       | A                        | GET       | /offers        |  MVP        |
-| List own offers   | L                        | GET       | /me/offers     |  2.0        |
+| List offers       | A                        | GET       | /offers        | MVP         |
+| List own offers   | L                        | GET       | /me/offers     | 2.0         |
 | List requests     | A                        | GET       | /requests      | MVP         |
 | List own requests | L                        | GET       | /me/requests   | 2.0         |
 | Create offer      | L                        | POST      | /offers        | MVP         |
@@ -72,12 +72,12 @@ Four roles are present in this model:
 
 **Request:**
 
-```json
+```
 POST /users
 
 {
-    "FirstName": string,
-    "LastName": string,
+    "Name": string,
+    "PreferredName": string,
     "Mail": string/email,
     "Password": string
 }
@@ -85,7 +85,7 @@ POST /users
 
 **Response:**
 
-```json
+```
 201 Created
 
 {
@@ -97,7 +97,7 @@ POST /users
 
 **Request:**
 
-```json
+```
 POST /auth
 
 {
@@ -108,12 +108,12 @@ POST /auth
 
 **Response:**
 
-```json
+```
 200 OK
 
 {
-    "AccessToken": "JWT SIMILAR(?) TO BEARER AUTHENTICATION TOKEN",
-    "ExpiresIn": 1800
+    "AccessToken": string/jwt,
+    "ExpiresIn": int
 }
 ```
 
@@ -121,25 +121,25 @@ POST /auth
 
 **Request:**
 
-```json
+```
 GET /auth
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 **Response:**
 
-```json
+```
 200 OK
 
 {
-    "AccessToken": "RENEWED JWT",
-    "ExpiresIn": 1800
+    "AccessToken": string/jwt,
+    "ExpiresIn": int
 }
 ```
 
 Or - if an expired token was presented:
 
-```json
+```
 401 Unauthorized
 WWW-Authenticate: Bearer realm="<FQDN>",
                   error="invalid_token",
@@ -150,13 +150,54 @@ WWW-Authenticate: Bearer realm="<FQDN>",
 
 **Request:**
 
-```json
+```
 DELETE /auth
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 **Response:**
 
-```json
+```
 200 OK
 ```
+
+#### List offers
+
+**Request:**
+
+**Response:**
+
+
+#### List requests
+
+**Request:**
+
+**Response:**
+
+
+#### Create offer
+
+**Request:**
+
+**Response:**
+
+
+#### Create request
+
+**Request:**
+
+**Response:**
+
+
+#### Create matching
+
+**Request:**
+
+**Response:**
+
+
+#### Get matching x
+
+**Request:**
+
+**Response:**
