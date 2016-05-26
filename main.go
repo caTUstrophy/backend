@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	//"github.com/caTUstrophy/backend/cache"
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -24,7 +25,6 @@ func CORSMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
-
 
 /**
  * new endpoints
@@ -51,29 +51,29 @@ func CreateUser(c *gin.Context) {
 	// On success: return newly created user.
 	c.JSON(201, User)
 }
-func Login (c *gin.Context) {
-	
+func Login(c *gin.Context) {
+
 }
 func RenewToken(c *gin.Context) {
-	
+
 }
 func Logout(c *gin.Context) {
-	
+
 }
 func ListOffers(c *gin.Context) {
-	
+
 }
 func ListRequests(c *gin.Context) {
-	
+
 }
 func CreateRequest(c *gin.Context) {
-	
+
 }
 func CreateMatching(c *gin.Context) {
-	
+
 }
 func GetMatching(c *gin.Context) {
-	matchingID := c.Params.ByName("matchingID")
+	//matchingID := c.Params.ByName("matchingID")
 }
 
 func main() {
@@ -88,8 +88,6 @@ func main() {
 	router.Use(DatabaseMiddleware(db))
 	router.Use(CORSMiddleware())
 
-	
-	
 	//new endpoints
 	router.POST("/users", CreateUser)
 	router.POST("/auth", Login)
