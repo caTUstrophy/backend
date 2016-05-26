@@ -1,9 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
-	//"github.com/caTUstrophy/backend/cache"
+	"github.com/caTUstrophy/backend/cache"
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -83,6 +84,8 @@ func main() {
 
 	// Open connection to database and insert middleware.
 	db := db.InitDB("sqlite3", "caTUstrophy.sqlite")
+	// Initialise cache for jwts
+	jwts := cache.MapCache{make(map[string]bool)}
 
 	// Add custom middleware to call stack.
 	router.Use(DatabaseMiddleware(db))
