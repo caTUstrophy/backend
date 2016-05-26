@@ -33,6 +33,9 @@ func CreateUser(c *gin.Context) {
 
 	var User db.User
 
+	// Check for existence of mail attribute in user supplied data
+    if User.Mail
+
 	db, ok := c.MustGet("db").(*gorm.DB)
 	if !ok {
 		log.Fatal("[CreateUser] Could not retrieve database connection from gin context.")
@@ -51,27 +54,35 @@ func CreateUser(c *gin.Context) {
 	// On success: return newly created user.
 	c.JSON(201, User)
 }
+
 func Login (c *gin.Context) {
-	
+
 }
+
 func RenewToken(c *gin.Context) {
-	
+
 }
+
 func Logout(c *gin.Context) {
-	
+
 }
+
 func ListOffers(c *gin.Context) {
-	
+
 }
+
 func ListRequests(c *gin.Context) {
-	
+
 }
+
 func CreateRequest(c *gin.Context) {
-	
+
 }
+
 func CreateMatching(c *gin.Context) {
-	
+
 }
+
 func GetMatching(c *gin.Context) {
 	matchingID := c.Params.ByName("matchingID")
 }
@@ -88,9 +99,7 @@ func main() {
 	router.Use(DatabaseMiddleware(db))
 	router.Use(CORSMiddleware())
 
-	
-	
-	//new endpoints
+	// Define endpoint to handler mapping
 	router.POST("/users", CreateUser)
 	router.POST("/auth", Login)
 	router.GET("/auth", RenewToken)
