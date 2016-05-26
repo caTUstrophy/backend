@@ -27,3 +27,4 @@ _testmain.go
 *.sqlite
 *.sqlite3
 *.sublime-*
+backend
