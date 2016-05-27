@@ -3,10 +3,6 @@ go:
     - tip
 
 script:
-    - go get github.com/gin-gonic/gin
-    - go get github.com/jinzhu/gorm
-    - go get github.com/jinzhu/gorm/dialects/sqlite
-    - go get github.com/caTUstrophy/backend/db
     - go build
 
 notifications:
