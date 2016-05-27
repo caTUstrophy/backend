@@ -22,8 +22,9 @@ type Permission struct {
 type Group struct {
 	gorm.Model
 
-	Location    string       `gorm:"index"`
-	Permissions []Permission `gorm:"many2many:group_permissions"`
+	DefaultGroup bool
+	Location     string       `gorm:"index"`
+	Permissions  []Permission `gorm:"many2many:group_permissions"`
 }
 
 type User struct {
@@ -99,6 +100,9 @@ func InitDB(databaseType string, databaseName string) *gorm.DB {
 		log.Fatal(err)
 	}
 
+	// Development: Log SQL by gorm.
+	db.LogMode(true)
+
 	// Check if our tables are present, otherwise create them.
 	db.CreateTable(&Permission{})
 	db.CreateTable(&Group{})
@@ -129,13 +133,15 @@ func AddDefaultData(db *gorm.DB) {
 	// Two default group entities.
 
 	GroupUser := Group{
-		Location:    "worldwide",
-		Permissions: []Permission{PermUser},
+		DefaultGroup: true,
+		Location:     "worldwide",
+		Permissions:  []Permission{PermUser},
 	}
 
 	GroupAdmin := Group{
-		Location:    "worldwide",
-		Permissions: []Permission{PermAdmin},
+		DefaultGroup: false,
+		Location:     "worldwide",
+		Permissions:  []Permission{PermAdmin},
 	}
 
 	// Some default tag entities.

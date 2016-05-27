@@ -15,8 +15,6 @@ import (
 func (app *App) CreateUser(c *gin.Context) {
 
 	var Payload CreateUserPayload
-	var CountDup int
-	var User db.User
 
 	// Expect user struct fields in JSON request body.
 	c.BindJSON(&Payload)
@@ -52,6 +50,7 @@ func (app *App) CreateUser(c *gin.Context) {
 	}
 
 	// Check for user duplicate attempt: entry with mail exists?
+	var CountDup int
 	app.DB.Model(&db.User{}).Where("mail = ?", Payload.Mail).Count(&CountDup)
 
 	if CountDup > 0 {
@@ -63,6 +62,8 @@ func (app *App) CreateUser(c *gin.Context) {
 
 		return
 	}
+
+	var User db.User
 
 	User.Name = Payload.Name
 	User.PreferredName = Payload.PreferredName
@@ -79,7 +80,11 @@ func (app *App) CreateUser(c *gin.Context) {
 		log.Fatal("[CreateUser] Error while generating hash in user creation. Terminating.")
 	}
 
-	// User.Groups =
+	var DefaultGroup db.Group
+	app.DB.First(&DefaultGroup, "default_group = ?", true)
+
+	// Add user to default user group and enable the user.
+	User.Groups = []db.Group{DefaultGroup}
 	User.Enabled = true
 
 	// Create user object in database.
