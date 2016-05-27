@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -28,7 +29,25 @@ type LoginPayload struct {
 	Password string `validate:"required"`
 }
 
-// Endpoints
+// Functions
+
+// Authorization checking
+
+func Authorize(req *http.Request, scope string) (bool, string) {
+
+	// Extract JWT from request headers.
+
+	// Check if JWT is valid.
+
+	// Check if an entry with mail from JWT exists in our session store.
+
+	// Check if JWT from request matches JWT from session store.
+
+	// Return success.
+	return true, ""
+}
+
+// Endpoint handlers
 
 func (app *App) CreateUser(c *gin.Context) {
 
@@ -168,14 +187,19 @@ func (app *App) Login(c *gin.Context) {
 	// Retrieve the session signing key from environment.
 	jwtSigningSecret := os.Getenv("JWT_SIGNING_SECRET")
 
+	nowTime := time.Now()
+	expTime := nowTime.Add((app.SessionValidFor - (30 * time.Second))).Unix()
+
 	// At this point, the user exists and provided a correct password.
 	// Create a JWT with claims to identify user.
-	expTime := time.Now().Add(app.SessionValidFor).Unix()
 	sessionJWT := jwt.New(jwt.SigningMethodHS512)
 
 	// Add these claims.
 	// TODO: Add important claims for security!
+	//       Hash(PasswordHash)? Needs database call, which is what we want to avoid.
 	sessionJWT.Claims["iss"] = User.Mail
+	sessionJWT.Claims["iat"] = nowTime.Unix()
+	sessionJWT.Claims["nbf"] = nowTime.Add((-1 * time.Minute)).Unix()
 	sessionJWT.Claims["exp"] = expTime
 
 	sessionJWTString, err := sessionJWT.SignedString([]byte(jwtSigningSecret))
@@ -195,6 +219,14 @@ func (app *App) Login(c *gin.Context) {
 
 func (app *App) RenewToken(c *gin.Context) {
 
+	// Example usage of authorization function.
+	if ok, message := Authorize(c.Request, "user"); !ok {
+
+		// Signal client an error and expect authorization.
+		c.JSON(401, message)
+
+		return
+	}
 }
 
 func (app *App) Logout(c *gin.Context) {
