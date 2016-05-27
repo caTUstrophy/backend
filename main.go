@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+
 	"github.com/caTUstrophy/backend/cache"
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
@@ -11,6 +13,7 @@ import (
 // Structs
 
 type App struct {
+	Router    *gin.Engine
 	DB        *gorm.DB
 	Validator *validator.Validate
 }
@@ -24,6 +27,34 @@ type CreateUserPayload struct {
 
 // Functions
 
+func InitAndConfig() *App {
+
+	// Define an initialization flag.
+	initFlag := flag.Bool("init", false, "Set this flag to true to initialize a fresh database with default data.")
+	flag.Parse()
+
+	// Make space for a application struct containing our global context.
+	app := new(App)
+
+	// Open connection to database and insert middleware.
+	app.DB = db.InitDB("sqlite3", "caTUstrophy.sqlite")
+
+	// If init flag was set to true, add default data to database.
+	if *initFlag {
+		db.AddDefaultData(app.DB)
+	}
+
+	// Initialize the validator instance to validate fields with tag 'validate'
+	validatorConfig := &validator.Config{TagName: "validate"}
+	app.Validator = validator.New(validatorConfig)
+
+	// Create new gin instance with default functionalities and add it to app struct.
+	router := gin.Default()
+	app.Router = router
+
+	return app
+}
+
 func CORSMiddleware() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
@@ -36,37 +67,27 @@ func CORSMiddleware() gin.HandlerFunc {
 
 func main() {
 
-	// Create new gin instance with default functionalities.
-	router := gin.Default()
+	// Parse command line flags and build application config.
+	app := InitAndConfig()
 
-	// Make space for a application struct containing our global context.
-	app := new(App)
-
-	// Open connection to database and insert middleware.
-	app.DB = db.InitDB("sqlite3", "caTUstrophy.sqlite")
-
-	// Initialize the validator instance to validate fields with tag 'validate'
-	validatorConfig := &validator.Config{TagName: "validate"}
-	app.Validator = validator.New(validatorConfig)
-
-	// Initialize cache for jwts
+	// Initialize cache for jwts.
 	jwts := cache.MapCache{make(map[string]bool)}
 	jwts.Set("test")
 
 	// Add custom middleware to call stack.
-	router.Use(CORSMiddleware())
+	app.Router.Use(CORSMiddleware())
 
 	// Define endpoint to handler mapping
-	router.POST("/users", app.CreateUser)
-	router.POST("/auth", app.Login)
-	router.GET("/auth", app.RenewToken)
-	router.DELETE("/auth", app.Logout)
-	router.GET("/offers", app.ListOffers)
-	router.GET("/requests", app.ListRequests)
-	router.POST("/requests", app.CreateRequest)
-	router.POST("/matchings", app.CreateMatching)
-	router.GET("/matchings/:matchingID", app.GetMatching)
+	app.Router.POST("/users", app.CreateUser)
+	app.Router.POST("/auth", app.Login)
+	app.Router.GET("/auth", app.RenewToken)
+	app.Router.DELETE("/auth", app.Logout)
+	app.Router.GET("/offers", app.ListOffers)
+	app.Router.GET("/requests", app.ListRequests)
+	app.Router.POST("/requests", app.CreateRequest)
+	app.Router.POST("/matchings", app.CreateMatching)
+	app.Router.GET("/matchings/:matchingID", app.GetMatching)
 
 	// Run our application.
-	router.Run(":3001")
+	app.Router.Run(":3001")
 }

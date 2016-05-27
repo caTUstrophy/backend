@@ -22,8 +22,8 @@ type Permission struct {
 type Group struct {
 	gorm.Model
 
-	Location    string `gorm:"index"`
-	Permissions []Permission
+	Location    string       `gorm:"index"`
+	Permissions []Permission `gorm:"many2many:group_permissions"`
 }
 
 type User struct {
@@ -37,7 +37,7 @@ type User struct {
 
 	PasswordHash string `gorm:"unique"`
 
-	Groups []Group
+	Groups []Group `gorm:"many2many:user_groups"`
 
 	Enabled bool
 }
@@ -58,7 +58,7 @@ type Matching struct {
 type Offer struct {
 	gorm.Model
 
-	Tags []Tag
+	Tags []Tag `gorm:"many2many:offer_tags"`
 	Name string
 
 	User User
@@ -70,7 +70,7 @@ type Offer struct {
 type Request struct {
 	gorm.Model
 
-	Tags []Tag
+	Tags []Tag `gorm:"many2many:request_tags"`
 	Name string
 
 	User User
@@ -111,12 +111,48 @@ func InitDB(databaseType string, databaseName string) *gorm.DB {
 	return db
 }
 
-// Insert default data into Permissions table
-func InsertDefaultPermissions(db *gorm.DB) {
-	// TODO
-}
+// Insert default data into Permissions, Groups and Tags table
+func AddDefaultData(db *gorm.DB) {
 
-// Insert default data into Groups table
-func InsertDefaultGroups(db *gorm.DB) {
-	// TODO
+	// Two default permission entities.
+
+	PermUser := Permission{
+		AccessRight: "user",
+		Description: "This permission represents a standard, registered but not privileged user in our system.",
+	}
+
+	PermAdmin := Permission{
+		AccessRight: "admin",
+		Description: "This permission represents a registered and fully authorized user in our system. Users with this permission have full API access to our system.",
+	}
+
+	// Two default group entities.
+
+	GroupUser := Group{
+		Location:    "worldwide",
+		Permissions: []Permission{PermUser},
+	}
+
+	GroupAdmin := Group{
+		Location:    "worldwide",
+		Permissions: []Permission{PermAdmin},
+	}
+
+	// Some default tag entities.
+
+	Tags := []Tag{
+		Tag{Name: "Food"},
+		Tag{Name: "Water"},
+		Tag{Name: "Vehicle"},
+		Tag{Name: "Tool"},
+		Tag{Name: "Information"},
+	}
+
+	db.Create(&GroupUser)
+	db.Create(&GroupAdmin)
+
+	for _, Tag := range Tags {
+		log.Println(Tag)
+		db.Create(&Tag)
+	}
 }

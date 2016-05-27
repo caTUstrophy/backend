@@ -75,11 +75,8 @@ func (app *App) CreateUser(c *gin.Context) {
 	User.PasswordHash = string(hash)
 
 	if err != nil {
-
 		// If there was an error during hash creation - terminate immediately.
-		log.Println("[CreateUser] Error while generating hash in user creation. Terminating.")
-
-		return
+		log.Fatal("[CreateUser] Error while generating hash in user creation. Terminating.")
 	}
 
 	// User.Groups =
