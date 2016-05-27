@@ -201,3 +201,10 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 **Request:**
 
 **Response:**
+
+## Tests
+
+In /tests there are some tests.
+
+### User registration
+The file user_registration.sh is a bash skript that sends http requests with a valid and some not valid user registration data. All cases that are tested will be printed in terminal, so please run it for more details.
