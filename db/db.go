@@ -103,6 +103,12 @@ func InitDB(databaseType string, databaseName string) *gorm.DB {
 	// Development: Log SQL by gorm.
 	db.LogMode(true)
 
+	return db
+}
+
+// Insert default data into Permissions, Groups and Tags table
+func AddDefaultData(db *gorm.DB) {
+
 	// Check if our tables are present, otherwise create them.
 	db.CreateTable(&Permission{})
 	db.CreateTable(&Group{})
@@ -111,12 +117,6 @@ func InitDB(databaseType string, databaseName string) *gorm.DB {
 	db.CreateTable(&Matching{})
 	db.CreateTable(&Offer{})
 	db.CreateTable(&Request{})
-
-	return db
-}
-
-// Insert default data into Permissions, Groups and Tags table
-func AddDefaultData(db *gorm.DB) {
 
 	// Two default permission entities.
 

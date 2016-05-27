@@ -2,13 +2,31 @@ package main
 
 import (
 	"log"
+	"os"
+	"time"
 
 	"github.com/caTUstrophy/backend/db"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/leebenson/conform"
+	"github.com/patrickmn/go-cache"
 	"golang.org/x/crypto/bcrypt"
 )
+
+// Structs
+
+type CreateUserPayload struct {
+	Name          string `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	PreferredName string `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Mail          string `conform:"trim,email" validate:"required,email"`
+	Password      string `validate:"required,min=16,containsany=0123456789,containsany=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+}
+
+type LoginPayload struct {
+	Mail     string `conform:"trim,email" validate:"required,email"`
+	Password string `validate:"required"`
+}
 
 // Endpoints
 
@@ -71,10 +89,8 @@ func (app *App) CreateUser(c *gin.Context) {
 	User.MailVerified = false
 
 	// Password hash generation.
-	// TODO: Cost currently set to 10, in production increase to 16.
-	hash, err := bcrypt.GenerateFromPassword([]byte(Payload.Password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(Payload.Password), app.HashCost)
 	User.PasswordHash = string(hash)
-
 	if err != nil {
 		// If there was an error during hash creation - terminate immediately.
 		log.Fatal("[CreateUser] Error while generating hash in user creation. Terminating.")
@@ -98,6 +114,83 @@ func (app *App) CreateUser(c *gin.Context) {
 
 func (app *App) Login(c *gin.Context) {
 
+	var Payload LoginPayload
+
+	// Expect login struct fields in JSON request body.
+	c.BindJSON(&Payload)
+
+	// Validate sent user login data.
+	conform.Strings(&Payload)
+	errs := app.Validator.Struct(&Payload)
+
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs.(validator.ValidationErrors) {
+
+			if err.Tag == "required" {
+				errResp[err.Field] = "Is required"
+			} else if err.Tag == "email" {
+				errResp[err.Field] = "Is not a valid mail address"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(400, errResp)
+
+		return
+	}
+
+	// Find user in database.
+	var User db.User
+	app.DB.First(&User, "mail = ?", Payload.Mail)
+
+	// Check if user is not known to our system.
+	if User.Mail == "" {
+		User.PasswordHash = ""
+	}
+
+	// Compare password hash from database with possible plaintext
+	// password from request. Compares in constant time.
+	err := bcrypt.CompareHashAndPassword([]byte(User.PasswordHash), []byte(Payload.Password))
+	if err != nil {
+
+		// Signal client that an error occured.
+		c.JSON(400, gin.H{
+			"Error": "Mail or password is wrong",
+		})
+
+		return
+	}
+
+	// Retrieve the session signing key from environment.
+	jwtSigningSecret := os.Getenv("JWT_SIGNING_SECRET")
+
+	// At this point, the user exists and provided a correct password.
+	// Create a JWT with claims to identify user.
+	expTime := time.Now().Add(app.SessionValidFor).Unix()
+	sessionJWT := jwt.New(jwt.SigningMethodHS512)
+
+	// Add these claims.
+	// TODO: Add important claims for security!
+	sessionJWT.Claims["iss"] = User.Mail
+	sessionJWT.Claims["exp"] = expTime
+
+	sessionJWTString, err := sessionJWT.SignedString([]byte(jwtSigningSecret))
+	if err != nil {
+		log.Fatalf("[Login] Signing of user session JWT went wrong: %s.\nTerminating.", err)
+	}
+
+	// Add JWT to session in-memory cache.
+	app.Sessions.Set(User.Mail, sessionJWTString, cache.DefaultExpiration)
+
+	// Deliver JWT to client that made the request.
+	c.JSON(200, gin.H{
+		"AccessToken": sessionJWTString,
+		"ExpiresIn":   expTime,
+	})
 }
 
 func (app *App) RenewToken(c *gin.Context) {

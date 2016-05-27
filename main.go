@@ -1,59 +1,26 @@
 package main
 
 import (
-	"flag"
+	"time"
 
-	"github.com/caTUstrophy/backend/cache"
-	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/jinzhu/gorm"
+	"github.com/patrickmn/go-cache"
 )
 
 // Structs
 
 type App struct {
-	Router    *gin.Engine
-	DB        *gorm.DB
-	Validator *validator.Validate
-}
-
-type CreateUserPayload struct {
-	Name          string `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	PreferredName string `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Mail          string `conform:"trim,email" validate:"required,email"`
-	Password      string `validate:"required,min=16,containsany=0123456789,containsany=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Router          *gin.Engine
+	DB              *gorm.DB
+	Sessions        *cache.Cache
+	Validator       *validator.Validate
+	HashCost        int
+	SessionValidFor time.Duration
 }
 
 // Functions
-
-func InitAndConfig() *App {
-
-	// Define an initialization flag.
-	initFlag := flag.Bool("init", false, "Set this flag to true to initialize a fresh database with default data.")
-	flag.Parse()
-
-	// Make space for a application struct containing our global context.
-	app := new(App)
-
-	// Open connection to database and insert middleware.
-	app.DB = db.InitDB("sqlite3", "caTUstrophy.sqlite")
-
-	// If init flag was set to true, add default data to database.
-	if *initFlag {
-		db.AddDefaultData(app.DB)
-	}
-
-	// Initialize the validator instance to validate fields with tag 'validate'
-	validatorConfig := &validator.Config{TagName: "validate"}
-	app.Validator = validator.New(validatorConfig)
-
-	// Create new gin instance with default functionalities and add it to app struct.
-	router := gin.Default()
-	app.Router = router
-
-	return app
-}
 
 func CORSMiddleware() gin.HandlerFunc {
 
@@ -69,10 +36,6 @@ func main() {
 
 	// Parse command line flags and build application config.
 	app := InitAndConfig()
-
-	// Initialize cache for jwts.
-	jwts := cache.MapCache{make(map[string]bool)}
-	jwts.Set("test")
 
 	// Add custom middleware to call stack.
 	app.Router.Use(CORSMiddleware())

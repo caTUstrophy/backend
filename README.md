@@ -1,6 +1,4 @@
-[![Build Status](https://travis-ci.org/caTUstrophy/backend.svg?branch=master)](https://travis-ci.org/caTUstrophy/backend)
-
-# CaTUstrophy backend
+# CaTUstrophy backend [![Build Status](https://travis-ci.org/caTUstrophy/backend.svg?branch=master)](https://travis-ci.org/caTUstrophy/backend)
 
 Backend part for our catastrophe aid tool. Written in Go.
 
