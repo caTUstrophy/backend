@@ -82,10 +82,10 @@ Four roles are present in this model:
 POST /users
 
 {
-    "Name": string,
-    "PreferredName": string,
-    "Mail": string/email,
-    "Password": string
+    "Name": required, string
+    "PreferredName": optional, string
+    "Mail": required, string/email
+    "Password": required, string
 }
 ```
 
@@ -107,8 +107,8 @@ POST /users
 POST /auth
 
 {
-    "Mail": string/email,
-    "Password": string
+    "Mail": required, string/email
+    "Password": required, string
 }
 ```
 
@@ -147,9 +147,7 @@ Or - if an expired token was presented:
 
 ```
 401 Unauthorized
-WWW-Authenticate: Bearer realm="<FQDN>",
-                  error="invalid_token",
-                  error_description="The access token expired"
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
 
 #### Logout
