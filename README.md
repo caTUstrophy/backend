@@ -65,7 +65,7 @@ Four roles are present in this model:
 | List requests  for region x 	| A                        | GET       | /requests/x    | MVP         |       |
 | List own requests 			| L                        | GET       | /me/requests   | 2.0         |       |
 | Create offer      			| L                        | POST      | /offers        | MVP         |       |
-| Create request    			| L                        | POST      | /requests      | MVP         |       |
+| Create request    			| L                        | POST      | /requests      | MVP         | ✔    |
 | Update offer x    			| L                        | PUT       | /me/offers/x   | 2.0         |       |
 | Update request x  			| L                        | PUT       | /me/requests/x | 2.0         |       |
 | Create matching   			| A                        | POST      | /matchings     | MVP         |       |
@@ -274,7 +274,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 {
 	"Name": "hugs",
 	"Tags": ["tag", "another tag"],
-	"ValidityPeriod": "1464706055",
+	"ValidityPeriod": 1464706055,
 	"Location": "worldwide"
 }
 ```
