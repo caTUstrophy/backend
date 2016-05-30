@@ -31,9 +31,11 @@ func main() {
 	// Enable compliance to CORS.
 	// TODO: Keep the values in check when this backend gets deployed (Origins!).
 	app.Router.Use(cors.Middleware(cors.Config{
-		Origins:         "http://localhost",
+		Origins:         "*",
 		Methods:         "GET, PUT, POST, DELETE",
 		RequestHeaders:  "Origin, Authorization, Content-Type",
+		ExposedHeaders:  "",
+		MaxAge:          2 * time.Hour,
 		Credentials:     true,
 		ValidateHeaders: false,
 	}))
