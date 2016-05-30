@@ -86,9 +86,23 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 	return true, &User, ""
 }
 
-func (app *App) CheckScope(user *db.User, location string, permission string) {
+func (app *App) CheckScope(user *db.User, location string, permission string) bool {
 
 	// TODO: Check if user is allowed to access this endpoint.
+
+	// Check contains User.Groups a group with location? No -> false | Yes -> Has this group the necessary permission?
+	for _, group := range user.Groups { // fast, because the typical user is member of few groups
+		if group.Location == location {
+			for _, groupPermission := range group.Permissions { // fast, because there are not many different permissions
+				if groupPermission.AccessRight == permission {
+					return true
+				}
+			}
+		}
+	}
+
+	// no group found that gives permission to user
+	return false
 }
 
 func (app *App) makeToken(c *gin.Context, user *db.User) {
