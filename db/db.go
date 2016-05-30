@@ -2,7 +2,6 @@ package db
 
 import (
 	"log"
-	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -59,24 +58,24 @@ type Matching struct {
 type Offer struct {
 	gorm.Model
 
-	Tags []Tag `gorm:"many2many:offer_tags"`
-	Name string
+	Name     string `gorm:"index;not null"`
+	User     User
+	Location string `gorm:"index;not null"`
 
-	User User
-
-	ValidityPeriod time.Time
+	Tags           []Tag `gorm:"many2many:offer_tags"`
+	ValidityPeriod int64
 	Expired        bool
 }
 
 type Request struct {
 	gorm.Model
 
-	Tags []Tag `gorm:"many2many:request_tags"`
-	Name string
+	Name     string `gorm:"index;not null"`
+	User     User
+	Location string `gorm:"index;not null"`
 
-	User User
-
-	ValidityPeriod time.Time
+	Tags           []Tag `gorm:"many2many:request_tags"`
+	ValidityPeriod int64
 	Expired        bool
 }
 
@@ -145,14 +144,13 @@ func AddDefaultData(db *gorm.DB) {
 	}
 
 	// Some default tag entities.
+	TagFood := Tag{Name: "Food"}
+	TagWater := Tag{Name: "Water"}
+	TagVehicle := Tag{Name: "Vehicle"}
+	TagTool := Tag{Name: "Tool"}
+	TagInformation := Tag{Name: "Information"}
 
-	Tags := []Tag{
-		Tag{Name: "Food"},
-		Tag{Name: "Water"},
-		Tag{Name: "Vehicle"},
-		Tag{Name: "Tool"},
-		Tag{Name: "Information"},
-	}
+	Tags := []Tag{TagFood, TagWater, TagVehicle, TagTool, TagInformation}
 
 	db.Create(&GroupUser)
 	db.Create(&GroupAdmin)

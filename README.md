@@ -57,8 +57,8 @@ Four roles are present in this model:
 | ----------------- | ------------------------ | --------- | -------------- | ----------- | ----- |
 | Registration      | U                        | POST      | /users         | MVP         | ✔    |
 | Login             | N                        | POST      | /auth          | MVP         | ✔    |
-| Renew auth token  | L                        | GET       | /auth          | MVP         |       |
-| Logout            | L                        | DELETE    | /auth          | MVP         |       |
+| Renew auth token  | L                        | GET       | /auth          | MVP         | ✔    |
+| Logout            | L                        | DELETE    | /auth          | MVP         | ✔    |
 | Own profile       | L                        | GET       | /me            | 2.0         |       |
 | List offers       | A                        | GET       | /offers        | MVP         |       |
 | List own offers   | L                        | GET       | /me/offers     | 2.0         |       |

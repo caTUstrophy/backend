@@ -30,6 +30,13 @@ type LoginPayload struct {
 	Password string `validate:"required"`
 }
 
+type CreateRequestPayload struct {
+	Name           string   `conform:"trim" validate:"required"`
+	Location       string   `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	ValidityPeriod int64    `conform:"trim" validate:"required"`
+}
+
 // Functions
 func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 
@@ -91,7 +98,7 @@ func (app *App) CheckScope(user *db.User, location string, permission string) {
 	// TODO: Check if user is allowed to access this endpoint.
 }
 
-func (app *App) makeToken(c *gin.Context, user *db.User) {
+func (app *App) makeToken(c *gin.Context, user *db.User) (string, int64) {
 
 	// Retrieve the session signing key from environment.
 	jwtSigningSecret := os.Getenv("JWT_SIGNING_SECRET")
@@ -119,11 +126,7 @@ func (app *App) makeToken(c *gin.Context, user *db.User) {
 	// Add JWT to session in-memory cache.
 	app.Sessions.Set(user.Mail, sessionJWTString, cache.DefaultExpiration)
 
-	// Deliver JWT to client that made the request.
-	c.JSON(200, gin.H{
-		"AccessToken": sessionJWTString,
-		"ExpiresIn":   nowTime.Add((app.SessionValidFor - (30 * time.Second))).Unix(),
-	})
+	return sessionJWTString, nowTime.Add((app.SessionValidFor - (30 * time.Second))).Unix()
 }
 
 // Endpoint handlers
@@ -257,18 +260,25 @@ func (app *App) Login(c *gin.Context) {
 
 		// Signal client that an error occured.
 		c.JSON(400, gin.H{
-			"Error": "Mail or password is wrong",
+			"Error": "Mail and/or password is wrong",
 		})
 
 		return
 	}
 
-	app.makeToken(c, &User)
+	// Create session JWT and expiration time of JWT.
+	sessionJWTString, sessionExpTime := app.makeToken(c, &User)
 
+	// Deliver JWT to client that made the request.
+	c.JSON(200, gin.H{
+		"AccessToken": sessionJWTString,
+		"ExpiresIn":   sessionExpTime,
+	})
 }
 
 func (app *App) RenewToken(c *gin.Context) {
 
+	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
 	if !ok {
 
@@ -279,7 +289,14 @@ func (app *App) RenewToken(c *gin.Context) {
 		return
 	}
 
-	app.makeToken(c, User)
+	// Create session JWT and expiration time of JWT.
+	sessionJWTString, sessionExpTime := app.makeToken(c, User)
+
+	// Deliver JWT to client that made the request.
+	c.JSON(200, gin.H{
+		"AccessToken": sessionJWTString,
+		"ExpiresIn":   sessionExpTime,
+	})
 }
 
 func (app *App) Logout(c *gin.Context) {
@@ -304,7 +321,20 @@ func (app *App) Logout(c *gin.Context) {
 func (app *App) ListOffers(c *gin.Context) {
 
 	// Check authorization for this function.
-	// Authorize()
+	ok, _, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(401)
+
+		return
+	}
+
+	// Check if user permissions are sufficient (user is admin).
+	// if ok := CheckScope(User, "worldwide", "admin"); !ok {
+	//     c.Status(401)
+	// }
 
 	var Offers []db.Offer
 
@@ -318,7 +348,20 @@ func (app *App) ListOffers(c *gin.Context) {
 func (app *App) ListRequests(c *gin.Context) {
 
 	// Check authorization for this function.
-	// Authorize()
+	ok, _, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(401)
+
+		return
+	}
+
+	// Check if user permissions are sufficient (user is admin).
+	// if ok := CheckScope(User, "worldwide", "admin"); !ok {
+	//     c.Status(401)
+	// }
 
 	var Requests []db.Request
 
@@ -332,7 +375,105 @@ func (app *App) ListRequests(c *gin.Context) {
 func (app *App) CreateRequest(c *gin.Context) {
 
 	// Check authorization for this function.
-	// Authorize()
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(401)
+
+		return
+	}
+
+	var Payload CreateRequestPayload
+
+	// Expect request struct fields for creation in JSON request body.
+	c.BindJSON(&Payload)
+
+	// Validate sent request creation data.
+	conform.Strings(&Payload)
+	errs := app.Validator.Struct(&Payload)
+
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs.(validator.ValidationErrors) {
+
+			if err.Tag == "required" {
+				errResp[err.Field] = "Is required"
+			} else if err.Tag == "excludesall" {
+				errResp[err.Field] = "Contains unallowed characters"
+			} else if err.Tag == "dive" {
+				errResp[err.Field] = "Needs to be an array"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(400, errResp)
+
+		return
+	}
+
+	var Request db.Request
+
+	// Set insert struct to values from payload.
+	Request.Name = Payload.Name
+	Request.User = *User
+	Request.Location = Payload.Location
+	Request.Tags = make([]db.Tag, 0)
+
+	// If tags were supplied, check if they exist in our system.
+	log.Printf("Do tags exist in payload?", Payload.Tags)
+	if len(Payload.Tags) > 0 {
+
+		var TagExists int
+		allTagsExist := true
+
+		for t := range Payload.Tags {
+
+			var Tag db.Tag
+
+			// Count number of results for query of name of tags.
+			app.DB.Where("name = ?", t).First(&Tag).Count(&TagExists)
+
+			// Set flag to false, if one tag was not found.
+			if TagExists <= 0 {
+				allTagsExist = false
+			} else {
+				Request.Tags = append(Request.Tags, Tag)
+			}
+		}
+
+		// If at least one of the tags does not exist - return error.
+		if !allTagsExist {
+			c.JSON(400, gin.H{
+				"Tags": "One or multiple tags do not exist",
+			})
+
+			return
+		}
+	}
+
+	// Check if validity period is yet to come.
+	if Payload.ValidityPeriod <= time.Now().Unix() {
+		c.JSON(400, gin.H{
+			"ValidityPeriod": "Request has to be valid until a date in the future",
+		})
+
+		return
+	} else {
+		Request.ValidityPeriod = Payload.ValidityPeriod
+	}
+
+	Request.Expired = false
+
+	// Save request to database.
+	app.DB.Create(&Request)
+
+	// Signal success to client.
+	c.Status(200)
 }
 
 func (app *App) CreateMatching(c *gin.Context) {
@@ -344,7 +485,20 @@ func (app *App) CreateMatching(c *gin.Context) {
 func (app *App) GetMatching(c *gin.Context) {
 
 	// Check authorization for this function.
-	// Authorize()
+	ok, _, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(401)
+
+		return
+	}
+
+	// Check if user permissions are sufficient (user is admin).
+	// if ok := CheckScope(User, "worldwide", "admin"); !ok {
+	//     c.Status(401)
+	// }
 
 	var Matching db.Matching
 
