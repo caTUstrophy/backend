@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
+	"github.com/itsjamie/gin-cors"
 	"github.com/jinzhu/gorm"
 	"github.com/patrickmn/go-cache"
 )
@@ -20,16 +21,6 @@ type App struct {
 	SessionValidFor time.Duration
 }
 
-// Functions
-
-func CORSMiddleware() gin.HandlerFunc {
-
-	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-		c.Next()
-	}
-}
-
 // Main
 
 func main() {
@@ -37,8 +28,15 @@ func main() {
 	// Parse command line flags and build application config.
 	app := InitAndConfig()
 
-	// Add custom middleware to call stack.
-	app.Router.Use(CORSMiddleware())
+	// Enable compliance to CORS.
+	// TODO: Keep the values in check when this backend gets deployed (Origins!).
+	app.Router.Use(cors.Middleware(cors.Config{
+		Origins:         "http://localhost",
+		Methods:         "GET, PUT, POST, DELETE",
+		RequestHeaders:  "Origin, Authorization, Content-Type",
+		Credentials:     true,
+		ValidateHeaders: false,
+	}))
 
 	// Define endpoint to handler mapping
 	app.Router.POST("/users", app.CreateUser)
