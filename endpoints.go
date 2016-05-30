@@ -31,7 +31,7 @@ type LoginPayload struct {
 }
 
 // Functions
-func (app *App) Authorize(req *http.Request, scope string) (bool, *db.User, string) {
+func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 
 	jwtSigningSecret := []byte(os.Getenv("JWT_SIGNING_SECRET"))
 
@@ -79,12 +79,51 @@ func (app *App) Authorize(req *http.Request, scope string) (bool, *db.User, stri
 		return false, nil, "JWT from request does not match with the registered JWT"
 	}
 
+	// Retrieve user from database.
 	var User db.User
 	app.DB.First(&User, "mail = ?", email)
 
-	// Check if access scope is sufficient.
-
 	return true, &User, ""
+}
+
+func (app *App) CheckScope(user *db.User, location string, permission string) {
+
+	// TODO: Check if user is allowed to access this endpoint.
+}
+
+func (app *App) makeToken(c *gin.Context, user *db.User) {
+
+	// Retrieve the session signing key from environment.
+	jwtSigningSecret := os.Getenv("JWT_SIGNING_SECRET")
+
+	// Save current timestamp.
+	nowTime := time.Now()
+
+	// At this point, the user exists and provided a correct password.
+	// Create a JWT with claims to identify user.
+	sessionJWT := jwt.New(jwt.SigningMethodHS512)
+
+	// Add these claims.
+	// TODO: Add important claims for security!
+	//       Hash(PasswordHash)? Needs database call, which is what we want to avoid.
+	sessionJWT.Claims["iss"] = user.Mail
+	sessionJWT.Claims["iat"] = nowTime.Unix()
+	sessionJWT.Claims["nbf"] = nowTime.Add((-1 * time.Minute)).Unix()
+	sessionJWT.Claims["exp"] = nowTime.Add(app.SessionValidFor).Unix()
+
+	sessionJWTString, err := sessionJWT.SignedString([]byte(jwtSigningSecret))
+	if err != nil {
+		log.Fatalf("[makeToken] Creating JWT went wrong: %s.\nTerminating.", err)
+	}
+
+	// Add JWT to session in-memory cache.
+	app.Sessions.Set(user.Mail, sessionJWTString, cache.DefaultExpiration)
+
+	// Deliver JWT to client that made the request.
+	c.JSON(200, gin.H{
+		"AccessToken": sessionJWTString,
+		"ExpiresIn":   nowTime.Add((app.SessionValidFor - (30 * time.Second))).Unix(),
+	})
 }
 
 // Endpoint handlers
@@ -228,48 +267,15 @@ func (app *App) Login(c *gin.Context) {
 
 }
 
-func (app *App) makeToken(c *gin.Context, User *db.User) {
-
-	// Retrieve the session signing key from environment.
-	jwtSigningSecret := os.Getenv("JWT_SIGNING_SECRET")
-
-	nowTime := time.Now()
-
-	// At this point, the user exists and provided a correct password.
-	// Create a JWT with claims to identify user.
-	sessionJWT := jwt.New(jwt.SigningMethodHS512)
-
-	// Add these claims.
-	// TODO: Add important claims for security!
-	//       Hash(PasswordHash)? Needs database call, which is what we want to avoid.
-	sessionJWT.Claims["iss"] = User.Mail
-	sessionJWT.Claims["iat"] = nowTime.Unix()
-	sessionJWT.Claims["nbf"] = nowTime.Add((-1 * time.Minute)).Unix()
-	sessionJWT.Claims["exp"] = nowTime.Add(app.SessionValidFor).Unix()
-
-	sessionJWTString, err := sessionJWT.SignedString([]byte(jwtSigningSecret))
-	if err != nil {
-		log.Fatalf("[makeToken] Creating JWT went wrong: %s.\nTerminating.", err)
-	}
-
-	// Add JWT to session in-memory cache.
-	app.Sessions.Set(User.Mail, sessionJWTString, cache.DefaultExpiration)
-
-	// Deliver JWT to client that made the request.
-	c.JSON(200, gin.H{
-		"AccessToken": sessionJWTString,
-		"ExpiresIn":   nowTime.Add((app.SessionValidFor - (30 * time.Second))).Unix(),
-	})
-}
-
 func (app *App) RenewToken(c *gin.Context) {
 
-	ok, User, message := app.Authorize(c.Request, "user")
-
+	ok, User, message := app.Authorize(c.Request)
 	if !ok {
+
 		// Signal client an error and expect authorization.
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
 		c.Status(401)
+
 		return
 	}
 
@@ -278,34 +284,75 @@ func (app *App) RenewToken(c *gin.Context) {
 
 func (app *App) Logout(c *gin.Context) {
 
-	ok, User, message := app.Authorize(c.Request, "")
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
 	if !ok {
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
 		c.Status(401)
 		return
 	}
+
+	// Remove user's JWT from session store.
 	app.Sessions.Delete(User.Mail)
-	c.JSON(200, "OK")
+
+	c.Status(200)
+
 	return
 
 }
 
 func (app *App) ListOffers(c *gin.Context) {
 
+	// Check authorization for this function.
+	// Authorize()
+
+	var Offers []db.Offer
+
+	// Retrieve all offers from database.
+	app.DB.Find(&Offers)
+
+	// Send back results to client.
+	c.JSON(200, Offers)
 }
 
 func (app *App) ListRequests(c *gin.Context) {
 
+	// Check authorization for this function.
+	// Authorize()
+
+	var Requests []db.Request
+
+	// Retrieve all requests from database.
+	app.DB.Find(&Requests)
+
+	// Send back results to client.
+	c.JSON(200, Requests)
 }
 
 func (app *App) CreateRequest(c *gin.Context) {
 
+	// Check authorization for this function.
+	// Authorize()
 }
 
 func (app *App) CreateMatching(c *gin.Context) {
 
+	// Check authorization for this function.
+	// Authorize()
 }
 
 func (app *App) GetMatching(c *gin.Context) {
-	// matchingID := c.Params.ByName("matchingID")
+
+	// Check authorization for this function.
+	// Authorize()
+
+	var Matching db.Matching
+
+	matchingID := c.Params.ByName("matchingID")
+
+	// Retrieve all requests from database.
+	app.DB.First(&Matching, "id = ?", matchingID)
+
+	// Send back results to client.
+	c.JSON(200, Matching)
 }
