@@ -54,7 +54,7 @@ Four roles are present in this model:
 * admin **(A)**: registered, authorized and privileged user
 
 | Functionality     			| Minimum needed privilege | HTTP verb | Endpoint       | API version | Done? |
-| ------------------------- ----| ------------------------ | --------- | -------------- | ----------- | ----- |
+| ------------------------------| ------------------------ | --------- | -------------- | ----------- | ----- |
 | Registration      			| U                        | POST      | /users         | MVP         | ✔    |
 | Login            				| N                        | POST      | /auth          | MVP         | ✔    |
 | Renew auth token  			| L                        | GET       | /auth          | MVP         | ✔    |
