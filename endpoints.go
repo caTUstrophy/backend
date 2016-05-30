@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -30,21 +31,60 @@ type LoginPayload struct {
 }
 
 // Functions
+func (app *App) Authorize(req *http.Request, scope string) (bool, *db.User, string) {
 
-// Authorization checking
-
-func Authorize(req *http.Request, scope string) (bool, string) {
+	jwtSigningSecret := []byte(os.Getenv("JWT_SIGNING_SECRET"))
 
 	// Extract JWT from request headers.
+	requestJWT, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
+
+		// Verfiy that JWT was signed with correct algorithm.
+
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("[Authorize] Unexpected signing method: %v.", token.Header["alg"])
+		}
+
+		// Return our JWT signing secret as the key to verify integrity of JWT.
+		return jwtSigningSecret, nil
+	})
 
 	// Check if JWT is valid.
+	if err != nil {
+
+		// Check every useful error variant.
+		if validationError, ok := err.(*jwt.ValidationError); ok {
+
+			if (validationError.Errors & (jwt.ValidationErrorExpired | jwt.ValidationErrorNotValidYet)) != 0 {
+				// JWT is not yet valid or expired.
+				return false, nil, "JWT not yet valid or expired"
+			} else {
+				// Invalid JWT was delivered.
+				return false, nil, "JWT was invalid"
+			}
+		} else {
+			// Something went wrong.
+			return false, nil, "JWT was invalid"
+		}
+	}
 
 	// Check if an entry with mail from JWT exists in our session store.
+	email := requestJWT.Claims["iss"].(string)
+	sessionJWTInterface, found := app.Sessions.Get(email)
+	if !found {
+		return false, nil, ("No valid token found for " + email)
+	}
 
 	// Check if JWT from request matches JWT from session store.
+	if sessionJWTInterface.(string) != requestJWT.Raw {
+		return false, nil, "JWT from request does not match with the registered JWT"
+	}
 
-	// Return success.
-	return true, ""
+	var User db.User
+	app.DB.First(&User, "mail = ?", email)
+
+	// Check if access scope is sufficient.
+
+	return true, &User, ""
 }
 
 // Endpoint handlers
@@ -184,11 +224,16 @@ func (app *App) Login(c *gin.Context) {
 		return
 	}
 
+	app.makeToken(c, &User)
+
+}
+
+func (app *App) makeToken(c *gin.Context, User *db.User) {
+
 	// Retrieve the session signing key from environment.
 	jwtSigningSecret := os.Getenv("JWT_SIGNING_SECRET")
 
 	nowTime := time.Now()
-	expTime := nowTime.Add((app.SessionValidFor - (30 * time.Second))).Unix()
 
 	// At this point, the user exists and provided a correct password.
 	// Create a JWT with claims to identify user.
@@ -200,11 +245,11 @@ func (app *App) Login(c *gin.Context) {
 	sessionJWT.Claims["iss"] = User.Mail
 	sessionJWT.Claims["iat"] = nowTime.Unix()
 	sessionJWT.Claims["nbf"] = nowTime.Add((-1 * time.Minute)).Unix()
-	sessionJWT.Claims["exp"] = expTime
+	sessionJWT.Claims["exp"] = nowTime.Add(app.SessionValidFor).Unix()
 
 	sessionJWTString, err := sessionJWT.SignedString([]byte(jwtSigningSecret))
 	if err != nil {
-		log.Fatalf("[Login] Signing of user session JWT went wrong: %s.\nTerminating.", err)
+		log.Fatalf("[makeToken] Creating JWT went wrong: %s.\nTerminating.", err)
 	}
 
 	// Add JWT to session in-memory cache.
@@ -213,23 +258,35 @@ func (app *App) Login(c *gin.Context) {
 	// Deliver JWT to client that made the request.
 	c.JSON(200, gin.H{
 		"AccessToken": sessionJWTString,
-		"ExpiresIn":   expTime,
+		"ExpiresIn":   nowTime.Add((app.SessionValidFor - (30 * time.Second))).Unix(),
 	})
 }
 
 func (app *App) RenewToken(c *gin.Context) {
 
-	// Example usage of authorization function.
-	if ok, message := Authorize(c.Request, "user"); !ok {
+	ok, User, message := app.Authorize(c.Request, "user")
 
+	if !ok {
 		// Signal client an error and expect authorization.
-		c.JSON(401, message)
-
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(401)
 		return
 	}
+
+	app.makeToken(c, User)
 }
 
 func (app *App) Logout(c *gin.Context) {
+
+	ok, User, message := app.Authorize(c.Request, "")
+	if !ok {
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(401)
+		return
+	}
+	app.Sessions.Delete(User.Mail)
+	c.JSON(200, "OK")
+	return
 
 }
 
