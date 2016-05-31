@@ -393,6 +393,8 @@ func (app *App) ListOffers(c *gin.Context) {
 
 	region := c.Params.ByName("region")
 
+	// TODO: Validate region!
+
 	var Offers []db.Offer
 
 	// Retrieve all offers from database.
@@ -427,6 +429,8 @@ func (app *App) ListRequests(c *gin.Context) {
 
 	region := c.Params.ByName("region")
 
+	// TODO: Validate region!
+
 	var Requests []db.Request
 
 	// Retrieve all requests from database.
@@ -454,9 +458,21 @@ func (app *App) CreateOffer(c *gin.Context) {
 	var Payload CreateOfferPayload
 
 	// Expect offer struct fields for creation in JSON request body.
-	c.BindJSON(&Payload)
+	err := c.BindJSON(&Payload)
+	if err != nil {
 
-	// Validate sent request creation data.
+		// Check if error was caused by failed unmarshalling string -> []string.
+		if err.Error() == "json: cannot unmarshal string into Go value of type []string" {
+
+			c.JSON(400, gin.H{
+				"Tags": "Provide an array, not a string",
+			})
+
+			return
+		}
+	}
+
+	// Validate sent offer creation data.
 	conform.Strings(&Payload)
 	errs := app.Validator.Struct(&Payload)
 
@@ -471,8 +487,6 @@ func (app *App) CreateOffer(c *gin.Context) {
 				errResp[err.Field] = "Is required"
 			} else if err.Tag == "excludesall" {
 				errResp[err.Field] = "Contains unallowed characters"
-			} else if err.Tag == "dive" {
-				errResp[err.Field] = "Needs to be an array"
 			}
 		}
 
@@ -494,21 +508,19 @@ func (app *App) CreateOffer(c *gin.Context) {
 	fmt.Printf(Offer.Location)
 
 	// If tags were supplied, check if they exist in our system.
-	log.Printf("Do tags exist in payload?", Payload.Tags)
 	if len(Payload.Tags) > 0 {
 
-		var TagExists int
 		allTagsExist := true
 
-		for t := range Payload.Tags {
+		for _, tag := range Payload.Tags {
 
 			var Tag db.Tag
 
 			// Count number of results for query of name of tags.
-			app.DB.Where("name = ?", t).First(&Tag).Count(&TagExists)
+			app.DB.First(&Tag, "name = ?", tag)
 
 			// Set flag to false, if one tag was not found.
-			if TagExists <= 0 {
+			if Tag.Name == "" {
 				allTagsExist = false
 			} else {
 				Offer.Tags = append(Offer.Tags, Tag)
@@ -517,28 +529,31 @@ func (app *App) CreateOffer(c *gin.Context) {
 
 		// If at least one of the tags does not exist - return error.
 		if !allTagsExist {
+
 			c.JSON(400, gin.H{
 				"Tags": "One or multiple tags do not exist",
 			})
 
 			return
 		}
+	} else {
+		Offer.Tags = nil
 	}
 
 	// Check if validity period is yet to come.
 	if Payload.ValidityPeriod <= time.Now().Unix() {
+
 		c.JSON(400, gin.H{
-			"ValidityPeriod": "Request has to be valid until a date in the future",
+			"ValidityPeriod": "Offer has to be valid until a date in the future",
 		})
 
 		return
 	} else {
 		Offer.ValidityPeriod = Payload.ValidityPeriod
+		Offer.Expired = false
 	}
 
-	Offer.Expired = false
-
-	// Save request to database.
+	// Save offer to database.
 	app.DB.Create(&Offer)
 	fmt.Printf(" -> Created new offer")
 
