@@ -44,6 +44,11 @@ type CreateOfferPayload struct {
 	ValidityPeriod int64    `conform:"trim" validate:"required"`
 }
 
+type CreateMatchingPayload struct {
+	Request           int   `conform:"trim" validate:"required"` 
+	Offer           int   `conform:"trim" validate:"required"` 
+}
+
 // Functions
 func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 	jwtSigningSecret := []byte(os.Getenv("JWT_SIGNING_SECRET"))
@@ -108,13 +113,15 @@ func (app *App) CheckScope(user *db.User, location string, permission string) bo
 
 	app.DB.Model(user).Related(&user.Groups)
 	for _, group := range user.Groups {
-
+		fmt.Println("A")
 		if group.Location == location {
 
+			fmt.Println("B")
 			// Fast, because there are not so many different permissions.
 			app.DB.Model(group).Related(&group.Permissions)
 			for _, groupPermission := range group.Permissions {
 
+				fmt.Println(groupPermission.AccessRight)
 				if groupPermission.AccessRight == permission {
 					return true
 				}
@@ -647,7 +654,90 @@ func (app *App) CreateRequest(c *gin.Context) {
 func (app *App) CreateMatching(c *gin.Context) {
 
 	// Check authorization for this function.
-	// Authorize()
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(401)
+
+		return
+	}
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
+		c.Status(401)
+	}
+
+	var Payload CreateMatchingPayload
+
+	// Expect user struct fields in JSON request body.
+	errs := c.BindJSON(&Payload)
+
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs.(validator.ValidationErrors) {
+
+			if err.Tag == "required" {
+				errResp[err.Field] = "Is required"
+			} else if err.Tag == "excludesall" {
+				errResp[err.Field] = "Contains unallowed characters"
+			} else if err.Tag == "dive" {
+				errResp[err.Field] = "Needs to be an array"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(400, errResp)
+
+		return
+	}
+
+
+	// check that offer and request do exist
+	var CountOffer int
+	app.DB.Model(&db.Offer{}).Where("id = ?", Payload.Offer).Count(&CountOffer)
+	var CountRequest int
+	app.DB.Model(&db.Request{}).Where("id = ?", Payload.Request).Count(&CountRequest)
+	if CountOffer == 0 || CountRequest == 0 {
+		c.JSON(400, gin.H{
+			"Matching": "Offer / Request doesnt exist",
+		})
+
+		return
+	}
+
+	// check for matching duplicate
+	var CountDup int
+	app.DB.Model(&db.Matching{}).Where("offer_id = ? AND request_id = ?", Payload.Offer, Payload.Request).Count(&CountDup)
+
+	if CountDup > 0 {
+		c.JSON(400, gin.H{
+			"Matching": "Already exists",
+		})
+
+		return
+	}
+
+	// get request and offer to resolve foreign key dependencies
+	var Offer db.Offer
+	app.DB.First(&Offer, "id = ?", Payload.Offer)
+	var Request db.Request
+	app.DB.First(&Request, "id = ?", Payload.Request)
+
+	// save matching
+	var Matching db.Matching
+	Matching.OfferId = Payload.Offer
+	Matching.Offer = Offer
+	Matching.RequestId = Payload.Request
+	Matching.Request = Request
+
+	app.DB.Create(&Matching)
+
+	c.Status(201)
 }
 
 func (app *App) GetMatching(c *gin.Context) {
