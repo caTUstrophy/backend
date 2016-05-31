@@ -4,7 +4,6 @@
 echo ''
 echo '### TEST: Offer ###'
 
-## --------- LOGIN ----------
 # -> create user
 echo 'POST /users'
 curl -s -H "Content-Type: application/json" -X POST -d '{"Name": "jery", "PreferredName": "jery", "Mail": "jery@gmx.de", "Password": "yoloyoloyoloyolo!12"}' http://localhost:3001/users
@@ -15,18 +14,7 @@ TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"Mail":"jery@gm
 TOKEN=$(echo $TOKEN | cut -d'"' -f 4)
 #echo "$TOKEN"
 
-
-
-
-## -------- TEST : Create
-
-# -> post offer
-echo 'POST /requests'
-REQ=$(curl -s -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST -d '{"Location":"Berlin", "Name":"Test Request", "ValidityPeriod":2000000000}' http://localhost:3001/requests)
-echo "$REQ"
-
 # -> post offer
 echo 'POST /offers'
-OFFER=$(curl -s -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST -d '{"Location":"Berlin", "Name":"Test Offer", "ValidityPeriod":2000000000}' http://localhost:3001/offers)
+OFFER=$(curl -s -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST -d '{"Location":"Berlin", "Name":"Test Name", "ValidityPeriod":2000000000}' http://localhost:3001/offers)
 echo "$OFFER"
-
