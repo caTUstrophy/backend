@@ -16,11 +16,33 @@ TOKEN=$(echo $TOKEN | cut -d'"' -f 4)
 
 # -> post request
 echo 'POST /requests'
-REQ=$(curl -s -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST -d '{"Location":"Berlin", "Name":"Test Name", "ValidityPeriod":2000000000}' http://localhost:3001/requests)
+#REQ=$(curl -s -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST -d '{"Location":"Berlin", "Name":"Test Name", "ValidityPeriod":2000000000}' http://localhost:3001/requests)
 echo "$REQ"
 
 
 # -> post offer
 echo 'POST /offers'
-OFFER=$(curl -s -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST -d '{"Location":"Berlin", "Name":"Test Name", "ValidityPeriod":2000000000}' http://localhost:3001/offers)
+#OFFER=$(curl -s -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST -d '{"Location":"Berlin", "Name":"Test Name", "ValidityPeriod":2000000000}' http://localhost:3001/offers)
 echo "$OFFER"
+
+
+
+# valid matching
+echo 'POST/matchings'
+MATCH=$(curl -s -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST -d '{"Offer":1, "Request":1}' http://localhost:3001/matchings)
+echo "$MATCH"
+
+# duplicate match
+echo 'POST/matchings'
+MATCH=$(curl -s -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST -d '{"Offer":1, "Request":1}' http://localhost:3001/matchings)
+echo "$MATCH"
+
+# invalid offer id
+echo 'POST/matchings'
+MATCH=$(curl -s -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST -d '{"Offer":0, "Request":1}' http://localhost:3001/matchings)
+echo "$MATCH"
+
+# invalid request id
+echo 'POST/matchings'
+MATCH=$(curl -s -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST -d '{"Offer":1, "Request":0}' http://localhost:3001/matchings)
+echo "$MATCH"

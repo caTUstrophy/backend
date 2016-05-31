@@ -44,8 +44,14 @@ type CreateOfferPayload struct {
 	ValidityPeriod int64    `conform:"trim" validate:"required"`
 }
 
+type CreateMatchingPayload struct {
+	Request int `conform:"trim" validate:"required"`
+	Offer   int `conform:"trim" validate:"required"`
+}
+
 // Functions
 func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
+
 	jwtSigningSecret := []byte(os.Getenv("JWT_SIGNING_SECRET"))
 
 	// Extract JWT from request headers.
@@ -105,14 +111,12 @@ func (app *App) CheckScope(user *db.User, location string, permission string) bo
 	// * Yes -> Has this group the necessary permission?
 
 	// Fast, because the typical user is member of few groups.
-
 	for _, group := range user.Groups {
 
 		if group.Location == location {
 
 			// Fast, because there are not so many different permissions.
 			for _, groupPermission := range group.Permissions {
-
 				if groupPermission.AccessRight == permission {
 					return true
 				}
@@ -131,6 +135,7 @@ func (app *App) makeToken(c *gin.Context, user *db.User) (string, int64) {
 
 	// Save current timestamp.
 	nowTime := time.Now()
+	expTime := nowTime.Add(app.SessionValidFor).Unix()
 
 	// At this point, the user exists and provided a correct password.
 	// Create a JWT with claims to identify user.
@@ -142,7 +147,7 @@ func (app *App) makeToken(c *gin.Context, user *db.User) (string, int64) {
 	sessionJWT.Claims["iss"] = user.Mail
 	sessionJWT.Claims["iat"] = nowTime.Unix()
 	sessionJWT.Claims["nbf"] = nowTime.Add((-1 * time.Minute)).Unix()
-	sessionJWT.Claims["exp"] = nowTime.Add(app.SessionValidFor).Unix()
+	sessionJWT.Claims["exp"] = expTime
 
 	sessionJWTString, err := sessionJWT.SignedString([]byte(jwtSigningSecret))
 	if err != nil {
@@ -152,7 +157,7 @@ func (app *App) makeToken(c *gin.Context, user *db.User) (string, int64) {
 	// Add JWT to session in-memory cache.
 	app.Sessions.Set(user.Mail, sessionJWTString, cache.DefaultExpiration)
 
-	return sessionJWTString, nowTime.Add((app.SessionValidFor - (30 * time.Second))).Unix()
+	return sessionJWTString, expTime
 }
 
 // Endpoint handlers
@@ -346,8 +351,11 @@ func (app *App) Logout(c *gin.Context) {
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
 	if !ok {
+
+		// Signal client an error and expect authorization.
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
 		c.Status(401)
+
 		return
 	}
 
@@ -357,7 +365,6 @@ func (app *App) Logout(c *gin.Context) {
 	c.Status(200)
 
 	return
-
 }
 
 func (app *App) ListOffers(c *gin.Context) {
@@ -375,11 +382,18 @@ func (app *App) ListOffers(c *gin.Context) {
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
 		c.Status(401)
+
+		return
 	}
 
 	region := c.Params.ByName("region")
 	// TODO: Security: Validate region
+
+	// TODO: Validate region!
 
 	var Offers []db.Offer
 
@@ -410,11 +424,18 @@ func (app *App) ListRequests(c *gin.Context) {
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
 		c.Status(401)
+
+		return
 	}
 
 	region := c.Params.ByName("region")
 	// TODO: Security: Validate region
+
+	// TODO: Validate region!
 
 	var Requests []db.Request
 
@@ -432,23 +453,38 @@ func (app *App) ListRequests(c *gin.Context) {
 }
 
 func (app *App) CreateOffer(c *gin.Context) {
+
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
 	if !ok {
+
 		fmt.Printf(message + "\n")
+
 		// Signal client an error and expect authorization.
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
 		c.Status(401)
-		c.JSON(401, gin.H{"message": "jwt invalid"})
+
 		return
 	}
 
 	var Payload CreateOfferPayload
 
 	// Expect offer struct fields for creation in JSON request body.
-	c.BindJSON(&Payload)
+	err := c.BindJSON(&Payload)
+	if err != nil {
 
-	// Validate sent request creation data.
+		// Check if error was caused by failed unmarshalling string -> []string.
+		if err.Error() == "json: cannot unmarshal string into Go value of type []string" {
+
+			c.JSON(400, gin.H{
+				"Tags": "Provide an array, not a string",
+			})
+
+			return
+		}
+	}
+
+	// Validate sent offer creation data.
 	conform.Strings(&Payload)
 	errs := app.Validator.Struct(&Payload)
 
@@ -463,8 +499,6 @@ func (app *App) CreateOffer(c *gin.Context) {
 				errResp[err.Field] = "Is required"
 			} else if err.Tag == "excludesall" {
 				errResp[err.Field] = "Contains unallowed characters"
-			} else if err.Tag == "dive" {
-				errResp[err.Field] = "Needs to be an array"
 			}
 		}
 
@@ -486,21 +520,19 @@ func (app *App) CreateOffer(c *gin.Context) {
 	fmt.Printf(Offer.Location)
 
 	// If tags were supplied, check if they exist in our system.
-	log.Printf("Do tags exist in payload?", Payload.Tags)
 	if len(Payload.Tags) > 0 {
 
-		var TagExists int
 		allTagsExist := true
 
-		for t := range Payload.Tags {
+		for _, tag := range Payload.Tags {
 
 			var Tag db.Tag
 
 			// Count number of results for query of name of tags.
-			app.DB.Where("name = ?", t).First(&Tag).Count(&TagExists)
+			app.DB.First(&Tag, "name = ?", tag)
 
 			// Set flag to false, if one tag was not found.
-			if TagExists <= 0 {
+			if Tag.Name == "" {
 				allTagsExist = false
 			} else {
 				Offer.Tags = append(Offer.Tags, Tag)
@@ -509,33 +541,38 @@ func (app *App) CreateOffer(c *gin.Context) {
 
 		// If at least one of the tags does not exist - return error.
 		if !allTagsExist {
+
 			c.JSON(400, gin.H{
 				"Tags": "One or multiple tags do not exist",
 			})
 
 			return
 		}
+	} else {
+		Offer.Tags = nil
 	}
 
 	// Check if validity period is yet to come.
 	if Payload.ValidityPeriod <= time.Now().Unix() {
+
 		c.JSON(400, gin.H{
-			"ValidityPeriod": "Request has to be valid until a date in the future",
+			"ValidityPeriod": "Offer has to be valid until a date in the future",
 		})
 
 		return
 	} else {
 		Offer.ValidityPeriod = Payload.ValidityPeriod
+		Offer.Expired = false
 	}
 
-	Offer.Expired = false
-
-	// Save request to database.
+	// Save offer to database.
 	app.DB.Create(&Offer)
 	fmt.Printf(" -> Created new offer")
 
-	// Signal success to client.
-	c.Status(200)
+	// On success: return ID of newly created offer.
+	c.JSON(201, gin.H{
+		"ID": Offer.ID,
+	})
 }
 
 func (app *App) CreateRequest(c *gin.Context) {
@@ -649,14 +686,100 @@ func (app *App) CreateRequest(c *gin.Context) {
 	// Save request to database.
 	app.DB.Create(&Request)
 
-	// Signal success to client.
-	c.Status(201)
+	// On success: return ID of newly created request.
+	c.JSON(201, gin.H{
+		"ID": Request.ID,
+	})
 }
 
 func (app *App) CreateMatching(c *gin.Context) {
 
 	// Check authorization for this function.
-	// Authorize()
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(401)
+
+		return
+	}
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
+		c.Status(401)
+	}
+
+	var Payload CreateMatchingPayload
+
+	// Expect user struct fields in JSON request body.
+	errs := c.BindJSON(&Payload)
+
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs.(validator.ValidationErrors) {
+
+			if err.Tag == "required" {
+				errResp[err.Field] = "Is required"
+			} else if err.Tag == "excludesall" {
+				errResp[err.Field] = "Contains unallowed characters"
+			} else if err.Tag == "dive" {
+				errResp[err.Field] = "Needs to be an array"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(400, errResp)
+
+		return
+	}
+
+	// check that offer and request do exist
+	var CountOffer int
+	app.DB.Model(&db.Offer{}).Where("id = ?", Payload.Offer).Count(&CountOffer)
+	var CountRequest int
+	app.DB.Model(&db.Request{}).Where("id = ?", Payload.Request).Count(&CountRequest)
+	if CountOffer == 0 || CountRequest == 0 {
+		c.JSON(400, gin.H{
+			"Matching": "Offer / Request doesnt exist",
+		})
+
+		return
+	}
+
+	// check for matching duplicate
+	var CountDup int
+	app.DB.Model(&db.Matching{}).Where("offer_id = ? AND request_id = ?", Payload.Offer, Payload.Request).Count(&CountDup)
+
+	if CountDup > 0 {
+		c.JSON(400, gin.H{
+			"Matching": "Already exists",
+		})
+
+		return
+	}
+
+	// get request and offer to resolve foreign key dependencies
+	var Offer db.Offer
+	app.DB.First(&Offer, "id = ?", Payload.Offer)
+	var Request db.Request
+	app.DB.First(&Request, "id = ?", Payload.Request)
+
+	// save matching
+	var Matching db.Matching
+	Matching.OfferId = Payload.Offer
+	Matching.Offer = Offer
+	Matching.RequestId = Payload.Request
+	Matching.Request = Request
+
+	app.DB.Create(&Matching)
+
+	c.JSON(201, gin.H{
+		"ID": Matching.ID,
+	})
 }
 
 func (app *App) GetMatching(c *gin.Context) {
@@ -680,6 +803,8 @@ func (app *App) GetMatching(c *gin.Context) {
 	var Matching db.Matching
 
 	matchingID := c.Params.ByName("matchingID")
+
+	// TODO: Validate matchingID!
 
 	// Retrieve all requests from database.
 	app.DB.First(&Matching, "id = ?", matchingID)

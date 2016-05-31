@@ -51,8 +51,10 @@ type Tag struct {
 
 type Matching struct {
 	gorm.Model
-	Offer   Offer
-	Request Request
+	Offer   Offer `gorm:"ForeignKey:OfferId;AssociationForeignKey:Refer"`
+	OfferId int
+	Request Request `gorm:"ForeignKey:RequestId;AssociationForeignKey:Refer"`
+	RequestId int
 }
 
 type Offer struct {
@@ -152,8 +154,23 @@ func AddDefaultData(db *gorm.DB) {
 
 	Tags := []Tag{TagFood, TagWater, TagVehicle, TagTool, TagInformation}
 
+	// Create default admin user ('admin@example.org', 'CaTUstrophyAdmin123$').
+	// TODO: Replace this with an interactive dialog, when starting
+	//       the backend for the first time.
+	UserAdmin := User{
+		Name:          "admin",
+		PreferredName: "The Boss Around Here",
+		Mail:          "admin@example.org",
+		PasswordHash:  "$2a$10$SkmaOImXqNS/PSWp65p1ougtA1N.o8r5qyu8M4RPTfGSMEf2k.Q1C",
+		Groups:        []Group{GroupAdmin},
+		Enabled:       true,
+	}
+
+	// Create the database elements for these default values.
+
 	db.Create(&GroupUser)
 	db.Create(&GroupAdmin)
+	db.Create(&UserAdmin)
 
 	for _, Tag := range Tags {
 		log.Println(Tag)
