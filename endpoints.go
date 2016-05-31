@@ -93,7 +93,7 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 
 	// Retrieve user from database.
 	var User db.User
-	app.DB.First(&User, "mail = ?", email)
+	app.DB.Preload("Groups").Preload("Groups.Permissions").First(&User, "mail = ?", email)
 
 	return true, &User, ""
 }
@@ -106,13 +106,11 @@ func (app *App) CheckScope(user *db.User, location string, permission string) bo
 
 	// Fast, because the typical user is member of few groups.
 
-	app.DB.Model(user).Related(&user.Groups)
 	for _, group := range user.Groups {
 
 		if group.Location == location {
 
 			// Fast, because there are not so many different permissions.
-			app.DB.Model(group).Related(&group.Permissions)
 			for _, groupPermission := range group.Permissions {
 
 				if groupPermission.AccessRight == permission {
@@ -121,8 +119,6 @@ func (app *App) CheckScope(user *db.User, location string, permission string) bo
 			}
 		}
 	}
-
-	fmt.Println("USER CHECK SCOPE FALSE?")
 
 	// No group found that gives permission to user.
 	return false
@@ -383,11 +379,17 @@ func (app *App) ListOffers(c *gin.Context) {
 	}
 
 	region := c.Params.ByName("region")
+	// TODO: Security: Validate region
 
 	var Offers []db.Offer
 
 	// Retrieve all offers from database.
 	app.DB.Find(&Offers, "Location = ?", region)
+
+	// TODO remove loop and exchange for preload
+	for i := 0; i < len(Offers); i++ {
+		app.DB.First(&Offers[i].User, "mail = ?", User.Mail)
+	}
 
 	// Send back results to client.
 	c.JSON(200, Offers)
@@ -412,11 +414,18 @@ func (app *App) ListRequests(c *gin.Context) {
 	}
 
 	region := c.Params.ByName("region")
+	// TODO: Security: Validate region
 
 	var Requests []db.Request
 
 	// Retrieve all requests from database.
-	app.DB.Find(&Requests, "Location = ?", region)
+	//app.DB.Preload("User").Find(&Requests, "location = ?", region)
+	app.DB.Find(&Requests, "location = ?", region)
+
+	// TODO remove loop and exchange for preload
+	for i := 0; i < len(Requests); i++ {
+		app.DB.First(&Requests[i].User, "mail = ?", User.Mail)
+	}
 
 	// Send back results to client.
 	c.JSON(200, Requests)
