@@ -45,6 +45,7 @@ func main() {
 	app.Router.POST("/auth", app.Login)
 	app.Router.GET("/auth", app.RenewToken)
 	app.Router.DELETE("/auth", app.Logout)
+	app.Router.POST("/offers", app.CreateOffer)
 	app.Router.GET("/offers", app.ListOffers)
 	app.Router.GET("/requests", app.ListRequests)
 	app.Router.POST("/requests", app.CreateRequest)

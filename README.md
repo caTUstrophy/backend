@@ -64,7 +64,7 @@ Four roles are present in this model:
 | List own offers   | L                        | GET       | /me/offers     | 2.0         |       |
 | List requests     | A                        | GET       | /requests      | MVP         |       |
 | List own requests | L                        | GET       | /me/requests   | 2.0         |       |
-| Create offer      | L                        | POST      | /offers        | MVP         |       |
+| Create offer      | L                        | POST      | /offers        | MVP         | ✔     |
 | Create request    | L                        | POST      | /requests      | MVP         |       |
 | Update offer x    | L                        | PUT       | /me/offers/x   | 2.0         |       |
 | Update request x  | L                        | PUT       | /me/requests/x | 2.0         |       |

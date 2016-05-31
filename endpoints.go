@@ -37,14 +37,19 @@ type CreateRequestPayload struct {
 	ValidityPeriod int64    `conform:"trim" validate:"required"`
 }
 
+type CreateOfferPayload struct {
+	Name           string   `conform:"trim" validate:"required"`
+	Location       string   `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	ValidityPeriod int64    `conform:"trim" validate:"required"`
+}
+
 // Functions
 func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
-
 	jwtSigningSecret := []byte(os.Getenv("JWT_SIGNING_SECRET"))
 
 	// Extract JWT from request headers.
 	requestJWT, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
-
 		// Verfiy that JWT was signed with correct algorithm.
 
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -54,6 +59,7 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 		// Return our JWT signing secret as the key to verify integrity of JWT.
 		return jwtSigningSecret, nil
 	})
+
 
 	// Check if JWT is valid.
 	if err != nil {
@@ -370,6 +376,115 @@ func (app *App) ListRequests(c *gin.Context) {
 
 	// Send back results to client.
 	c.JSON(200, Requests)
+}
+
+func (app *App) CreateOffer(c *gin.Context) {
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+		fmt.Printf(message + "\n")
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(401)
+		c.JSON(401, gin.H{ "message": "jwt invalid", })
+		return
+	}
+
+	var Payload CreateOfferPayload
+
+	// Expect offer struct fields for creation in JSON request body.
+	c.BindJSON(&Payload)
+
+
+	// Validate sent request creation data.
+	conform.Strings(&Payload)
+	errs := app.Validator.Struct(&Payload)
+
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs.(validator.ValidationErrors) {
+
+			if err.Tag == "required" {
+				errResp[err.Field] = "Is required"
+			} else if err.Tag == "excludesall" {
+				errResp[err.Field] = "Contains unallowed characters"
+			} else if err.Tag == "dive" {
+				errResp[err.Field] = "Needs to be an array"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(400, errResp)
+
+		return
+	}
+
+
+	var Offer db.Offer
+
+	// Set insert struct to values from payload.
+	Offer.Name = Payload.Name
+	Offer.User = *User
+	Offer.Location = Payload.Location
+	Offer.Tags = make([]db.Tag, 0)
+
+	fmt.Printf(Offer.Name)
+	fmt.Printf(Offer.Location)
+
+	// If tags were supplied, check if they exist in our system.
+	log.Printf("Do tags exist in payload?", Payload.Tags)
+	if len(Payload.Tags) > 0 {
+
+		var TagExists int
+		allTagsExist := true
+
+		for t := range Payload.Tags {
+
+			var Tag db.Tag
+
+			// Count number of results for query of name of tags.
+			app.DB.Where("name = ?", t).First(&Tag).Count(&TagExists)
+
+			// Set flag to false, if one tag was not found.
+			if TagExists <= 0 {
+				allTagsExist = false
+			} else {
+				Offer.Tags = append(Offer.Tags, Tag)
+			}
+		}
+
+		// If at least one of the tags does not exist - return error.
+		if !allTagsExist {
+			c.JSON(400, gin.H{
+				"Tags": "One or multiple tags do not exist",
+			})
+
+			return
+		}
+	}
+
+	// Check if validity period is yet to come.
+	if Payload.ValidityPeriod <= time.Now().Unix() {
+		c.JSON(400, gin.H{
+			"ValidityPeriod": "Request has to be valid until a date in the future",
+		})
+
+		return
+	} else {
+		Offer.ValidityPeriod = Payload.ValidityPeriod
+	}
+
+	Offer.Expired = false
+
+	// Save request to database.
+	app.DB.Create(&Offer)
+	fmt.Printf(" -> Created new offer")
+
+	// Signal success to client.
+	c.Status(200)
 }
 
 func (app *App) CreateRequest(c *gin.Context) {
