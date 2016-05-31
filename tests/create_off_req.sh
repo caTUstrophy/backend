@@ -24,3 +24,9 @@ echo "$REQ"
 echo 'POST /offers'
 OFFER=$(curl -s -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST -d '{"Location":"Berlin", "Name":"Test Name", "ValidityPeriod":2000000000}' http://localhost:3001/offers)
 echo "$OFFER"
+
+
+
+echo 'POST/matchings'
+MATCH=$(curl -s -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST -d '{"Offer":1, "Request":1}' http://localhost:3001/matchings)
+echo "$MATCH"
