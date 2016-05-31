@@ -45,8 +45,8 @@ type CreateOfferPayload struct {
 }
 
 type CreateMatchingPayload struct {
-	Request           int   `conform:"trim" validate:"required"` 
-	Offer           int   `conform:"trim" validate:"required"` 
+	Request int `conform:"trim" validate:"required"`
+	Offer   int `conform:"trim" validate:"required"`
 }
 
 // Functions
@@ -732,7 +732,6 @@ func (app *App) CreateMatching(c *gin.Context) {
 		return
 	}
 
-
 	// check that offer and request do exist
 	var CountOffer int
 	app.DB.Model(&db.Offer{}).Where("id = ?", Payload.Offer).Count(&CountOffer)
@@ -772,7 +771,7 @@ func (app *App) CreateMatching(c *gin.Context) {
 	Matching.Request = Request
 
 	app.DB.Create(&Matching)
-	
+
 	c.JSON(201, gin.H{
 		"ID": Matching.ID,
 	})

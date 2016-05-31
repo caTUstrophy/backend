@@ -51,9 +51,9 @@ type Tag struct {
 
 type Matching struct {
 	gorm.Model
-	Offer   Offer `gorm:"ForeignKey:OfferId;AssociationForeignKey:Refer"`
-	OfferId int
-	Request Request `gorm:"ForeignKey:RequestId;AssociationForeignKey:Refer"`
+	Offer     Offer `gorm:"ForeignKey:OfferId;AssociationForeignKey:Refer"`
+	OfferId   int
+	Request   Request `gorm:"ForeignKey:RequestId;AssociationForeignKey:Refer"`
 	RequestId int
 }
 
@@ -81,7 +81,7 @@ type Request struct {
 	Expired        bool
 }
 
-// Set Expired-flag for all requests and offers
+// Set Expired flag for all requests and offers that are not valid anymore.
 func CheckForExpired(db *gorm.DB) {
 	// TODO
 }
