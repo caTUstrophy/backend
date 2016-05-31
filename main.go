@@ -46,9 +46,9 @@ func main() {
 	app.Router.GET("/auth", app.RenewToken)
 	app.Router.DELETE("/auth", app.Logout)
 	app.Router.POST("/offers", app.CreateOffer)
-	app.Router.GET("/offers", app.ListOffers)
-	app.Router.GET("/requests", app.ListRequests)
+	app.Router.GET("/offers/:region", app.ListOffers)
 	app.Router.POST("/requests", app.CreateRequest)
+	app.Router.GET("/requests/:region", app.ListRequests)
 	app.Router.POST("/matchings", app.CreateMatching)
 	app.Router.GET("/matchings/:matchingID", app.GetMatching)
 

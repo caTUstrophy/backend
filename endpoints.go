@@ -120,6 +120,8 @@ func (app *App) CheckScope(user *db.User, location string, permission string) bo
 		}
 	}
 
+	fmt.Println("USER CHECK SCOPE FALSE?")
+
 	// No group found that gives permission to user.
 	return false
 }
@@ -363,7 +365,7 @@ func (app *App) Logout(c *gin.Context) {
 func (app *App) ListOffers(c *gin.Context) {
 
 	// Check authorization for this function.
-	ok, _, message := app.Authorize(c.Request)
+	ok, User, message := app.Authorize(c.Request)
 	if !ok {
 
 		// Signal client an error and expect authorization.
@@ -374,14 +376,16 @@ func (app *App) ListOffers(c *gin.Context) {
 	}
 
 	// Check if user permissions are sufficient (user is admin).
-	// if ok := CheckScope(User, "worldwide", "admin"); !ok {
-	//     c.Status(401)
-	// }
+	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
+	    c.Status(401)
+	}
+
+	region := c.Params.ByName("region")
 
 	var Offers []db.Offer
 
 	// Retrieve all offers from database.
-	app.DB.Find(&Offers)
+	app.DB.Find(&Offers, "Location = ?", region)
 
 	// Send back results to client.
 	c.JSON(200, Offers)
@@ -390,7 +394,7 @@ func (app *App) ListOffers(c *gin.Context) {
 func (app *App) ListRequests(c *gin.Context) {
 
 	// Check authorization for this function.
-	ok, _, message := app.Authorize(c.Request)
+	ok, User, message := app.Authorize(c.Request)
 	if !ok {
 
 		// Signal client an error and expect authorization.
@@ -401,14 +405,16 @@ func (app *App) ListRequests(c *gin.Context) {
 	}
 
 	// Check if user permissions are sufficient (user is admin).
-	// if ok := CheckScope(User, "worldwide", "admin"); !ok {
-	//     c.Status(401)
-	// }
+	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
+	    c.Status(401)
+	}
+
+	region := c.Params.ByName("region")
 
 	var Requests []db.Request
 
 	// Retrieve all requests from database.
-	app.DB.Find(&Requests)
+	app.DB.Find(&Requests, "Location = ?", region)
 
 	// Send back results to client.
 	c.JSON(200, Requests)
