@@ -388,7 +388,7 @@ func (app *App) ListOffers(c *gin.Context) {
 
 	// TODO remove loop and exchange for preload
 	for i := 0; i < len(Offers); i++ {
-		app.DB.First(&Offers[i].User, "mail = ?", User.Mail)
+		app.DB.Select("name, id").First(&Offers[i].User, "mail = ?", User.Mail)
 	}
 
 	// Send back results to client.
@@ -424,7 +424,7 @@ func (app *App) ListRequests(c *gin.Context) {
 
 	// TODO remove loop and exchange for preload
 	for i := 0; i < len(Requests); i++ {
-		app.DB.First(&Requests[i].User, "mail = ?", User.Mail)
+		app.DB.Select("name, id").First(&Requests[i].User, "mail = ?", User.Mail)
 	}
 
 	// Send back results to client.
