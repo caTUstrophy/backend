@@ -112,6 +112,7 @@ func (app *App) CheckScope(user *db.User, location string, permission string) bo
 		if group.Location == location {
 
 			// Fast, because there are not so many different permissions.
+			app.DB.Model(group).Related(&group.Permissions)
 			for _, groupPermission := range group.Permissions {
 
 				if groupPermission.AccessRight == permission {
