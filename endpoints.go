@@ -60,7 +60,6 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 		return jwtSigningSecret, nil
 	})
 
-
 	// Check if JWT is valid.
 	if err != nil {
 
@@ -106,6 +105,8 @@ func (app *App) CheckScope(user *db.User, location string, permission string) bo
 	// * Yes -> Has this group the necessary permission?
 
 	// Fast, because the typical user is member of few groups.
+
+	app.DB.Model(user).Related(&user.Groups)
 	for _, group := range user.Groups {
 
 		if group.Location == location {
@@ -377,7 +378,7 @@ func (app *App) ListOffers(c *gin.Context) {
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
-	    c.Status(401)
+		c.Status(401)
 	}
 
 	region := c.Params.ByName("region")
@@ -406,7 +407,7 @@ func (app *App) ListRequests(c *gin.Context) {
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
-	    c.Status(401)
+		c.Status(401)
 	}
 
 	region := c.Params.ByName("region")
@@ -428,7 +429,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 		// Signal client an error and expect authorization.
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
 		c.Status(401)
-		c.JSON(401, gin.H{ "message": "jwt invalid", })
+		c.JSON(401, gin.H{"message": "jwt invalid"})
 		return
 	}
 
@@ -436,7 +437,6 @@ func (app *App) CreateOffer(c *gin.Context) {
 
 	// Expect offer struct fields for creation in JSON request body.
 	c.BindJSON(&Payload)
-
 
 	// Validate sent request creation data.
 	conform.Strings(&Payload)
@@ -463,7 +463,6 @@ func (app *App) CreateOffer(c *gin.Context) {
 
 		return
 	}
-
 
 	var Offer db.Offer
 
