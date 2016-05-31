@@ -50,6 +50,7 @@ type CreateMatchingPayload struct {
 }
 
 // Functions
+
 func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 
 	jwtSigningSecret := []byte(os.Getenv("JWT_SIGNING_SECRET"))
@@ -117,6 +118,7 @@ func (app *App) CheckScope(user *db.User, location string, permission string) bo
 
 			// Fast, because there are not so many different permissions.
 			for _, groupPermission := range group.Permissions {
+
 				if groupPermission.AccessRight == permission {
 					return true
 				}
@@ -248,7 +250,11 @@ func (app *App) CreateUser(c *gin.Context) {
 
 	// On success: return ID of newly created user.
 	c.JSON(201, gin.H{
-		"ID": User.ID,
+		"ID":            User.ID,
+		"Name":          User.Name,
+		"PreferredName": User.PreferredName,
+		"Mail":          User.Mail,
+		"Groups":        User.Groups,
 	})
 }
 
@@ -571,7 +577,11 @@ func (app *App) CreateOffer(c *gin.Context) {
 
 	// On success: return ID of newly created offer.
 	c.JSON(201, gin.H{
-		"ID": Offer.ID,
+		"ID":             Offer.ID,
+		"Name":           Offer.Name,
+		"Location":       Offer.Location,
+		"Tags":           Offer.Tags,
+		"ValidityPeriod": Offer.ValidityPeriod,
 	})
 }
 
@@ -688,7 +698,11 @@ func (app *App) CreateRequest(c *gin.Context) {
 
 	// On success: return ID of newly created request.
 	c.JSON(201, gin.H{
-		"ID": Request.ID,
+		"ID":             Request.ID,
+		"Name":           Request.Name,
+		"Location":       Request.Location,
+		"Tags":           Request.Tags,
+		"ValidityPeriod": Request.ValidityPeriod,
 	})
 }
 
@@ -707,13 +721,30 @@ func (app *App) CreateMatching(c *gin.Context) {
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
 		c.Status(401)
+
+		return
 	}
 
 	var Payload CreateMatchingPayload
 
 	// Expect user struct fields in JSON request body.
-	errs := c.BindJSON(&Payload)
+	err := c.BindJSON(&Payload)
+	if err != nil {
+
+		c.JSON(400, gin.H{
+			"Error": "Supplied values in JSON body could not be parsed",
+		})
+
+		return
+	}
+
+	// Validate sent user login data.
+	conform.Strings(&Payload)
+	errs := app.Validator.Struct(&Payload)
 
 	if errs != nil {
 
@@ -726,8 +757,6 @@ func (app *App) CreateMatching(c *gin.Context) {
 				errResp[err.Field] = "Is required"
 			} else if err.Tag == "excludesall" {
 				errResp[err.Field] = "Contains unallowed characters"
-			} else if err.Tag == "dive" {
-				errResp[err.Field] = "Needs to be an array"
 			}
 		}
 
@@ -742,6 +771,7 @@ func (app *App) CreateMatching(c *gin.Context) {
 	app.DB.Model(&db.Offer{}).Where("id = ?", Payload.Offer).Count(&CountOffer)
 	var CountRequest int
 	app.DB.Model(&db.Request{}).Where("id = ?", Payload.Request).Count(&CountRequest)
+
 	if CountOffer == 0 || CountRequest == 0 {
 		c.JSON(400, gin.H{
 			"Matching": "Offer / Request doesnt exist",
@@ -777,9 +807,7 @@ func (app *App) CreateMatching(c *gin.Context) {
 
 	app.DB.Create(&Matching)
 
-	c.JSON(201, gin.H{
-		"ID": Matching.ID,
-	})
+	c.JSON(201, Matching)
 }
 
 func (app *App) GetMatching(c *gin.Context) {

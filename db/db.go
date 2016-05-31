@@ -9,8 +9,6 @@ import (
 
 // Models
 
-// Users and permissions
-
 type Permission struct {
 	gorm.Model
 
@@ -41,8 +39,6 @@ type User struct {
 
 	Enabled bool
 }
-
-// Offer, Request and Matching
 
 type Tag struct {
 	gorm.Model
