@@ -46,6 +46,7 @@ type CreateOfferPayload struct {
 
 // Functions
 func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
+
 	jwtSigningSecret := []byte(os.Getenv("JWT_SIGNING_SECRET"))
 
 	// Extract JWT from request headers.
@@ -134,6 +135,7 @@ func (app *App) makeToken(c *gin.Context, user *db.User) (string, int64) {
 
 	// Save current timestamp.
 	nowTime := time.Now()
+	expTime := nowTime.Add(app.SessionValidFor).Unix()
 
 	// At this point, the user exists and provided a correct password.
 	// Create a JWT with claims to identify user.
@@ -145,7 +147,7 @@ func (app *App) makeToken(c *gin.Context, user *db.User) (string, int64) {
 	sessionJWT.Claims["iss"] = user.Mail
 	sessionJWT.Claims["iat"] = nowTime.Unix()
 	sessionJWT.Claims["nbf"] = nowTime.Add((-1 * time.Minute)).Unix()
-	sessionJWT.Claims["exp"] = nowTime.Add(app.SessionValidFor).Unix()
+	sessionJWT.Claims["exp"] = expTime
 
 	sessionJWTString, err := sessionJWT.SignedString([]byte(jwtSigningSecret))
 	if err != nil {
@@ -155,7 +157,7 @@ func (app *App) makeToken(c *gin.Context, user *db.User) (string, int64) {
 	// Add JWT to session in-memory cache.
 	app.Sessions.Set(user.Mail, sessionJWTString, cache.DefaultExpiration)
 
-	return sessionJWTString, nowTime.Add((app.SessionValidFor - (30 * time.Second))).Unix()
+	return sessionJWTString, expTime
 }
 
 // Endpoint handlers
@@ -349,8 +351,11 @@ func (app *App) Logout(c *gin.Context) {
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
 	if !ok {
+
+		// Signal client an error and expect authorization.
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
 		c.Status(401)
+
 		return
 	}
 
@@ -360,7 +365,6 @@ func (app *App) Logout(c *gin.Context) {
 	c.Status(200)
 
 	return
-
 }
 
 func (app *App) ListOffers(c *gin.Context) {
@@ -378,7 +382,12 @@ func (app *App) ListOffers(c *gin.Context) {
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
 		c.Status(401)
+
+		return
 	}
 
 	region := c.Params.ByName("region")
@@ -407,7 +416,12 @@ func (app *App) ListRequests(c *gin.Context) {
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
 		c.Status(401)
+
+		return
 	}
 
 	region := c.Params.ByName("region")
@@ -422,14 +436,17 @@ func (app *App) ListRequests(c *gin.Context) {
 }
 
 func (app *App) CreateOffer(c *gin.Context) {
+
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
 	if !ok {
+
 		fmt.Printf(message + "\n")
+
 		// Signal client an error and expect authorization.
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
 		c.Status(401)
-		c.JSON(401, gin.H{"message": "jwt invalid"})
+
 		return
 	}
 
@@ -524,8 +541,10 @@ func (app *App) CreateOffer(c *gin.Context) {
 	app.DB.Create(&Offer)
 	fmt.Printf(" -> Created new offer")
 
-	// Signal success to client.
-	c.Status(200)
+	// On success: return ID of newly created offer.
+	c.JSON(201, gin.H{
+		"ID": Offer.ID,
+	})
 }
 
 func (app *App) CreateRequest(c *gin.Context) {
@@ -639,14 +658,21 @@ func (app *App) CreateRequest(c *gin.Context) {
 	// Save request to database.
 	app.DB.Create(&Request)
 
-	// Signal success to client.
-	c.Status(201)
+	// On success: return ID of newly created request.
+	c.JSON(201, gin.H{
+		"ID": Request.ID,
+	})
 }
 
 func (app *App) CreateMatching(c *gin.Context) {
 
 	// Check authorization for this function.
 	// Authorize()
+
+	// On success: return ID of newly created matching.
+	// c.JSON(201, gin.H{
+	//     "ID": Matching.ID,
+	// })
 }
 
 func (app *App) GetMatching(c *gin.Context) {
@@ -670,6 +696,8 @@ func (app *App) GetMatching(c *gin.Context) {
 	var Matching db.Matching
 
 	matchingID := c.Params.ByName("matchingID")
+
+	// TODO: Validate matchingID!
 
 	// Retrieve all requests from database.
 	app.DB.First(&Matching, "id = ?", matchingID)
