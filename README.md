@@ -55,10 +55,10 @@ Four roles are present in this model:
 
 | Functionality     | Minimum needed privilege | HTTP verb | Endpoint       | API version | Done? |
 | ----------------- | ------------------------ | --------- | -------------- | ----------- | ----- |
-| Registration      | U                        | POST      | /users         | MVP         | ✔    |
-| Login             | N                        | POST      | /auth          | MVP         | ✔    |
-| Renew auth token  | L                        | GET       | /auth          | MVP         | ✔    |
-| Logout            | L                        | DELETE    | /auth          | MVP         | ✔    |
+| Registration      | U                        | POST      | /users         | MVP         | ✔     |
+| Login             | N                        | POST      | /auth          | MVP         | ✔     |
+| Renew auth token  | L                        | GET       | /auth          | MVP         | ✔     |
+| Logout            | L                        | DELETE    | /auth          | MVP         | ✔     |
 | Own profile       | L                        | GET       | /me            | 2.0         |       |
 | List offers       | A                        | GET       | /offers        | MVP         | ✔    |
 | List own offers   | L                        | GET       | /me/offers     | 2.0         |       |
@@ -69,7 +69,8 @@ Four roles are present in this model:
 | Update offer x    | L                        | PUT       | /me/offers/x   | 2.0         |       |
 | Update request x  | L                        | PUT       | /me/requests/x | 2.0         |       |
 | Create matching   | A                        | POST      | /matchings     | MVP         | ✔    |
-| Get matching x    | L                        | GET       | /matchings/x   | MVP         | ✔    |
+| Get matching x    | L                        | GET       | /matchings/x   | MVP         | ✔     |
+| Get matchings		| A						   | GET	   | /matchings		| 2.0		  |		  |
 
 
 ### Detailed request information
@@ -179,23 +180,21 @@ Succes
 
 ```
 200 OK
-{
-	"Offers": [
+[
+	{
 		{
-			{
+			"Name": string,
+			"Tags": string array,
+			"ValidityPeriod": unix timestamp,
+			"Location": string,
+			"User": {
 				"Name": string,
-				"Tags": string array,
-				"ValidityPeriod": unix timestamp,
-				"Location": string,
-				"User": {
-					"Name": string,
-					"ID": int id
-				}
+				"ID": int id
 			}
-		}, 
-		...
-	]
-}
+		}
+	}, 
+	...
+]
 ```
 
 Fail
@@ -223,23 +222,21 @@ Succes
 
 ```
 200 OK
-{
-	"Requests": [
+[
+	{
 		{
-			{
+			"Name": string,
+			"Tags": string array,
+			"ValidityPeriod": unix timestamp,
+			"Location": string,
+			"User": {
 				"Name": string,
-				"Tags": string array,
-				"ValidityPeriod": unix timestamp,
-				"Location": string,
-				"User": {
-					"Name": string,
-					"ID": int id
-				}
+				"ID": int id
 			}
-		}, 
-		...
-	]
-}
+		}
+	}, 
+	...
+]
 ```
 
 Fail
