@@ -65,7 +65,7 @@ Four roles are present in this model:
 | List requests     | A                        | GET       | /requests      | MVP         |       |
 | List own requests | L                        | GET       | /me/requests   | 2.0         |       |
 | Create offer      | L                        | POST      | /offers        | MVP         | ✔     |
-| Create request    | L                        | POST      | /requests      | MVP         |       |
+| Create request    | L                        | POST      | /requests      | MVP         | ✔     |
 | Update offer x    | L                        | PUT       | /me/offers/x   | 2.0         |       |
 | Update request x  | L                        | PUT       | /me/requests/x | 2.0         |       |
 | Create matching   | A                        | POST      | /matchings     | MVP         |       |
@@ -169,46 +169,243 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Request:**
 
+```
+GET /offers/x
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
 **Response:**
+Succes
+
+```
+200 OK
+{
+	"Offers": [
+		{
+			{
+				"Name": string,
+				"Tags": string array,
+				"ValidityPeriod": unix timestamp,
+				"Location": string,
+				"User": {
+					"Name": string,
+					"ID": int id
+				}
+			}
+		}, 
+		...
+	]
+}
+```
+
+Fail
+
+```
+400 Bad Request
+{
+	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
+```
 
 
 #### List requests
 
 **Request:**
 
-**Response:**
+```
+GET /requests/x
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
 
+
+**Response:**
+Succes
+
+```
+200 OK
+{
+	"Requests": [
+		{
+			{
+				"Name": string,
+				"Tags": string array,
+				"ValidityPeriod": unix timestamp,
+				"Location": string,
+				"User": {
+					"Name": string,
+					"ID": int id
+				}
+			}
+		}, 
+		...
+	]
+}
+```
+
+Fail
+
+```
+400 Bad Request
+{
+	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
+```
 
 #### Create offer
 
 **Request:**
 
+```
+POST /offers
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+{
+	"Name": required, string,
+	"Tags": optional, string array,
+	"ValidityPeriod": required, unix timestamp,
+	"Location": required, string
+}
+```
+
+***Example:***
+
+```
+POST /offers
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+{
+	"Name": "hugs",
+	"Tags": ["tag", "another tag"],
+	"ValidityPeriod": 1464706055,
+	"Location": "worldwide"
+}
+```
+
 **Response:**
 
+Success
+
+```
+200 OK
+```
+
+Fail
+
+```
+400 Bad Request
+{
+	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
+```
+
+***Example:***
+
+```
+400 Bad Request
+{
+	"Location": "User can't post for this location. (But don't expect this exact message)"
+}
+```
 
 #### Create request
 
+
 **Request:**
+
+```
+POST /requests
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+{
+	"Name": required, string,
+	"Tags": optional, string array,
+	"ValidityPeriod": required, unix timestamp,
+	"Location": required, string
+}
+```
 
 **Response:**
 
+Succes
 
+```
+200 OK
+```
+
+Fail
+
+```
+400 Bad Request
+{
+	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
+```
 #### Create matching
 
 **Request:**
 
-**Response:**
+```
+POST /matchings
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+{
+	"Request": required, int id,
+	"Offer": required, int id
+}
+```
 
+**Response:**
+Succes
+
+```
+200 OK
+{
+	"ID": int id
+}
+```
+
+Fail
+
+```
+400 Bad Request
+{
+	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
+```
 
 #### Get matching x
 
 **Request:**
 
+```
+GET /matchings/x
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
 **Response:**
+Succes
 
-## Tests
+```
+200 OK
+{
+	"Request": {
+		"ID": int id,
+		"Name": string,
+		"Tags": string array,
+		"ValidityPeriod": unix timestamp,
+		"Location": string
+	},
+	"Offer": {
+		"ID": int id,
+		"Name": string,
+		"Tags": string array,
+		"ValidityPeriod": unix timestamp,
+		"Location": string
+	},
+}
+```
 
-In /tests there are some tests.
+Fail
 
-### User registration
-The file user_registration.sh is a bash skript that sends http requests with a valid and some not valid user registration data. All cases that are tested will be printed in terminal, so please run it for more details.
+```
+400 Bad Request
+{
+	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
+```

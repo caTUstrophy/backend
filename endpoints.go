@@ -84,12 +84,12 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 	email := requestJWT.Claims["iss"].(string)
 	sessionJWTInterface, found := app.Sessions.Get(email)
 	if !found {
-		return false, nil, ("No valid token found for " + email)
+		return false, nil, "JWT was invalid"
 	}
 
 	// Check if JWT from request matches JWT from session store.
 	if sessionJWTInterface.(string) != requestJWT.Raw {
-		return false, nil, "JWT from request does not match with the registered JWT"
+		return false, nil, "JWT was invalid"
 	}
 
 	// Retrieve user from database.
@@ -99,9 +99,29 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 	return true, &User, ""
 }
 
-func (app *App) CheckScope(user *db.User, location string, permission string) {
+func (app *App) CheckScope(user *db.User, location string, permission string) bool {
 
-	// TODO: Check if user is allowed to access this endpoint.
+	// Check if User.Groups contains a group with location.
+	// * No -> false
+	// * Yes -> Has this group the necessary permission?
+
+	// Fast, because the typical user is member of few groups.
+	for _, group := range user.Groups {
+
+		if group.Location == location {
+
+			// Fast, because there are not so many different permissions.
+			for _, groupPermission := range group.Permissions {
+
+				if groupPermission.AccessRight == permission {
+					return true
+				}
+			}
+		}
+	}
+
+	// No group found that gives permission to user.
+	return false
 }
 
 func (app *App) makeToken(c *gin.Context, user *db.User) (string, int64) {
@@ -142,7 +162,15 @@ func (app *App) CreateUser(c *gin.Context) {
 	var Payload CreateUserPayload
 
 	// Expect user struct fields in JSON request body.
-	c.BindJSON(&Payload)
+	err := c.BindJSON(&Payload)
+	if err != nil {
+
+		c.JSON(400, gin.H{
+			"Error": "Supplied values in JSON body could not be parsed",
+		})
+
+		return
+	}
 
 	// Validate sent user registration data.
 	conform.Strings(&Payload)
@@ -224,7 +252,15 @@ func (app *App) Login(c *gin.Context) {
 	var Payload LoginPayload
 
 	// Expect login struct fields in JSON request body.
-	c.BindJSON(&Payload)
+	err := c.BindJSON(&Payload)
+	if err != nil {
+
+		c.JSON(400, gin.H{
+			"Error": "Supplied values in JSON body could not be parsed",
+		})
+
+		return
+	}
 
 	// Validate sent user login data.
 	conform.Strings(&Payload)
@@ -261,7 +297,7 @@ func (app *App) Login(c *gin.Context) {
 
 	// Compare password hash from database with possible plaintext
 	// password from request. Compares in constant time.
-	err := bcrypt.CompareHashAndPassword([]byte(User.PasswordHash), []byte(Payload.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(User.PasswordHash), []byte(Payload.Password))
 	if err != nil {
 
 		// Signal client that an error occured.
@@ -503,7 +539,19 @@ func (app *App) CreateRequest(c *gin.Context) {
 	var Payload CreateRequestPayload
 
 	// Expect request struct fields for creation in JSON request body.
-	c.BindJSON(&Payload)
+	err := c.BindJSON(&Payload)
+	if err != nil {
+
+		// Check if error was caused by failed unmarshalling string -> []string.
+		if err.Error() == "json: cannot unmarshal string into Go value of type []string" {
+
+			c.JSON(400, gin.H{
+				"Tags": "Provide an array, not a string",
+			})
+
+			return
+		}
+	}
 
 	// Validate sent request creation data.
 	conform.Strings(&Payload)
@@ -520,8 +568,6 @@ func (app *App) CreateRequest(c *gin.Context) {
 				errResp[err.Field] = "Is required"
 			} else if err.Tag == "excludesall" {
 				errResp[err.Field] = "Contains unallowed characters"
-			} else if err.Tag == "dive" {
-				errResp[err.Field] = "Needs to be an array"
 			}
 		}
 
@@ -540,21 +586,19 @@ func (app *App) CreateRequest(c *gin.Context) {
 	Request.Tags = make([]db.Tag, 0)
 
 	// If tags were supplied, check if they exist in our system.
-	log.Printf("Do tags exist in payload?", Payload.Tags)
 	if len(Payload.Tags) > 0 {
 
-		var TagExists int
 		allTagsExist := true
 
-		for t := range Payload.Tags {
+		for _, tag := range Payload.Tags {
 
 			var Tag db.Tag
 
 			// Count number of results for query of name of tags.
-			app.DB.Where("name = ?", t).First(&Tag).Count(&TagExists)
+			app.DB.First(&Tag, "name = ?", tag)
 
 			// Set flag to false, if one tag was not found.
-			if TagExists <= 0 {
+			if Tag.Name == "" {
 				allTagsExist = false
 			} else {
 				Request.Tags = append(Request.Tags, Tag)
@@ -563,16 +607,20 @@ func (app *App) CreateRequest(c *gin.Context) {
 
 		// If at least one of the tags does not exist - return error.
 		if !allTagsExist {
+
 			c.JSON(400, gin.H{
 				"Tags": "One or multiple tags do not exist",
 			})
 
 			return
 		}
+	} else {
+		Request.Tags = nil
 	}
 
 	// Check if validity period is yet to come.
 	if Payload.ValidityPeriod <= time.Now().Unix() {
+
 		c.JSON(400, gin.H{
 			"ValidityPeriod": "Request has to be valid until a date in the future",
 		})
@@ -580,15 +628,14 @@ func (app *App) CreateRequest(c *gin.Context) {
 		return
 	} else {
 		Request.ValidityPeriod = Payload.ValidityPeriod
+		Request.Expired = false
 	}
-
-	Request.Expired = false
 
 	// Save request to database.
 	app.DB.Create(&Request)
 
 	// Signal success to client.
-	c.Status(200)
+	c.Status(201)
 }
 
 func (app *App) CreateMatching(c *gin.Context) {
