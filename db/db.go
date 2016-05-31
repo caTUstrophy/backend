@@ -51,8 +51,10 @@ type Tag struct {
 
 type Matching struct {
 	gorm.Model
-	Offer   Offer
-	Request Request
+	Offer   Offer `gorm:"ForeignKey:OfferId;AssociationForeignKey:Refer"`
+	OfferId int
+	Request Request `gorm:"ForeignKey:RequestId;AssociationForeignKey:Refer"`
+	RequestId int
 }
 
 type Offer struct {

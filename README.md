@@ -60,16 +60,16 @@ Four roles are present in this model:
 | Renew auth token  | L                        | GET       | /auth          | MVP         | ✔    |
 | Logout            | L                        | DELETE    | /auth          | MVP         | ✔    |
 | Own profile       | L                        | GET       | /me            | 2.0         |       |
-| List offers       | A                        | GET       | /offers        | MVP         |       |
+| List offers       | A                        | GET       | /offers        | MVP         | ✔    |
 | List own offers   | L                        | GET       | /me/offers     | 2.0         |       |
-| List requests     | A                        | GET       | /requests      | MVP         |       |
+| List requests     | A                        | GET       | /requests      | MVP         | ✔    |
 | List own requests | L                        | GET       | /me/requests   | 2.0         |       |
 | Create offer      | L                        | POST      | /offers        | MVP         | ✔     |
 | Create request    | L                        | POST      | /requests      | MVP         | ✔     |
 | Update offer x    | L                        | PUT       | /me/offers/x   | 2.0         |       |
 | Update request x  | L                        | PUT       | /me/requests/x | 2.0         |       |
-| Create matching   | A                        | POST      | /matchings     | MVP         |       |
-| Get matching x    | L                        | GET       | /matchings/x   | MVP         |       |
+| Create matching   | A                        | POST      | /matchings     | MVP         | ✔    |
+| Get matching x    | L                        | GET       | /matchings/x   | MVP         | ✔    |
 
 
 ### Detailed request information
