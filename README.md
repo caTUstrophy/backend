@@ -53,23 +53,24 @@ Four roles are present in this model:
 * logged-in user **(L)**: registered and authorized user
 * admin **(A)**: registered, authorized and privileged user
 
-| Functionality     | Minimum needed privilege | HTTP verb | Endpoint       | API version | Done? |
-| ----------------- | ------------------------ | --------- | -------------- | ----------- | ----- |
-| Registration      | U                        | POST      | /users         | MVP         | ✔    |
-| Login             | N                        | POST      | /auth          | MVP         | ✔    |
-| Renew auth token  | L                        | GET       | /auth          | MVP         | ✔    |
-| Logout            | L                        | DELETE    | /auth          | MVP         | ✔    |
-| Own profile       | L                        | GET       | /me            | 2.0         |       |
-| List offers       | A                        | GET       | /offers        | MVP         |       |
-| List own offers   | L                        | GET       | /me/offers     | 2.0         |       |
-| List requests     | A                        | GET       | /requests      | MVP         |       |
-| List own requests | L                        | GET       | /me/requests   | 2.0         |       |
-| Create offer      | L                        | POST      | /offers        | MVP         | ✔     |
-| Create request    | L                        | POST      | /requests      | MVP         | ✔     |
-| Update offer x    | L                        | PUT       | /me/offers/x   | 2.0         |       |
-| Update request x  | L                        | PUT       | /me/requests/x | 2.0         |       |
-| Create matching   | A                        | POST      | /matchings     | MVP         |       |
-| Get matching x    | L                        | GET       | /matchings/x   | MVP         |       |
+
+| Functionality     			| Minimum needed privilege | HTTP verb | Endpoint       | API version | Done? |
+| ------------------------------| ------------------------ | --------- | -------------- | ----------- | ----- |
+| Registration      			| U                        | POST      | /users         | MVP         | ✔    |
+| Login            				| N                        | POST      | /auth          | MVP         | ✔    |
+| Renew auth token  			| L                        | GET       | /auth          | MVP         | ✔    |
+| Logout            			| L                        | DELETE    | /auth          | MVP         | ✔    |
+| Own profile       			| L                        | GET       | /me            | 2.0         |       |
+| List offers for region x 		| A                        | GET       | /offers/x      | MVP         | ✔    |
+| List own offers   			| L                        | GET       | /me/offers     | 2.0         |       |
+| List requests  for region x 	| A                        | GET       | /requests/x    | MVP         | ✔    |
+| List own requests 			| L                        | GET       | /me/requests   | 2.0         |       |
+| Create offer      			| L                        | POST      | /offers        | MVP         | ✔    |
+| Create request    			| L                        | POST      | /requests      | MVP         | ✔    |
+| Update offer x    			| L                        | PUT       | /me/offers/x   | 2.0         |       |
+| Update request x  			| L                        | PUT       | /me/requests/x | 2.0         |       |
+| Create matching   			| A                        | POST      | /matchings     | MVP         |       |
+| Get matching x    			| L                        | GET       | /matchings/x   | MVP         |       |
 
 
 ### Detailed request information
