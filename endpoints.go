@@ -368,9 +368,10 @@ func (app *App) Logout(c *gin.Context) {
 	// Remove user's JWT from session store.
 	app.Sessions.Delete(User.Mail)
 
-	c.Status(200)
-
-	return
+	// Signal client success and return ID of logged out user.
+	c.JSON(200, gin.H{
+		"ID": User.ID,
+	})
 }
 
 func (app *App) ListOffers(c *gin.Context) {
@@ -397,7 +398,6 @@ func (app *App) ListOffers(c *gin.Context) {
 	}
 
 	region := c.Params.ByName("region")
-	// TODO: Security: Validate region
 
 	// TODO: Validate region!
 
@@ -439,7 +439,6 @@ func (app *App) ListRequests(c *gin.Context) {
 	}
 
 	region := c.Params.ByName("region")
-	// TODO: Security: Validate region
 
 	// TODO: Validate region!
 
