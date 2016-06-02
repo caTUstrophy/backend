@@ -103,13 +103,13 @@ Success (**Currently!** Format will change very soon!)
 201 Created
 
 {
-	"ID": int,
+	"ID": int id,
 	"Mail": string,
 	"Name": string,
 	"PreferredName": string,
 	"Groups": [
 		{
-			"ID": int,
+			"ID": int id,
 			"CreatedAt": Date,
 			"UpdatedAt": Date,
 			"DeletedAt": Date (or null),
@@ -185,6 +185,10 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 ```
 200 OK
+
+{
+	"ID": int id
+}
 ```
 
 #### List offers
@@ -312,12 +316,12 @@ Success (**Currently!** Format will change very soon!)
 201 Created
 
 {
-	"ID": int,
+	"ID": int id,
 	"Location": string,
 	"Name": string,
 	"Tags": [
 		{
-			"ID": int,
+			"ID": int id,
 			"CreatedAt": Date,
 			"UpdatedAt": Date,
 			"DeletedAt": Date (or null),
@@ -374,12 +378,12 @@ Success (**Currently!** Format will change very soon!)
 201 Created
 
 {
-	"ID": int,
+	"ID": int id,
 	"Location": string,
 	"Name": string,
 	"Tags": [
 		{
-			"ID": int,
+			"ID": int id,
 			"CreatedAt": Date,
 			"UpdatedAt": Date,
 			"DeletedAt": Date (or null),
@@ -423,14 +427,14 @@ Success (**Currently!** Format will change very soon!)
 201 Created
 
 {
-	"ID": int,
+	"ID": int id,
 	"CreatedAt": Date,
 	"UpdatedAt": Date,
 	"DeletedAt": Date (or null),
 	"OfferId": int,
 	"RequestId": int,
 	"Offer": {
-		"ID": int,
+		"ID": int id,
 		"CreatedAt": Date,
 		"UpdatedAt": Date,
 		"DeletedAt": Date (or null),
@@ -444,7 +448,7 @@ Success (**Currently!** Format will change very soon!)
 		"Expired": boolean
 	},
 	"Request": {
-		"ID": int,
+		"ID": int id,
 		"CreatedAt": Date,
 		"UpdatedAt": Date,
 		"DeletedAt": Date (or null),
