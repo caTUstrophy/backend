@@ -73,6 +73,11 @@ Four roles are present in this model:
 | Get matchings		| A						   | GET	   | /matchings		| 2.0		  |		  |
 
 
+### What is inside a JWT?
+
+**To be added soon.**
+
+
 ### Detailed request information
 
 #### Registration
@@ -92,11 +97,27 @@ POST /users
 
 **Response:**
 
+Success (**Currently!** Format will change very soon!)
+
 ```
 201 Created
 
 {
-    "ID": int
+	"ID": int,
+	"Mail": string,
+	"Name": string,
+	"PreferredName": string,
+	"Groups": [
+		{
+			"ID": int,
+			"CreatedAt": Date,
+			"UpdatedAt": Date,
+			"DeletedAt": Date (or null),
+			"DefaultGroup": boolean,
+			"Location": string,
+			"Permissions": null
+		}
+	]
 }
 ```
 
@@ -176,10 +197,12 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 **Response:**
-Succes
+
+Success
 
 ```
 200 OK
+
 [
 	{
 		{
@@ -201,6 +224,7 @@ Fail
 
 ```
 400 Bad Request
+
 {
 	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
@@ -216,12 +240,13 @@ GET /requests/x
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
-
 **Response:**
-Succes
+
+Success
 
 ```
 200 OK
+
 [
 	{
 		{
@@ -243,6 +268,7 @@ Fail
 
 ```
 400 Bad Request
+
 {
 	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
@@ -255,6 +281,7 @@ Fail
 ```
 POST /offers
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
 {
 	"Name": required, string,
 	"Tags": optional, string array,
@@ -268,6 +295,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 POST /offers
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
 {
 	"Name": "hugs",
 	"Tags": ["tag", "another tag"],
@@ -278,16 +306,34 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success
+Success (**Currently!** Format will change very soon!)
 
 ```
-200 OK
+201 Created
+
+{
+	"ID": int,
+	"Location": string,
+	"Name": string,
+	"Tags": [
+		{
+			"ID": int,
+			"CreatedAt": Date,
+			"UpdatedAt": Date,
+			"DeletedAt": Date (or null),
+			"Name": string
+		},
+		...
+	],
+	"ValidityPeriod": int
+}
 ```
 
 Fail
 
 ```
 400 Bad Request
+
 {
 	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
@@ -297,6 +343,7 @@ Fail
 
 ```
 400 Bad Request
+
 {
 	"Location": "User can't post for this location. (But don't expect this exact message)"
 }
@@ -310,6 +357,7 @@ Fail
 ```
 POST /requests
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
 {
 	"Name": required, string,
 	"Tags": optional, string array,
@@ -320,20 +368,39 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Succes
+Success (**Currently!** Format will change very soon!)
 
 ```
-200 OK
+201 Created
+
+{
+	"ID": int,
+	"Location": string,
+	"Name": string,
+	"Tags": [
+		{
+			"ID": int,
+			"CreatedAt": Date,
+			"UpdatedAt": Date,
+			"DeletedAt": Date (or null),
+			"Name": string
+		},
+		...
+	],
+	"ValidityPeriod": int
+}
 ```
 
 Fail
 
 ```
 400 Bad Request
+
 {
 	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
 ```
+
 #### Create matching
 
 **Request:**
@@ -341,6 +408,7 @@ Fail
 ```
 POST /matchings
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
 {
 	"Request": required, int id,
 	"Offer": required, int id
@@ -348,12 +416,47 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 **Response:**
-Succes
+
+Success (**Currently!** Format will change very soon!)
 
 ```
-200 OK
+201 Created
+
 {
-	"ID": int id
+	"ID": int,
+	"CreatedAt": Date,
+	"UpdatedAt": Date,
+	"DeletedAt": Date (or null),
+	"OfferId": int,
+	"RequestId": int,
+	"Offer": {
+		"ID": int,
+		"CreatedAt": Date,
+		"UpdatedAt": Date,
+		"DeletedAt": Date (or null),
+		"Name": string,
+		"User": {
+			<currently empty user object>
+		},
+		"Location": string,
+		"Tags": null,
+		"ValidityPeriod": int,
+		"Expired": boolean
+	},
+	"Request": {
+		"ID": int,
+		"CreatedAt": Date,
+		"UpdatedAt": Date,
+		"DeletedAt": Date (or null),
+		"Name": string,
+		"User": {
+			<currently empty user object>
+		},
+		"Location": string,
+		"Tags": null,
+		"ValidityPeriod": int,
+		"Expired": boolean
+	}
 }
 ```
 
@@ -361,6 +464,7 @@ Fail
 
 ```
 400 Bad Request
+
 {
 	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
@@ -376,10 +480,12 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 **Response:**
-Succes
+
+Success
 
 ```
 200 OK
+
 {
 	"Request": {
 		"ID": int id,
@@ -402,6 +508,7 @@ Fail
 
 ```
 400 Bad Request
+
 {
 	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
