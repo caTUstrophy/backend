@@ -7,6 +7,7 @@ This project provides the backend for a platform connecting people in a region s
 ## Get it running
 
 **1)** You have to have a working [Go installation](https://golang.org/doc/install) on your system. Preferably via your system's package manager.
+Also, you need to have a working and running PostgreSQL instance.
 
 **2)** Initially run
 ```bash
@@ -31,13 +32,22 @@ to fetch all dependencies of this project.
 $ go build
 ```
 
-**6a)** If you are running the project the first time or after you dropped the database to start fresh, start the backend via
+**6)** Create a Postgres user and database. Then add this to your environment variables. For development, add the following to your .bashrc
+```
+export CATUSTROPHY_HOST=localhost
+export CATUSTROPHY_USER=<POSTGRES DB USER>
+export CATUSTROPHY_DB=<DB NAME>
+export CATUSTROPHY_SSLMODE=disable
+export CATUSTROPHY_PW=<PASSWORD>
+```
+
+**7a)** If you are running the project the first time or after you dropped the database to start fresh, start the backend via
 ```bash
 $ ./backend --init
 ```
 This will create the tables and fill in some default needed content.
 
-**6b)** Alternatively - and in the most common case - start it with
+**7b)** Alternatively - and in the most common case - start it with
 ```bash
 $ ./backend
 ```
