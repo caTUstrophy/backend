@@ -4,6 +4,7 @@ Backend part for our catastrophe aid tool. Written in Go.
 
 This project provides the backend for a platform connecting people in a region suffering from a catastrophe, e.g. a natural disaster. The frontend part can be found [here](https://github.com/caTUstrophy/frontend). We develop this platform within the scope of one of our university courses, the [Programmierpraktikum: Soziale Netzwerke](https://www.cit.tu-berlin.de/menue/teaching/sommersemester_16/programmierpraktikum_soziale_netzwerke_ppsn/).
 
+
 ## Get it running
 
 **1)** You have to have a working [Go installation](https://golang.org/doc/install) on your system. Preferably via your system's package manager.
@@ -94,6 +95,7 @@ Four roles are present in this model:
 
 ### Detailed request information
 
+
 #### Registration
 
 **Request:**
@@ -135,6 +137,7 @@ Success (**Currently!** Format will change very soon!)
 }
 ```
 
+
 #### Login
 
 **Request:**
@@ -158,6 +161,7 @@ POST /auth
     "ExpiresIn": int
 }
 ```
+
 
 #### Renew auth token
 
@@ -186,6 +190,7 @@ Or - if an expired token was presented:
 WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
 
+
 #### Logout
 
 **Request:**
@@ -204,6 +209,54 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 	"ID": int id
 }
 ```
+
+
+#### Own profile
+
+**Request:**
+
+```
+GET /me
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success
+
+```
+```
+
+Fail
+
+```
+```
+
+
+#### Update own profile
+
+**Request:**
+
+```
+POST /me
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+}
+```
+
+**Response:**
+
+Success
+
+```
+```
+
+Fail
+
+```
+```
+
 
 #### List offers for region x
 
@@ -246,6 +299,28 @@ Fail
 {
 	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
+```
+
+
+#### List own offers
+
+**Request:**
+
+```
+GET /me/offers
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success
+
+```
+```
+
+Fail
+
+```
 ```
 
 
@@ -292,6 +367,29 @@ Fail
 }
 ```
 
+
+#### List own requests
+
+**Request:**
+
+```
+GET /me/requests
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success
+
+```
+```
+
+Fail
+
+```
+```
+
+
 #### Create offer
 
 **Request:**
@@ -324,7 +422,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success (**Currently!** Format will change very soon!)
+Success (**Currently!** Format will change very soon!):
 
 ```
 201 Created
@@ -347,7 +445,7 @@ Success (**Currently!** Format will change very soon!)
 }
 ```
 
-Fail
+Fail:
 
 ```
 400 Bad Request
@@ -367,8 +465,8 @@ Fail
 }
 ```
 
-#### Create request
 
+#### Create request
 
 **Request:**
 
@@ -386,7 +484,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success (**Currently!** Format will change very soon!)
+Success (**Currently!** Format will change very soon!):
 
 ```
 201 Created
@@ -409,7 +507,7 @@ Success (**Currently!** Format will change very soon!)
 }
 ```
 
-Fail
+Fail:
 
 ```
 400 Bad Request
@@ -418,6 +516,57 @@ Fail
 	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
 ```
+
+
+#### Update own offer x
+
+**Request:**
+
+```
+PUT /me/offers/x
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+}
+```
+
+**Response:**
+
+Success
+
+```
+```
+
+Fail
+
+```
+```
+
+
+#### Update own request x
+
+**Request:**
+
+```
+PUT /me/requests/x
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+}
+```
+
+**Response:**
+
+Success
+
+```
+```
+
+Fail
+
+```
+```
+
 
 #### Create matching
 
@@ -435,7 +584,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success (**Currently!** Format will change very soon!)
+Success (**Currently!** Format will change very soon!):
 
 ```
 201 Created
@@ -478,7 +627,7 @@ Success (**Currently!** Format will change very soon!)
 }
 ```
 
-Fail
+Fail:
 
 ```
 400 Bad Request
@@ -487,6 +636,29 @@ Fail
 	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
 ```
+
+
+#### List matchings
+
+**Request:**
+
+```
+GET /matchings
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success
+
+```
+```
+
+Fail
+
+```
+```
+
 
 #### Get matching x
 
@@ -499,7 +671,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success
+Success:
 
 ```
 200 OK
@@ -522,7 +694,7 @@ Success
 }
 ```
 
-Fail
+Fail:
 
 ```
 400 Bad Request
