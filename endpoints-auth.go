@@ -112,7 +112,7 @@ func (app *App) makeToken(c *gin.Context, user *db.User) string {
 
 	// Save current timestamp.
 	nowTime := time.Now()
-	expTime := nowTime.Add(app.SessionValidFor).Unix()
+	expTime := nowTime.Add(app.SessionValidFor).Format(time.RFC3339)
 
 	// At this point, the user exists and provided a correct password.
 	// Create a JWT with claims to identify user.
@@ -122,8 +122,8 @@ func (app *App) makeToken(c *gin.Context, user *db.User) string {
 	// TODO: Add important claims for security!
 	//       Hash(PasswordHash)? Needs database call, which is what we want to avoid.
 	sessionJWT.Claims["iss"] = user.Mail
-	sessionJWT.Claims["iat"] = nowTime.Unix()
-	sessionJWT.Claims["nbf"] = nowTime.Add((-1 * time.Minute)).Unix()
+	sessionJWT.Claims["iat"] = nowTime.Format(time.RFC3339)
+	sessionJWT.Claims["nbf"] = nowTime.Add((-1 * time.Minute)).Format(time.RFC3339)
 	sessionJWT.Claims["exp"] = expTime
 
 	sessionJWTString, err := sessionJWT.SignedString([]byte(jwtSigningSecret))

@@ -90,7 +90,23 @@ Four roles are present in this model:
 
 ### What is inside a JWT?
 
-**To be added soon.**
+Inside a JWT issued by this backend, the following fields are present:
+
+```
+{
+	"iss": "ralollol@bernd.orgorg",
+	"iat": "2016-06-09T21:39:12+02:00",
+	"nbf": "2016-06-09T21:38:12+02:00",
+	"exp": "2016-06-09T22:09:12+02:00"
+}
+```
+
+**iss (issuer):** Mail of user this token is issued to.  
+**iat (issued at):** Time and date when token was issued. [RFC3339 date](https://www.ietf.org/rfc/rfc3339.txt)  
+**nbf (not before):** Token is to be discarded when used before this time and date. [RFC3339 date](https://www.ietf.org/rfc/rfc3339.txt)  
+**exp (expires):** Token is to be discarded when used after this time and date. [RFC3339 date](https://www.ietf.org/rfc/rfc3339.txt)
+
+Please note that further identification fields may be added in the future.
 
 
 ### Detailed request information
