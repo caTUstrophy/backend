@@ -1,10 +1,17 @@
 package db
 
 import (
+	"fmt"
 	"log"
+	"os"
+	"strconv"
 
 	"github.com/jinzhu/gorm"
+
+	// TEMPORARY: Comment in whichever you need.
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 // Models
@@ -82,17 +89,58 @@ func CheckForExpired(db *gorm.DB) {
 	// TODO
 }
 
-// Create connection to our database.
-func InitDB(databaseType string, databaseName string) *gorm.DB {
+// Create connection to our database from environment file.
+func InitDB() *gorm.DB {
+
+	var db *gorm.DB
+
+	// Fetch from environment which database type to connect to.
+	dbType := os.Getenv("DB_TYPE")
 
 	// Tries to connect to specified database.
-	db, err := gorm.Open(databaseType, databaseName)
-	if err != nil {
-		log.Fatal(err)
+	if dbType == "postgres" {
+
+		port, err := strconv.Atoi(os.Getenv("DB_PORT"))
+		if err != nil {
+			log.Fatal("[InitDB] Unrecognized port type in .env file. Integer expected.")
+		}
+
+		db, err = gorm.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+			os.Getenv("DB_USER"), os.Getenv("DB_PW"), os.Getenv("DB_HOST"),
+			port, os.Getenv("DB_DBNAME"), os.Getenv("DB_SSLMODE")))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+	} else if dbType == "mysql" {
+
+		port, err := strconv.Atoi(os.Getenv("DB_PORT"))
+		if err != nil {
+			log.Fatal("[InitDB] Unrecognized port type in .env file. Integer expected.")
+		}
+
+		db, err = gorm.Open("mysql", fmt.Sprintf("%s:%s@%s:%d/%s?charset=utf8&parseTime=True&loc=Local",
+			os.Getenv("DB_USER"), os.Getenv("DB_PW"), os.Getenv("DB_HOST"),
+			port, os.Getenv("DB_DBNAME")))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+	} else if dbType == "sqlite" {
+
+		var err error
+
+		db, err = gorm.Open("sqlite3", os.Getenv("SQLITE_DB_PATH"))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+	} else {
+		log.Fatal("[InitDB] Unknown database type in environment file. Did you forget to specify a database in your .env file?")
 	}
 
 	// Check connection to database in order to be sure.
-	err = db.DB().Ping()
+	err := db.DB().Ping()
 	if err != nil {
 		log.Fatal(err)
 	}

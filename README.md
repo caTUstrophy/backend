@@ -27,18 +27,11 @@ to fetch all dependencies of this project.
 
 **4)** Create an `.env` file suited to your deployment. For this, copy the provided `.env.example` to `.env` and edit it to your needs. **Choose strong secret keys!**
 
-**5)** Build the project via
+**5)** Set up a Postgres database. Create a Postgres user and set a password for that user. Then add these information to your just created environment `.env` file. As above, have a look at the `.env.example` for a description of which values you have to set.
+
+**6)** Build the project via
 ```bash
 $ go build
-```
-
-**6)** Create a Postgres user and database. Then add this to your environment variables. For development, add the following to your .bashrc
-```
-export CATUSTROPHY_HOST=localhost
-export CATUSTROPHY_USER=<POSTGRES DB USER>
-export CATUSTROPHY_DB=<DB NAME>
-export CATUSTROPHY_SSLMODE=disable
-export CATUSTROPHY_PW=<PASSWORD>
 ```
 
 **7a)** If you are running the project the first time or after you dropped the database to start fresh, start the backend via

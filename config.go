@@ -2,9 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/caTUstrophy/backend/db"
@@ -40,7 +38,7 @@ func InitAndConfig() *App {
 	app.Router = gin.Default()
 
 	// Open connection to database and insert middleware.
-	app.DB = db.InitDB("postgres", fmt.Sprintf("host=%s user=%s dbname=%s sslmode=%s password=%s", os.Getenv("CATUSTROPHY_HOST"), os.Getenv("CATUSTROPHY_USER"), os.Getenv("CATUSTROPHY_DB"), os.Getenv("CATUSTROPHY_SSLMODE"), os.Getenv("CATUSTROPHY_PW")))
+	app.DB = db.InitDB()
 
 	// If init flag was set to true, add default data to database.
 	if *initFlag {

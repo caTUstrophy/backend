@@ -396,8 +396,8 @@ func (app *App) GetUser(c *gin.Context) {
 			Permissions interface{}
 		}{
 			struct {
-				lat float32
 				lon float32
+				lat float32
 			}{
 				float32(13.5),
 				float32(50.2),
@@ -436,8 +436,8 @@ func (app *App) UpdateUser(c *gin.Context) {
 			Permissions interface{}
 		}{
 			struct {
-				lat float32
 				lon float32
+				lat float32
 			}{
 				13.5,
 				50.2,
@@ -514,8 +514,8 @@ func (app *App) ListUserOffers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Name": "Offering bread",
 		"Location": struct {
-			lat float32
 			lon float32
+			lat float32
 		}{
 			12.7,
 			51.0,
@@ -591,8 +591,8 @@ func (app *App) ListUserRequests(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Name": "Looking for bread",
 		"Location": struct {
-			lat float32
 			lon float32
+			lat float32
 		}{
 			13.9,
 			50.1,
@@ -870,8 +870,8 @@ func (app *App) UpdateUserOffer(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Name": "Offering COMPLETELY NEW bread",
 		"Location": struct {
-			lat float32
 			lon float32
+			lat float32
 		}{
 			15.5,
 			45.3,
@@ -907,8 +907,8 @@ func (app *App) UpdateUserRequest(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Name": "Looking for COMPLETELY NEW bread",
 		"Location": struct {
-			lat float32
 			lon float32
+			lat float32
 		}{
 			14.0,
 			49.9,
@@ -1068,8 +1068,8 @@ func (app *App) ListMatchings(c *gin.Context) {
 				"1-2-3-4",
 			},
 			struct {
-				lat float32
 				lon float32
+				lat float32
 			}{
 				13.9,
 				50.1,
@@ -1097,8 +1097,8 @@ func (app *App) ListMatchings(c *gin.Context) {
 				"u-x-y-z",
 			},
 			struct {
-				lat float32
 				lon float32
+				lat float32
 			}{
 				13.9,
 				50.1,
