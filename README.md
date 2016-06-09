@@ -45,6 +45,16 @@ $ ./backend
 Afterwards, the backend is reachable at `http://localhost:3001`.
 
 
+## Available admin user
+
+To be able to use this backend during development we provide a default admin account. When you initially run `./backend --init`, an admin user with the following credentials will be created:
+
+**Mail:** admin@example.org  
+**Password:** CaTUstrophyAdmin123$
+
+**Please make sure you don't create this default admin user in production!**
+
+
 ## API documentation
 
 Four roles are present in this model:
@@ -53,24 +63,25 @@ Four roles are present in this model:
 * logged-in user **(L)**: registered and authorized user
 * admin **(A)**: registered, authorized and privileged user
 
-| Functionality     | Minimum needed privilege | HTTP verb | Endpoint       | API version | Done? |
-| ----------------- | ------------------------ | --------- | -------------- | ----------- | ----- |
-| Registration      | U                        | POST      | /users         | MVP         | ✔     |
-| Login             | N                        | POST      | /auth          | MVP         | ✔     |
-| Renew auth token  | L                        | GET       | /auth          | MVP         | ✔     |
-| Logout            | L                        | DELETE    | /auth          | MVP         | ✔     |
-| Own profile       | L                        | GET       | /me            | 2.0         |       |
-| List offers       | A                        | GET       | /offers        | MVP         | ✔    |
-| List own offers   | L                        | GET       | /me/offers     | 2.0         |       |
-| List requests     | A                        | GET       | /requests      | MVP         | ✔    |
-| List own requests | L                        | GET       | /me/requests   | 2.0         |       |
-| Create offer      | L                        | POST      | /offers        | MVP         | ✔     |
-| Create request    | L                        | POST      | /requests      | MVP         | ✔     |
-| Update offer x    | L                        | PUT       | /me/offers/x   | 2.0         |       |
-| Update request x  | L                        | PUT       | /me/requests/x | 2.0         |       |
-| Create matching   | A                        | POST      | /matchings     | MVP         | ✔    |
-| Get matching x    | L                        | GET       | /matchings/x   | MVP         | ✔     |
-| Get matchings		| A						   | GET	   | /matchings		| 2.0		  |		  |
+| Functionality          | Needed privilege | HTTP verb | Endpoint       | API version | Done? |
+| ---------------------- | ---------------- | --------- | -------------- | ----------- | ----- |
+| Registration           | U                | POST      | /users         | MVP         | ✔    |
+| Login                  | N                | POST      | /auth          | MVP         | ✔    |
+| Renew auth token       | L                | GET       | /auth          | MVP         | ✔    |
+| Logout                 | L                | DELETE    | /auth          | MVP         | ✔    |
+| Own profile            | L                | GET       | /me            | 2.0         |       |
+| Update own profile     | L                | POST      | /me            | 2.0         |       |
+| List offers region x   | A                | GET       | /offers/x      | MVP         | ✔    |
+| List own offers        | L                | GET       | /me/offers     | 2.0         |       |
+| List requests region x | A                | GET       | /requests/x    | MVP         | ✔    |
+| List own requests      | L                | GET       | /me/requests   | 2.0         |       |
+| Create offer           | L                | POST      | /offers        | MVP         | ✔    |
+| Create request         | L                | POST      | /requests      | MVP         | ✔    |
+| Update own offer x     | L                | PUT       | /me/offers/x   | 2.0         |       |
+| Update own request x   | L                | PUT       | /me/requests/x | 2.0         |       |
+| Create matching        | A                | POST      | /matchings     | MVP         | ✔    |
+| List matchings         | A                | GET       | /matchings     | 2.0         |       |
+| Get matching x         | L                | GET       | /matchings/x   | MVP         | ✔    |
 
 
 ### What is inside a JWT?
@@ -191,7 +202,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 }
 ```
 
-#### List offers
+#### List offers for region x
 
 **Request:**
 
@@ -235,7 +246,7 @@ Fail
 ```
 
 
-#### List requests
+#### List requests for region x
 
 **Request:**
 

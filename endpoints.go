@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"time"
+
+	"net/http"
 
 	"github.com/caTUstrophy/backend/db"
 	"github.com/dgrijalva/jwt-go"
@@ -130,7 +131,7 @@ func (app *App) CheckScope(user *db.User, location string, permission string) bo
 	return false
 }
 
-func (app *App) makeToken(c *gin.Context, user *db.User) (string, int64) {
+func (app *App) makeToken(c *gin.Context, user *db.User) string {
 
 	// Retrieve the session signing key from environment.
 	jwtSigningSecret := os.Getenv("JWT_SIGNING_SECRET")
@@ -159,7 +160,7 @@ func (app *App) makeToken(c *gin.Context, user *db.User) (string, int64) {
 	// Add JWT to session in-memory cache.
 	app.Sessions.Set(user.Mail, sessionJWTString, cache.DefaultExpiration)
 
-	return sessionJWTString, expTime
+	return sessionJWTString
 }
 
 // Endpoint handlers
@@ -172,7 +173,7 @@ func (app *App) CreateUser(c *gin.Context) {
 	err := c.BindJSON(&Payload)
 	if err != nil {
 
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Supplied values in JSON body could not be parsed",
 		})
 
@@ -204,7 +205,7 @@ func (app *App) CreateUser(c *gin.Context) {
 		}
 
 		// Send prepared error message to client.
-		c.JSON(400, errResp)
+		c.JSON(http.StatusBadRequest, errResp)
 
 		return
 	}
@@ -216,7 +217,7 @@ func (app *App) CreateUser(c *gin.Context) {
 	if CountDup > 0 {
 
 		// Signal client that this mail is already in use.
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Mail": "Already exists",
 		})
 
@@ -249,7 +250,7 @@ func (app *App) CreateUser(c *gin.Context) {
 	app.DB.Create(&User)
 
 	// On success: return ID of newly created user.
-	c.JSON(201, gin.H{
+	c.JSON(http.StatusCreated, gin.H{
 		"ID":            User.ID,
 		"Name":          User.Name,
 		"PreferredName": User.PreferredName,
@@ -266,7 +267,7 @@ func (app *App) Login(c *gin.Context) {
 	err := c.BindJSON(&Payload)
 	if err != nil {
 
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Supplied values in JSON body could not be parsed",
 		})
 
@@ -292,7 +293,7 @@ func (app *App) Login(c *gin.Context) {
 		}
 
 		// Send prepared error message to client.
-		c.JSON(400, errResp)
+		c.JSON(http.StatusBadRequest, errResp)
 
 		return
 	}
@@ -312,7 +313,7 @@ func (app *App) Login(c *gin.Context) {
 	if err != nil {
 
 		// Signal client that an error occured.
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Mail and/or password is wrong",
 		})
 
@@ -320,12 +321,11 @@ func (app *App) Login(c *gin.Context) {
 	}
 
 	// Create session JWT and expiration time of JWT.
-	sessionJWTString, sessionExpTime := app.makeToken(c, &User)
+	sessionJWTString := app.makeToken(c, &User)
 
 	// Deliver JWT to client that made the request.
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"AccessToken": sessionJWTString,
-		"ExpiresIn":   sessionExpTime,
 	})
 }
 
@@ -337,18 +337,17 @@ func (app *App) RenewToken(c *gin.Context) {
 
 		// Signal client an error and expect authorization.
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(401)
+		c.Status(http.StatusUnauthorized)
 
 		return
 	}
 
 	// Create session JWT and expiration time of JWT.
-	sessionJWTString, sessionExpTime := app.makeToken(c, User)
+	sessionJWTString := app.makeToken(c, User)
 
 	// Deliver JWT to client that made the request.
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"AccessToken": sessionJWTString,
-		"ExpiresIn":   sessionExpTime,
 	})
 }
 
@@ -360,7 +359,7 @@ func (app *App) Logout(c *gin.Context) {
 
 		// Signal client an error and expect authorization.
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(401)
+		c.Status(http.StatusUnauthorized)
 
 		return
 	}
@@ -369,8 +368,88 @@ func (app *App) Logout(c *gin.Context) {
 	app.Sessions.Delete(User.Mail)
 
 	// Signal client success and return ID of logged out user.
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"ID": User.ID,
+	})
+}
+
+func (app *App) GetUser(c *gin.Context) {
+
+	// Check authorization for this function.
+	ok, _, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// TODO: Change stub to real function.
+	c.JSON(http.StatusOK, gin.H{
+		"Name":          "Bernd",
+		"PreferredName": "Da Börnd",
+		"Mail":          "esistdermomentgekommen@mail.com",
+		"Groups": struct {
+			Location    interface{}
+			Permissions interface{}
+		}{
+			struct {
+				lat float32
+				lon float32
+			}{
+				float32(13.5),
+				float32(50.2),
+			},
+			struct {
+				AccessRight string
+				Description string
+			}{
+				"user",
+				"This permission represents a standard, registered but not privileged user in our system.",
+			},
+		},
+	})
+}
+
+func (app *App) UpdateUser(c *gin.Context) {
+
+	// Check authorization for this function.
+	ok, _, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// TODO: Change stub to real function.
+	c.JSON(http.StatusOK, gin.H{
+		"Name":          "Updated Bernd",
+		"PreferredName": "Da Börnd",
+		"Mail":          "esistdermomentgekommen@mail.com",
+		"Groups": struct {
+			Location    interface{}
+			Permissions interface{}
+		}{
+			struct {
+				lat float32
+				lon float32
+			}{
+				13.5,
+				50.2,
+			},
+			struct {
+				AccessRight string
+				Description string
+			}{
+				"user",
+				"This permission represents a standard, registered but not privileged user in our system.",
+			},
+		},
 	})
 }
 
@@ -382,7 +461,7 @@ func (app *App) ListOffers(c *gin.Context) {
 
 		// Signal client an error and expect authorization.
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(401)
+		c.Status(http.StatusUnauthorized)
 
 		return
 	}
@@ -392,7 +471,7 @@ func (app *App) ListOffers(c *gin.Context) {
 
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
-		c.Status(401)
+		c.Status(http.StatusUnauthorized)
 
 		return
 	}
@@ -412,7 +491,42 @@ func (app *App) ListOffers(c *gin.Context) {
 	}
 
 	// Send back results to client.
-	c.JSON(200, Offers)
+	c.JSON(http.StatusOK, Offers)
+}
+
+func (app *App) ListUserOffers(c *gin.Context) {
+
+	// Check authorization for this function.
+	ok, _, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// TODO: Change this stub to real function.
+	// 1) Only retrieve offers from user.
+	// 2) Check expired field - extra argument for that?
+	// 3) Only return what's needed.
+	c.JSON(http.StatusOK, gin.H{
+		"Name": "Offering bread",
+		"Location": struct {
+			lat float32
+			lon float32
+		}{
+			12.7,
+			51.0,
+		},
+		"Tags": struct {
+			Name string
+		}{
+			"Food",
+		},
+		"ValidityPeriod": time.Now().Format(time.RFC3339),
+	})
 }
 
 func (app *App) ListRequests(c *gin.Context) {
@@ -423,7 +537,7 @@ func (app *App) ListRequests(c *gin.Context) {
 
 		// Signal client an error and expect authorization.
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(401)
+		c.Status(http.StatusUnauthorized)
 
 		return
 	}
@@ -433,7 +547,7 @@ func (app *App) ListRequests(c *gin.Context) {
 
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
-		c.Status(401)
+		c.Status(http.StatusUnauthorized)
 
 		return
 	}
@@ -454,7 +568,42 @@ func (app *App) ListRequests(c *gin.Context) {
 	}
 
 	// Send back results to client.
-	c.JSON(200, Requests)
+	c.JSON(http.StatusOK, Requests)
+}
+
+func (app *App) ListUserRequests(c *gin.Context) {
+
+	// Check authorization for this function.
+	ok, _, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// TODO: Change this stub to real function.
+	// 1) Only retrieve requests from user.
+	// 2) Check expired field - extra argument for that?
+	// 3) Only return what's needed.
+	c.JSON(http.StatusOK, gin.H{
+		"Name": "Looking for bread",
+		"Location": struct {
+			lat float32
+			lon float32
+		}{
+			13.9,
+			50.1,
+		},
+		"Tags": struct {
+			Name string
+		}{
+			"Food",
+		},
+		"ValidityPeriod": time.Now().Format(time.RFC3339),
+	})
 }
 
 func (app *App) CreateOffer(c *gin.Context) {
@@ -463,11 +612,9 @@ func (app *App) CreateOffer(c *gin.Context) {
 	ok, User, message := app.Authorize(c.Request)
 	if !ok {
 
-		fmt.Printf(message + "\n")
-
 		// Signal client an error and expect authorization.
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(401)
+		c.Status(http.StatusUnauthorized)
 
 		return
 	}
@@ -481,7 +628,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 		// Check if error was caused by failed unmarshalling string -> []string.
 		if err.Error() == "json: cannot unmarshal string into Go value of type []string" {
 
-			c.JSON(400, gin.H{
+			c.JSON(http.StatusBadRequest, gin.H{
 				"Tags": "Provide an array, not a string",
 			})
 
@@ -508,7 +655,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 		}
 
 		// Send prepared error message to client.
-		c.JSON(400, errResp)
+		c.JSON(http.StatusBadRequest, errResp)
 
 		return
 	}
@@ -520,9 +667,6 @@ func (app *App) CreateOffer(c *gin.Context) {
 	Offer.User = *User
 	Offer.Location = Payload.Location
 	Offer.Tags = make([]db.Tag, 0)
-
-	fmt.Printf(Offer.Name)
-	fmt.Printf(Offer.Location)
 
 	// If tags were supplied, check if they exist in our system.
 	if len(Payload.Tags) > 0 {
@@ -547,7 +691,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 		// If at least one of the tags does not exist - return error.
 		if !allTagsExist {
 
-			c.JSON(400, gin.H{
+			c.JSON(http.StatusBadRequest, gin.H{
 				"Tags": "One or multiple tags do not exist",
 			})
 
@@ -560,7 +704,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 	// Check if validity period is yet to come.
 	if Payload.ValidityPeriod <= time.Now().Unix() {
 
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"ValidityPeriod": "Offer has to be valid until a date in the future",
 		})
 
@@ -572,10 +716,9 @@ func (app *App) CreateOffer(c *gin.Context) {
 
 	// Save offer to database.
 	app.DB.Create(&Offer)
-	fmt.Printf(" -> Created new offer")
 
 	// On success: return ID of newly created offer.
-	c.JSON(201, gin.H{
+	c.JSON(http.StatusCreated, gin.H{
 		"ID":             Offer.ID,
 		"Name":           Offer.Name,
 		"Location":       Offer.Location,
@@ -592,7 +735,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 
 		// Signal client an error and expect authorization.
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(401)
+		c.Status(http.StatusUnauthorized)
 
 		return
 	}
@@ -606,7 +749,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 		// Check if error was caused by failed unmarshalling string -> []string.
 		if err.Error() == "json: cannot unmarshal string into Go value of type []string" {
 
-			c.JSON(400, gin.H{
+			c.JSON(http.StatusBadRequest, gin.H{
 				"Tags": "Provide an array, not a string",
 			})
 
@@ -633,7 +776,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 		}
 
 		// Send prepared error message to client.
-		c.JSON(400, errResp)
+		c.JSON(http.StatusBadRequest, errResp)
 
 		return
 	}
@@ -669,7 +812,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 		// If at least one of the tags does not exist - return error.
 		if !allTagsExist {
 
-			c.JSON(400, gin.H{
+			c.JSON(http.StatusBadRequest, gin.H{
 				"Tags": "One or multiple tags do not exist",
 			})
 
@@ -682,7 +825,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 	// Check if validity period is yet to come.
 	if Payload.ValidityPeriod <= time.Now().Unix() {
 
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"ValidityPeriod": "Request has to be valid until a date in the future",
 		})
 
@@ -696,12 +839,86 @@ func (app *App) CreateRequest(c *gin.Context) {
 	app.DB.Create(&Request)
 
 	// On success: return ID of newly created request.
-	c.JSON(201, gin.H{
+	c.JSON(http.StatusCreated, gin.H{
 		"ID":             Request.ID,
 		"Name":           Request.Name,
 		"Location":       Request.Location,
 		"Tags":           Request.Tags,
 		"ValidityPeriod": Request.ValidityPeriod,
+	})
+}
+
+func (app *App) UpdateUserOffer(c *gin.Context) {
+
+	// Check authorization for this function.
+	ok, _, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	offerID := c.Params.ByName("offerID")
+	log.Println("[UpdateUserOffer] Offer ID was:", offerID)
+
+	// TODO: Validate offerID!
+
+	// TODO: Change this stub to real function.
+	c.JSON(http.StatusOK, gin.H{
+		"Name": "Offering COMPLETELY NEW bread",
+		"Location": struct {
+			lat float32
+			lon float32
+		}{
+			15.5,
+			45.3,
+		},
+		"Tags": struct {
+			Name string
+		}{
+			"Food",
+		},
+		"ValidityPeriod": time.Now().Format(time.RFC3339),
+	})
+}
+
+func (app *App) UpdateUserRequest(c *gin.Context) {
+
+	// Check authorization for this function.
+	ok, _, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	requestID := c.Params.ByName("requestID")
+	log.Println("[UpdateUserRequest] Request ID was:", requestID)
+
+	// TODO: Validate requestID!
+
+	// TODO: Change this stub to real function.
+	c.JSON(http.StatusOK, gin.H{
+		"Name": "Looking for COMPLETELY NEW bread",
+		"Location": struct {
+			lat float32
+			lon float32
+		}{
+			14.0,
+			49.9,
+		},
+		"Tags": struct {
+			Name string
+		}{
+			"Food",
+		},
+		"ValidityPeriod": time.Now().Format(time.RFC3339),
 	})
 }
 
@@ -713,7 +930,7 @@ func (app *App) CreateMatching(c *gin.Context) {
 
 		// Signal client an error and expect authorization.
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(401)
+		c.Status(http.StatusUnauthorized)
 
 		return
 	}
@@ -723,7 +940,7 @@ func (app *App) CreateMatching(c *gin.Context) {
 
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
-		c.Status(401)
+		c.Status(http.StatusUnauthorized)
 
 		return
 	}
@@ -734,7 +951,7 @@ func (app *App) CreateMatching(c *gin.Context) {
 	err := c.BindJSON(&Payload)
 	if err != nil {
 
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Supplied values in JSON body could not be parsed",
 		})
 
@@ -760,7 +977,7 @@ func (app *App) CreateMatching(c *gin.Context) {
 		}
 
 		// Send prepared error message to client.
-		c.JSON(400, errResp)
+		c.JSON(http.StatusBadRequest, errResp)
 
 		return
 	}
@@ -772,7 +989,7 @@ func (app *App) CreateMatching(c *gin.Context) {
 	app.DB.Model(&db.Request{}).Where("id = ?", Payload.Request).Count(&CountRequest)
 
 	if CountOffer == 0 || CountRequest == 0 {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Matching": "Offer / Request doesnt exist",
 		})
 
@@ -784,7 +1001,7 @@ func (app *App) CreateMatching(c *gin.Context) {
 	app.DB.Model(&db.Matching{}).Where("offer_id = ? AND request_id = ?", Payload.Offer, Payload.Request).Count(&CountDup)
 
 	if CountDup > 0 {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Matching": "Already exists",
 		})
 
@@ -806,7 +1023,94 @@ func (app *App) CreateMatching(c *gin.Context) {
 
 	app.DB.Create(&Matching)
 
-	c.JSON(201, Matching)
+	c.JSON(http.StatusCreated, Matching)
+}
+
+func (app *App) ListMatchings(c *gin.Context) {
+
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// TODO: Change this stub to real function.
+	// 1) Check for expired fields in offers and requests - via extra argument?
+	c.JSON(http.StatusOK, gin.H{
+		"Offer": struct {
+			ID             string
+			Name           string
+			User           interface{}
+			Location       interface{}
+			Tags           interface{}
+			ValidityPeriod string
+		}{
+			"a-b-c-d",
+			"Offering bread",
+			struct {
+				ID string
+			}{
+				"1-2-3-4",
+			},
+			struct {
+				lat float32
+				lon float32
+			}{
+				13.9,
+				50.1,
+			},
+			struct {
+				Name string
+			}{
+				"Food",
+			},
+			time.Now().Format(time.RFC3339),
+		},
+		"Request": struct {
+			ID             string
+			Name           string
+			User           interface{}
+			Location       interface{}
+			Tags           interface{}
+			ValidityPeriod string
+		}{
+			"9-d-2-c",
+			"Looking for bread",
+			struct {
+				ID string
+			}{
+				"u-x-y-z",
+			},
+			struct {
+				lat float32
+				lon float32
+			}{
+				13.9,
+				50.1,
+			},
+			struct {
+				Name string
+			}{
+				"Food",
+			},
+			time.Now().Format(time.RFC3339),
+		},
+	})
 }
 
 func (app *App) GetMatching(c *gin.Context) {
@@ -817,15 +1121,10 @@ func (app *App) GetMatching(c *gin.Context) {
 
 		// Signal client an error and expect authorization.
 		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(401)
+		c.Status(http.StatusUnauthorized)
 
 		return
 	}
-
-	// Check if user permissions are sufficient (user is admin).
-	// if ok := CheckScope(User, "worldwide", "admin"); !ok {
-	//     c.Status(401)
-	// }
 
 	var Matching db.Matching
 
@@ -837,5 +1136,5 @@ func (app *App) GetMatching(c *gin.Context) {
 	app.DB.First(&Matching, "id = ?", matchingID)
 
 	// Send back results to client.
-	c.JSON(200, Matching)
+	c.JSON(http.StatusOK, Matching)
 }
