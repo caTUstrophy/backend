@@ -1,5 +1,9 @@
 package db
 
+import (
+	"time"
+)
+
 // Models
 
 type Permission struct {
@@ -37,7 +41,7 @@ type Offer struct {
 	User           User
 	Location       string `gorm:"index;not null"`
 	Tags           []Tag  `gorm:"many2many:offer_tags"`
-	ValidityPeriod int64
+	ValidityPeriod time.Time
 	Expired        bool
 }
 
@@ -47,7 +51,7 @@ type Request struct {
 	User           User
 	Location       string `gorm:"index;not null"`
 	Tags           []Tag  `gorm:"many2many:request_tags"`
-	ValidityPeriod int64
+	ValidityPeriod time.Time
 	Expired        bool
 }
 
@@ -58,3 +62,21 @@ type Matching struct {
 	Request   Request `gorm:"ForeignKey:RequestId;AssociationForeignKey:Refer"`
 	RequestId string
 }
+
+// TODO: Add an area representation similar to this.
+//       Make use of PostGIS and Postgres native geometric types.
+//       Points will NOT be represented like this.
+
+/*
+type Point struct {
+	Longitude float32
+	Latitude  float32
+}
+
+type Area struct {
+	ID          string `gorm:"primary_key"`
+	Name        string
+	Description string
+	Boundaries  []Point
+}
+*/

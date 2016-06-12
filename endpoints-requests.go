@@ -20,7 +20,7 @@ type CreateRequestPayload struct {
 	Name           string   `conform:"trim" validate:"required"`
 	Location       string   `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	ValidityPeriod int64    `conform:"trim" validate:"required"`
+	ValidityPeriod string   `conform:"trim" validate:"required"`
 }
 
 // Requests related functions.
@@ -121,8 +121,19 @@ func (app *App) CreateRequest(c *gin.Context) {
 		Request.Tags = nil
 	}
 
+	// Check if supplied date is a RFC3339 compliant date.
+	PayloadTime, err := time.Parse(time.RFC3339, Payload.ValidityPeriod)
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"ValidityPeriod": "Request has to be a RFC3339 compliant date",
+		})
+
+		return
+	}
+
 	// Check if validity period is yet to come.
-	if Payload.ValidityPeriod <= time.Now().Unix() {
+	if PayloadTime.Unix() <= time.Now().Unix() {
 
 		c.JSON(http.StatusBadRequest, gin.H{
 			"ValidityPeriod": "Request has to be valid until a date in the future",
@@ -130,7 +141,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 
 		return
 	} else {
-		Request.ValidityPeriod = Payload.ValidityPeriod
+		Request.ValidityPeriod = PayloadTime
 		Request.Expired = false
 	}
 
@@ -177,10 +188,10 @@ func (app *App) ListRequests(c *gin.Context) {
 	var Requests []db.Request
 
 	// Retrieve all requests from database.
-	//app.DB.Preload("User").Find(&Requests, "location = ?", region)
+	// app.DB.Preload("User").Find(&Requests, "location = ?", region)
 	app.DB.Find(&Requests, "location = ?", region)
 
-	// TODO remove loop and exchange for preload
+	// TODO: remove loop and exchange for preload
 	for i := 0; i < len(Requests); i++ {
 		app.DB.Select("name, id").First(&Requests[i].User, "mail = ?", User.Mail)
 	}

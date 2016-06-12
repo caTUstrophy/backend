@@ -20,7 +20,7 @@ type CreateOfferPayload struct {
 	Name           string   `conform:"trim" validate:"required"`
 	Location       string   `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	ValidityPeriod int64    `conform:"trim" validate:"required"`
+	ValidityPeriod string   `conform:"trim" validate:"required"`
 }
 
 // Offers related functions.
@@ -121,8 +121,19 @@ func (app *App) CreateOffer(c *gin.Context) {
 		Offer.Tags = nil
 	}
 
+	// Check if supplied date is a RFC3339 compliant date.
+	PayloadTime, err := time.Parse(time.RFC3339, Payload.ValidityPeriod)
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"ValidityPeriod": "Offer has to be a RFC3339 compliant date",
+		})
+
+		return
+	}
+
 	// Check if validity period is yet to come.
-	if Payload.ValidityPeriod <= time.Now().Unix() {
+	if PayloadTime.Unix() <= time.Now().Unix() {
 
 		c.JSON(http.StatusBadRequest, gin.H{
 			"ValidityPeriod": "Offer has to be valid until a date in the future",
@@ -130,7 +141,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 
 		return
 	} else {
-		Offer.ValidityPeriod = Payload.ValidityPeriod
+		Offer.ValidityPeriod = PayloadTime
 		Offer.Expired = false
 	}
 
@@ -179,7 +190,7 @@ func (app *App) ListOffers(c *gin.Context) {
 	// Retrieve all offers from database.
 	app.DB.Find(&Offers, "Location = ?", region)
 
-	// TODO remove loop and exchange for preload
+	// TODO: remove loop and exchange for preload
 	for i := 0; i < len(Offers); i++ {
 		app.DB.Select("name, id").First(&Offers[i].User, "mail = ?", User.Mail)
 	}

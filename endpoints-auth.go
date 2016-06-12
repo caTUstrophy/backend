@@ -83,7 +83,7 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 func (app *App) CheckScope(user *db.User, location string, permission string) bool {
 
 	// Check if User.Groups contains a group with location.
-	// * No -> false
+	// * No  -> false
 	// * Yes -> Has this group the necessary permission?
 
 	// Fast, because the typical user is member of few groups.

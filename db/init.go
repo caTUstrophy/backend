@@ -17,11 +17,6 @@ import (
 
 // Functions.
 
-// Set Expired flag for all requests and offers that are not valid anymore.
-func CheckForExpired(db *gorm.DB) {
-	// TODO
-}
-
 // Create connection to our database from environment file.
 func InitDB() *gorm.DB {
 
@@ -92,9 +87,10 @@ func AddDefaultData(db *gorm.DB) {
 	db.CreateTable(&Group{})
 	db.CreateTable(&User{})
 	db.CreateTable(&Tag{})
-	db.CreateTable(&Matching{})
 	db.CreateTable(&Offer{})
 	db.CreateTable(&Request{})
+	db.CreateTable(&Matching{})
+	// db.CreateTable(&Area{})
 
 	// Two default permission entities.
 
@@ -127,6 +123,7 @@ func AddDefaultData(db *gorm.DB) {
 	}
 
 	// Some default tag entities.
+
 	TagFood := Tag{ID: fmt.Sprintf("%s", uuid.NewV4()), Name: "Food"}
 	TagWater := Tag{ID: fmt.Sprintf("%s", uuid.NewV4()), Name: "Water"}
 	TagVehicle := Tag{ID: fmt.Sprintf("%s", uuid.NewV4()), Name: "Vehicle"}
@@ -148,15 +145,31 @@ func AddDefaultData(db *gorm.DB) {
 		Enabled:       true,
 	}
 
+	// A default areas.
+	/*
+		AreaTU := Area{
+			ID:          fmt.Sprintf("%s", uuid.NewV4()),
+			Name:        "TU Berlin",
+			Description: "The campus of the Technische Universität Berlin in Charlottenburg, Berlin.",
+			Boundaries:  []Point{Point{13.324401, 52.516872}, Point{13.322599, 52.514740}, Point{13.322679, 52.512611}, Point{13.322674, 52.511743}, Point{13.328280, 52.508302}, Point{13.331077, 52.512191}, Point{13.329763, 52.513787}, Point{13.324401, 52.516872}},
+		}
+	*/
+
 	// Create the database elements for these default values.
 	db.Create(&PermUser)
 	db.Create(&PermAdmin)
 	db.Create(&GroupUser)
 	db.Create(&GroupAdmin)
 	db.Create(&UserAdmin)
+	// db.Create(&AreaTU)
 
 	for _, Tag := range Tags {
 		log.Println(Tag)
 		db.Create(&Tag)
 	}
+}
+
+// Set Expired flag for all requests and offers that are not valid anymore.
+func CheckForExpired(db *gorm.DB) {
+	// TODO
 }

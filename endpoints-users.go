@@ -135,6 +135,7 @@ func (app *App) GetUser(c *gin.Context) {
 
 	// TODO: Change stub to real function.
 	c.JSON(http.StatusOK, gin.H{
+		"ID":            fmt.Sprintf("%s", uuid.NewV4()),
 		"Name":          "Bernd",
 		"PreferredName": "Da Börnd",
 		"Mail":          "esistdermomentgekommen@mail.com",
@@ -175,6 +176,7 @@ func (app *App) UpdateUser(c *gin.Context) {
 
 	// TODO: Change stub to real function.
 	c.JSON(http.StatusOK, gin.H{
+		"ID":            fmt.Sprintf("%s", uuid.NewV4()),
 		"Name":          "Updated Bernd",
 		"PreferredName": "Da Börnd",
 		"Mail":          "esistdermomentgekommen@mail.com",
