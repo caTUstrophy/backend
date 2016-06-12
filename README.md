@@ -138,19 +138,22 @@ Success (**Currently!** Format will change very soon!)
 201 Created
 
 {
-	"ID": int id,
+	"ID": UUID v4,
 	"Mail": string,
 	"Name": string,
 	"PreferredName": string,
 	"Groups": [
 		{
-			"ID": int id,
-			"CreatedAt": Date,
-			"UpdatedAt": Date,
-			"DeletedAt": Date (or null),
+			"ID": UUID v4,
 			"DefaultGroup": boolean,
 			"Location": string,
-			"Permissions": null
+			"Permissions": [
+	            {
+	                "ID": UUID v4,
+	                "AccessRight": string,
+	                "Description": string
+	            }
+            ]
 		}
 	]
 }
@@ -224,7 +227,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 200 OK
 
 {
-	"ID": int id
+	"ID": UUID v4
 }
 ```
 
@@ -297,11 +300,11 @@ Success
 		{
 			"Name": string,
 			"Tags": string array,
-			"ValidityPeriod": unix timestamp,
+			"ValidityPeriod": RFC3339 date,
 			"Location": string,
 			"User": {
-				"Name": string,
-				"ID": int id
+				"ID": UUID v4,
+				"Name": string
 			}
 		}
 	}, 
@@ -363,11 +366,11 @@ Success
 		{
 			"Name": string,
 			"Tags": string array,
-			"ValidityPeriod": unix timestamp,
+			"ValidityPeriod": RFC3339 date,
 			"Location": string,
 			"User": {
-				"Name": string,
-				"ID": int id
+				"ID": UUID v4,
+				"Name": string
 			}
 		}
 	}, 
@@ -419,7 +422,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 {
 	"Name": required, string,
 	"Tags": optional, string array,
-	"ValidityPeriod": required, unix timestamp,
+	"ValidityPeriod": required, RFC3339 date,
 	"Location": required, string
 }
 ```
@@ -433,7 +436,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 {
 	"Name": "hugs",
 	"Tags": ["tag", "another tag"],
-	"ValidityPeriod": 1464706055,
+	"ValidityPeriod": "2017-11-01T22:08:41+00:00",
 	"Location": "worldwide"
 }
 ```
@@ -446,20 +449,17 @@ Success (**Currently!** Format will change very soon!):
 201 Created
 
 {
-	"ID": int id,
+	"ID": UUID v4,
 	"Location": string,
 	"Name": string,
 	"Tags": [
 		{
-			"ID": int id,
-			"CreatedAt": Date,
-			"UpdatedAt": Date,
-			"DeletedAt": Date (or null),
+			"ID": UUID v4,
 			"Name": string
 		},
 		...
 	],
-	"ValidityPeriod": int
+	"ValidityPeriod": RFC3339 date
 }
 ```
 
@@ -495,7 +495,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 {
 	"Name": required, string,
 	"Tags": optional, string array,
-	"ValidityPeriod": required, unix timestamp,
+	"ValidityPeriod": required, RFC3339 date,
 	"Location": required, string
 }
 ```
@@ -508,20 +508,17 @@ Success (**Currently!** Format will change very soon!):
 201 Created
 
 {
-	"ID": int id,
+	"ID": UUID v4,
 	"Location": string,
 	"Name": string,
 	"Tags": [
 		{
-			"ID": int id,
-			"CreatedAt": Date,
-			"UpdatedAt": Date,
-			"DeletedAt": Date (or null),
+			"ID": UUID v4,
 			"Name": string
 		},
 		...
 	],
-	"ValidityPeriod": int
+	"ValidityPeriod": RFC3339 date
 }
 ```
 
@@ -595,8 +592,8 @@ POST /matchings
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
-	"Request": required, int id,
-	"Offer": required, int id
+	"Request": required, UUID v4,
+	"Offer": required, UUID v4
 }
 ```
 
@@ -608,38 +605,29 @@ Success (**Currently!** Format will change very soon!):
 201 Created
 
 {
-	"ID": int id,
-	"CreatedAt": Date,
-	"UpdatedAt": Date,
-	"DeletedAt": Date (or null),
-	"OfferId": int,
-	"RequestId": int,
+	"ID": UUID v4,
+	"OfferId": UUID v4,
+	"RequestId": UUID v4,
 	"Offer": {
-		"ID": int id,
-		"CreatedAt": Date,
-		"UpdatedAt": Date,
-		"DeletedAt": Date (or null),
+		"ID": UUID v4,
 		"Name": string,
 		"User": {
 			<currently empty user object>
 		},
 		"Location": string,
 		"Tags": null,
-		"ValidityPeriod": int,
+		"ValidityPeriod": RFC3339 date,
 		"Expired": boolean
 	},
 	"Request": {
-		"ID": int id,
-		"CreatedAt": Date,
-		"UpdatedAt": Date,
-		"DeletedAt": Date (or null),
+		"ID": UUID v4,
 		"Name": string,
 		"User": {
 			<currently empty user object>
 		},
 		"Location": string,
 		"Tags": null,
-		"ValidityPeriod": int,
+		"ValidityPeriod": RFC3339 date,
 		"Expired": boolean
 	}
 }
@@ -696,17 +684,17 @@ Success:
 
 {
 	"Request": {
-		"ID": int id,
+		"ID": UUID v4,
 		"Name": string,
 		"Tags": string array,
-		"ValidityPeriod": unix timestamp,
+		"ValidityPeriod": RFC3339 date,
 		"Location": string
 	},
 	"Offer": {
-		"ID": int id,
+		"ID": UUID v4,
 		"Name": string,
 		"Tags": string array,
-		"ValidityPeriod": unix timestamp,
+		"ValidityPeriod": RFC3339 date,
 		"Location": string
 	},
 }
