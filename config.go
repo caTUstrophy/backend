@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/caTUstrophy/backend/db"
@@ -27,12 +29,18 @@ func InitAndConfig() *App {
 	// Make space for a application struct containing our global context.
 	app := new(App)
 
-	// Set cost factor of bcrypt password hashing to 10.
-	// TODO: On production, set this to 16.
-	app.HashCost = 10
+	// Set cost factor of bcrypt password hashing to the one loaded from environment.
+	app.HashCost, err = strconv.Atoi(os.Getenv("PASSWORD_HASHING_COST"))
+	if err != nil {
+		log.Fatal("[InitAndConfig] Could not load PASSWORD_HASHING_COST from .env file. Missing or not an integer?")
+	}
 
-	// Set JWT session token validity to 30 minutes.
-	app.SessionValidFor = 30 * time.Minute
+	// Set JWT session token validity to the duration in minutes loaded from environment.
+	validFor, err := strconv.Atoi(os.Getenv("JWT_VALID_FOR"))
+	if err != nil {
+		log.Fatal("[InitAndConfig] Could not load JWT_VALID_FOR from .env file. Missing or not an integer?")
+	}
+	app.SessionValidFor = time.Duration(validFor) * time.Minute
 
 	// Create new gin instance with default functionalities and add it to app struct.
 	app.Router = gin.Default()

@@ -10,13 +10,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/leebenson/conform"
+	"github.com/satori/go.uuid"
 )
 
 // Structs.
 
 type CreateMatchingPayload struct {
-	Request int `conform:"trim" validate:"required"`
-	Offer   int `conform:"trim" validate:"required"`
+	Request string `conform:"trim" validate:"required,uuid4"`
+	Offer   string `conform:"trim" validate:"required,uuid4"`
 }
 
 // Matching related functions.
@@ -72,6 +73,8 @@ func (app *App) CreateMatching(c *gin.Context) {
 				errResp[err.Field] = "Is required"
 			} else if err.Tag == "excludesall" {
 				errResp[err.Field] = "Contains unallowed characters"
+			} else if err.Tag == "uuid4" {
+				errResp[err.Field] = "Needs to be an UUID version 4"
 			}
 		}
 
@@ -81,25 +84,29 @@ func (app *App) CreateMatching(c *gin.Context) {
 		return
 	}
 
-	// check that offer and request do exist
+	// Check that offer and request do exist.
 	var CountOffer int
 	app.DB.Model(&db.Offer{}).Where("id = ?", Payload.Offer).Count(&CountOffer)
 	var CountRequest int
 	app.DB.Model(&db.Request{}).Where("id = ?", Payload.Request).Count(&CountRequest)
 
-	if CountOffer == 0 || CountRequest == 0 {
+	if (CountOffer == 0) || (CountRequest == 0) {
+
+		// Signal request failure to client.
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Matching": "Offer / Request doesnt exist",
+			"Matching": "Offer or request does not exist",
 		})
 
 		return
 	}
 
-	// check for matching duplicate
+	// Check for duplicate of matching.
 	var CountDup int
 	app.DB.Model(&db.Matching{}).Where("offer_id = ? AND request_id = ?", Payload.Offer, Payload.Request).Count(&CountDup)
 
 	if CountDup > 0 {
+
+		// Signal request failure to client.
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Matching": "Already exists",
 		})
@@ -107,19 +114,21 @@ func (app *App) CreateMatching(c *gin.Context) {
 		return
 	}
 
-	// get request and offer to resolve foreign key dependencies
+	// Get request and offer to resolve foreign key dependencies.
 	var Offer db.Offer
 	app.DB.First(&Offer, "id = ?", Payload.Offer)
 	var Request db.Request
 	app.DB.First(&Request, "id = ?", Payload.Request)
 
-	// save matching
+	// Save matching.
 	var Matching db.Matching
+	Matching.ID = fmt.Sprintf("%s", uuid.NewV4())
 	Matching.OfferId = Payload.Offer
 	Matching.Offer = Offer
 	Matching.RequestId = Payload.Request
 	Matching.Request = Request
 
+	// Save matching to database.
 	app.DB.Create(&Matching)
 
 	c.JSON(http.StatusCreated, Matching)
@@ -159,12 +168,12 @@ func (app *App) ListMatchings(c *gin.Context) {
 			Tags           interface{}
 			ValidityPeriod string
 		}{
-			"a-b-c-d",
+			"a55b22de-5955-4d2a-9078-1479bda097e7",
 			"Offering bread",
 			struct {
 				ID string
 			}{
-				"1-2-3-4",
+				"08f5588f-40c0-4ad1-9fd3-ce20e37903d3",
 			},
 			struct {
 				lon float32
@@ -188,12 +197,12 @@ func (app *App) ListMatchings(c *gin.Context) {
 			Tags           interface{}
 			ValidityPeriod string
 		}{
-			"9-d-2-c",
+			"adbe5c76-e3ac-4dee-90a4-d85054c64bdd",
 			"Looking for bread",
 			struct {
 				ID string
 			}{
-				"u-x-y-z",
+				"aaf84b79-ec0f-45df-9282-58850064fcbe",
 			},
 			struct {
 				lon float32

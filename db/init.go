@@ -7,82 +7,15 @@ import (
 	"strconv"
 
 	"github.com/jinzhu/gorm"
+	"github.com/satori/go.uuid"
 
-	// TEMPORARY: Comment in whichever you need.
+	// TEMPORARY: Use whichever connector you need.
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
-// Models
-
-type Permission struct {
-	gorm.Model
-
-	AccessRight string `gorm:"index;not null;unique"`
-	Description string
-}
-
-type Group struct {
-	gorm.Model
-
-	DefaultGroup bool
-	Location     string       `gorm:"index"`
-	Permissions  []Permission `gorm:"many2many:group_permissions"`
-}
-
-type User struct {
-	gorm.Model
-
-	Name          string
-	PreferredName string
-
-	Mail         string `gorm:"index;not null;unique"`
-	MailVerified bool
-
-	PasswordHash string `gorm:"unique"`
-
-	Groups []Group `gorm:"many2many:user_groups"`
-
-	Enabled bool
-}
-
-type Tag struct {
-	gorm.Model
-	Name string `gorm:"index;not null;unique"`
-}
-
-type Matching struct {
-	gorm.Model
-	Offer     Offer `gorm:"ForeignKey:OfferId;AssociationForeignKey:Refer"`
-	OfferId   int
-	Request   Request `gorm:"ForeignKey:RequestId;AssociationForeignKey:Refer"`
-	RequestId int
-}
-
-type Offer struct {
-	gorm.Model
-
-	Name     string `gorm:"index;not null"`
-	User     User
-	Location string `gorm:"index;not null"`
-
-	Tags           []Tag `gorm:"many2many:offer_tags"`
-	ValidityPeriod int64
-	Expired        bool
-}
-
-type Request struct {
-	gorm.Model
-
-	Name     string `gorm:"index;not null"`
-	User     User
-	Location string `gorm:"index;not null"`
-
-	Tags           []Tag `gorm:"many2many:request_tags"`
-	ValidityPeriod int64
-	Expired        bool
-}
+// Functions.
 
 // Set Expired flag for all requests and offers that are not valid anymore.
 func CheckForExpired(db *gorm.DB) {
@@ -166,11 +99,13 @@ func AddDefaultData(db *gorm.DB) {
 	// Two default permission entities.
 
 	PermUser := Permission{
+		ID:          fmt.Sprintf("%s", uuid.NewV4()),
 		AccessRight: "user",
 		Description: "This permission represents a standard, registered but not privileged user in our system.",
 	}
 
 	PermAdmin := Permission{
+		ID:          fmt.Sprintf("%s", uuid.NewV4()),
 		AccessRight: "admin",
 		Description: "This permission represents a registered and fully authorized user in our system. Users with this permission have full API access to our system.",
 	}
@@ -178,23 +113,25 @@ func AddDefaultData(db *gorm.DB) {
 	// Two default group entities.
 
 	GroupUser := Group{
+		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: true,
 		Location:     "worldwide",
 		Permissions:  []Permission{PermUser},
 	}
 
 	GroupAdmin := Group{
+		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: false,
 		Location:     "worldwide",
 		Permissions:  []Permission{PermAdmin},
 	}
 
 	// Some default tag entities.
-	TagFood := Tag{Name: "Food"}
-	TagWater := Tag{Name: "Water"}
-	TagVehicle := Tag{Name: "Vehicle"}
-	TagTool := Tag{Name: "Tool"}
-	TagInformation := Tag{Name: "Information"}
+	TagFood := Tag{ID: fmt.Sprintf("%s", uuid.NewV4()), Name: "Food"}
+	TagWater := Tag{ID: fmt.Sprintf("%s", uuid.NewV4()), Name: "Water"}
+	TagVehicle := Tag{ID: fmt.Sprintf("%s", uuid.NewV4()), Name: "Vehicle"}
+	TagTool := Tag{ID: fmt.Sprintf("%s", uuid.NewV4()), Name: "Tool"}
+	TagInformation := Tag{ID: fmt.Sprintf("%s", uuid.NewV4()), Name: "Information"}
 
 	Tags := []Tag{TagFood, TagWater, TagVehicle, TagTool, TagInformation}
 
@@ -202,6 +139,7 @@ func AddDefaultData(db *gorm.DB) {
 	// TODO: Replace this with an interactive dialog, when starting
 	//       the backend for the first time.
 	UserAdmin := User{
+		ID:            fmt.Sprintf("%s", uuid.NewV4()),
 		Name:          "admin",
 		PreferredName: "The Boss Around Here",
 		Mail:          "admin@example.org",
@@ -211,7 +149,8 @@ func AddDefaultData(db *gorm.DB) {
 	}
 
 	// Create the database elements for these default values.
-
+	db.Create(&PermUser)
+	db.Create(&PermAdmin)
 	db.Create(&GroupUser)
 	db.Create(&GroupAdmin)
 	db.Create(&UserAdmin)

@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/leebenson/conform"
+	"github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -85,6 +86,7 @@ func (app *App) CreateUser(c *gin.Context) {
 
 	var User db.User
 
+	User.ID = fmt.Sprintf("%s", uuid.NewV4())
 	User.Name = Payload.Name
 	User.PreferredName = Payload.PreferredName
 	User.Mail = Payload.Mail
@@ -99,7 +101,7 @@ func (app *App) CreateUser(c *gin.Context) {
 	}
 
 	var DefaultGroup db.Group
-	app.DB.First(&DefaultGroup, "default_group = ?", true)
+	app.DB.Preload("Permissions").First(&DefaultGroup, "default_group = ?", true)
 
 	// Add user to default user group and enable the user.
 	User.Groups = []db.Group{DefaultGroup}

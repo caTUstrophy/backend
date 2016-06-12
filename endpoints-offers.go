@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/leebenson/conform"
+	"github.com/satori/go.uuid"
 )
 
 // Structs.
@@ -81,6 +82,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 	var Offer db.Offer
 
 	// Set insert struct to values from payload.
+	Offer.ID = fmt.Sprintf("%s", uuid.NewV4())
 	Offer.Name = Payload.Name
 	Offer.User = *User
 	Offer.Location = Payload.Location

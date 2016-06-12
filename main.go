@@ -30,6 +30,7 @@ func main() {
 
 	// Enable compliance to CORS.
 	// TODO: Keep the values in check when this backend gets deployed (Origins!).
+	//       Put this config into config.go and make it environment loadable.
 	app.Router.Use(cors.Middleware(cors.Config{
 		Origins:         "*",
 		Methods:         "GET, PUT, POST, DELETE",
