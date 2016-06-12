@@ -86,6 +86,9 @@ Four roles are present in this model:
 | Create matching        | A                | POST      | /matchings     | MVP         | ✔    |
 | List matchings         | A                | GET       | /matchings     | 2.0         |       |
 | Get matching x         | L                | GET       | /matchings/x   | MVP         | ✔    |
+| Create an area         | L                | POST      | /areas         | 2.0         |       |
+| List areas             | L                | GET       | /areas         | 2.0         |       |
+| Update area x          | L                | PUT       | /areas/x       | 2.0         |       |
 
 
 ### What is inside a JWT?
@@ -173,8 +176,7 @@ POST /auth
 200 OK
 
 {
-    "AccessToken": string/jwt,
-    "ExpiresIn": int
+    "AccessToken": string/jwt
 }
 ```
 
@@ -718,4 +720,74 @@ Fail:
 {
 	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
+```
+
+
+### Create an area
+
+**Request:**
+
+```
+POST /areas
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+}
+```
+
+**Response:**
+
+Success
+
+```
+```
+
+Fail
+
+```
+```
+
+
+### List areas
+
+**Request:**
+
+```
+GET /areas
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success
+
+```
+```
+
+Fail
+
+```
+```
+
+
+### Update area x
+
+```
+PUT /areas/x
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+}
+```
+
+**Response:**
+
+Success
+
+```
+```
+
+Fail
+
+```
 ```
