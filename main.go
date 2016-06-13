@@ -65,11 +65,9 @@ func main() {
 	app.Router.GET("/matchings", app.ListMatchings)
 	app.Router.GET("/matchings/:matchingID", app.GetMatching)
 
-	/*
-		app.Router.POST("/areas", app.CreateArea)
-		app.Router.GET("/areas", app.ListAreas)
-		app.Router.GET("/areas/:areaID", app.GetArea)
-	*/
+	// app.Router.POST("/areas", app.CreateArea)
+	app.Router.GET("/areas", app.ListAreas)
+	// app.Router.GET("/areas/:areaID", app.GetArea)
 
 	// Run our application.
 	app.Router.Run(":3001")
