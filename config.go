@@ -29,6 +29,21 @@ func InitAndConfig() *App {
 	// Make space for a application struct containing our global context.
 	app := new(App)
 
+	// Read IP and port to run on from environment.
+	app.IP = os.Getenv("BACKEND_IP")
+	app.Port = os.Getenv("BACKEND_PORT")
+
+	// Create new gin instance with default functionalities and add it to app struct.
+	app.Router = gin.Default()
+
+	// Open connection to database and insert middleware.
+	app.DB = db.InitDB()
+
+	// If init flag was set to true, add default data to database.
+	if *initFlag {
+		db.AddDefaultData(app.DB)
+	}
+
 	// Set cost factor of bcrypt password hashing to the one loaded from environment.
 	app.HashCost, err = strconv.Atoi(os.Getenv("PASSWORD_HASHING_COST"))
 	if err != nil {
@@ -41,17 +56,6 @@ func InitAndConfig() *App {
 		log.Fatal("[InitAndConfig] Could not load JWT_VALID_FOR from .env file. Missing or not an integer?")
 	}
 	app.SessionValidFor = time.Duration(validFor) * time.Minute
-
-	// Create new gin instance with default functionalities and add it to app struct.
-	app.Router = gin.Default()
-
-	// Open connection to database and insert middleware.
-	app.DB = db.InitDB()
-
-	// If init flag was set to true, add default data to database.
-	if *initFlag {
-		db.AddDefaultData(app.DB)
-	}
 
 	// Instantiate a new go-cache instance to hold the JWTs of user sessions.
 	app.Sessions = cache.New(app.SessionValidFor, 10*time.Second)

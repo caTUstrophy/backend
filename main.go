@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,12 +14,14 @@ import (
 // Structs
 
 type App struct {
+	IP              string
+	Port            string
 	Router          *gin.Engine
 	DB              *gorm.DB
-	Sessions        *cache.Cache
-	Validator       *validator.Validate
 	HashCost        int
 	SessionValidFor time.Duration
+	Sessions        *cache.Cache
+	Validator       *validator.Validate
 }
 
 // Main
@@ -70,5 +73,5 @@ func main() {
 	// app.Router.GET("/areas/:areaID", app.GetArea)
 
 	// Run our application.
-	app.Router.Run(":3001")
+	app.Router.Run(fmt.Sprintf("%s:%s", app.IP, app.Port))
 }
