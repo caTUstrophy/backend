@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"net/http"
@@ -183,7 +182,27 @@ func (app *App) ListOffers(c *gin.Context) {
 
 	region := c.Params.ByName("region")
 
-	// TODO: Validate region!
+	// Validate sent region.
+	errs := app.Validator.Field(region, "required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C")
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs.(validator.ValidationErrors) {
+
+			if err.Tag == "required" {
+				errResp["region"] = "Is required"
+			} else if err.Tag == "excludesall" {
+				errResp["region"] = "Contains unallowed characters"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(http.StatusBadRequest, errResp)
+
+		return
+	}
 
 	var Offers []db.Offer
 
@@ -248,9 +267,28 @@ func (app *App) UpdateUserOffer(c *gin.Context) {
 	}
 
 	offerID := c.Params.ByName("offerID")
-	log.Println("[UpdateUserOffer] Offer ID was:", offerID)
 
-	// TODO: Validate offerID!
+	// Validate sent offerID.
+	errs := app.Validator.Field(offerID, "required,uuid4")
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs.(validator.ValidationErrors) {
+
+			if err.Tag == "required" {
+				errResp["offerID"] = "Is required"
+			} else if err.Tag == "uuid4" {
+				errResp["offerID"] = "Needs to be an UUID version 4"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(http.StatusBadRequest, errResp)
+
+		return
+	}
 
 	// TODO: Change this stub to real function.
 	c.JSON(http.StatusOK, gin.H{

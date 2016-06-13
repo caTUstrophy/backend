@@ -234,11 +234,31 @@ func (app *App) GetMatching(c *gin.Context) {
 		return
 	}
 
-	var Matching db.Matching
-
 	matchingID := c.Params.ByName("matchingID")
 
-	// TODO: Validate matchingID!
+	// Validate sent matchingID.
+	errs := app.Validator.Field(matchingID, "required,uuid4")
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs.(validator.ValidationErrors) {
+
+			if err.Tag == "required" {
+				errResp["matchingID"] = "Is required"
+			} else if err.Tag == "uuid4" {
+				errResp["matchingID"] = "Needs to be an UUID version 4"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(http.StatusBadRequest, errResp)
+
+		return
+	}
+
+	var Matching db.Matching
 
 	// Retrieve all requests from database.
 	app.DB.First(&Matching, "id = ?", matchingID)
