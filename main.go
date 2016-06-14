@@ -3,7 +3,6 @@ package main
 import (
 	"time"
 
-	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/itsjamie/gin-cors"
