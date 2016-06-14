@@ -28,20 +28,26 @@ to fetch all dependencies of this project.
 
 **4)** Create an `.env` file suited to your deployment. For this, copy the provided `.env.example` to `.env` and edit it to your needs. **Choose strong secret keys!**
 
-**5)** Set up a Postgres database. Create a Postgres user and set a password for that user. Then add these information to your just created environment `.env` file. As above, have a look at the `.env.example` for a description of which values you have to set.
+**5)** Add PostGIS to your database. Run in your psql
+```
+CREATE EXTENSION postgis;
+CREATE EXTENSION postgis_topology;
+```
 
-**6)** Build the project via
+**6)** Set up a Postgres database. Create a Postgres user and set a password for that user. Then add these information to your just created environment `.env` file. As above, have a look at the `.env.example` for a description of which values you have to set.
+
+**7)** Build the project via
 ```bash
 $ go build
 ```
 
-**7a)** If you are running the project the first time or after you dropped the database to start fresh, start the backend via
+**8a)** If you are running the project the first time or after you dropped the database to start fresh, start the backend via
 ```bash
 $ ./backend --init
 ```
 This will create the tables and fill in some default needed content.
 
-**7b)** Alternatively - and in the most common case - start it with
+**8b)** Alternatively - and in the most common case - start it with
 ```bash
 $ ./backend
 ```
