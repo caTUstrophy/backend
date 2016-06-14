@@ -16,7 +16,6 @@ import (
 type App struct {
 	Router          *gin.Engine
 	DB              *gorm.DB
-	SuperAdmin      db.Group
 	Sessions        *cache.Cache
 	Validator       *validator.Validate
 	HashCost        int
@@ -64,7 +63,7 @@ func main() {
 	app.Router.PUT("/me/requests/:requestID", app.UpdateUserRequest)
 
 	app.Router.POST("/matchings", app.CreateMatching)
-	app.Router.GET("/matchings/:region", app.ListMatchings)
+	app.Router.GET("/matchings/region/:region", app.ListMatchings)
 	app.Router.GET("/matchings/:matchingID", app.GetMatching)
 
 	// app.Router.POST("/areas", app.CreateArea)

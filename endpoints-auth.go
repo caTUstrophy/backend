@@ -89,8 +89,10 @@ func (app *App) CheckScope(user *db.User, location db.Area, permission string) b
 	// Fast, because the typical user is member of few groups.
 	for _, group := range user.Groups {
 
-		if group.Location.ID == app.SuperAdmin.ID { // If user is member of super admin group, he has any permission
-			return true
+		for _, groupPermission := range group.Permissions {
+			if groupPermission.AccessRight == "superadmin" {
+				return true
+			}
 		}
 
 		if group.Location.ID == location.ID {

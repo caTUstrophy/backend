@@ -41,9 +41,9 @@ func InitDB() *gorm.DB {
 			log.Fatal(err)
 		}
 
-		// We use postGIS
+		/* // We use postGIS
 		db.Exec("CREATE EXTENSION postgis")
-		db.Exec("CREATE EXTENSION postgis_topology")
+		db.Exec("CREATE EXTENSION postgis_topology") */
 
 	} else if dbType == "mysql" {
 
