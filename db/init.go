@@ -186,7 +186,8 @@ func AddDefaultData(db *gorm.DB) {
 	db.Create(&GroupAdmin)
 	db.Create(&GroupSuperAdmin)
 	db.Create(&UserAdmin)
-	// db.Create(&AreaTU)
+	db.Create(&AreaTU)
+	db.Create(&NoLocation)
 
 	for _, Tag := range Tags {
 		log.Println(Tag)

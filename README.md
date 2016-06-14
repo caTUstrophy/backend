@@ -67,28 +67,28 @@ Four roles are present in this model:
 * logged-in user **(L)**: registered and authorized user
 * admin **(A)**: registered, authorized and privileged user
 
-| Functionality          | Needed privilege | HTTP verb | Endpoint       | API version | Done? |
-| ---------------------- | ---------------- | --------- | -------------- | ----------- | ----- |
-| Registration           | U                | POST      | /users         | MVP         | ✔    |
-| Login                  | N                | POST      | /auth          | MVP         | ✔    |
-| Renew auth token       | L                | GET       | /auth          | MVP         | ✔    |
-| Logout                 | L                | DELETE    | /auth          | MVP         | ✔    |
-| Own profile            | L                | GET       | /me            | 2.0         |       |
-| Update own profile     | L                | POST      | /me            | 2.0         |       |
-| List offers region x   | A                | GET       | /offers/x      | MVP         | ✔    |
-| List own offers        | L                | GET       | /me/offers     | 2.0         |       |
-| List requests region x | A                | GET       | /requests/x    | MVP         | ✔    |
-| List own requests      | L                | GET       | /me/requests   | 2.0         |       |
-| Create offer           | L                | POST      | /offers        | MVP         | ✔    |
-| Create request         | L                | POST      | /requests      | MVP         | ✔    |
-| Update own offer x     | L                | PUT       | /me/offers/x   | 2.0         |       |
-| Update own request x   | L                | PUT       | /me/requests/x | 2.0         |       |
-| Create matching        | A                | POST      | /matchings     | MVP         | ✔    |
-| List matchings         | A                | GET       | /matchings     | 2.0         |       |
-| Get matching x         | L                | GET       | /matchings/x   | MVP         | ✔    |
-| Create an area         | L                | POST      | /areas         | 2.0         |       |
-| List areas             | L                | GET       | /areas         | 2.0         |       |
-| Update area x          | L                | PUT       | /areas/x       | 2.0         |       |
+| Functionality          		| Needed privilege | HTTP verb | Endpoint       		| API version | Done? |
+| ----------------------------- | ---------------- | --------- | ---------------------- | ----------- | ----- |
+| Registration           		| U                | POST      | /users         		| MVP         | ✔     |
+| Login                  		| N                | POST      | /auth          		| MVP         | ✔     |
+| Renew auth token       		| L                | GET       | /auth          		| MVP         | ✔     |
+| Logout                 		| L                | DELETE    | /auth          		| MVP         | ✔     |
+| Own profile            		| L                | GET       | /me            		| 2.0         |       |
+| Update own profile     		| L                | POST      | /me            		| 2.0         |       |
+| List offers region x   		| A                | GET       | /offers/x      		| MVP         | ✔     |
+| List own offers        		| L                | GET       | /me/offers     		| 2.0         |       |
+| List requests region x 		| A                | GET       | /requests/x    		| MVP         | ✔     |
+| List own requests      		| L                | GET       | /me/requests   		| 2.0         |       |
+| Create offer           		| L                | POST      | /offers        		| MVP         | ✔     |
+| Create request         		| L                | POST      | /requests      		| MVP         | ✔     |
+| Update own offer x     		| L                | PUT       | /me/offers/x   		| 2.0         |       |
+| Update own request x   		| L                | PUT       | /me/requests/x 		| 2.0         |       |
+| Create matching        		| A                | POST      | /matchings     		| MVP         | ✔     |
+| List matchings of region x	| A                | GET       | /matchings/region/x	| 2.0         |       |
+| Get matching x         		| L                | GET       | /matchings/ID/x   		| MVP         | ✔     |
+| Create an area         		| L                | POST      | /areas         		| 2.0         |       |
+| List areas             		| L                | GET       | /areas         		| 2.0         |       |
+| Update area x          		| L                | PUT       | /areas/x       		| 2.0         |       |
 
 
 ### What is inside a JWT?
