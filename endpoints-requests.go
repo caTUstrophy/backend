@@ -234,28 +234,19 @@ func (app *App) ListUserRequests(c *gin.Context) {
 		return
 	}
 
-
-
-
 	// TODO: Change this stub to real function.
-	// 1) Only retrieve requests from user.
-	// 2) Check expired field - extra argument for that?
-	// 3) Only return what's needed.
+	// replace tmp location - once postgis branch merged
 
 	type TmpLocation struct {
 		Longitude float64
 		Latitude  float64
 	}
 
-	type TmpTag struct {
-		Name string
-	}
-
 	type TmpUserRequest struct {
 		ID             string
 		Name           string
 		Location       TmpLocation
-		Tags           []TmpTag
+		Tags           []string
 		ValidityPeriod string
 	}
 
@@ -263,9 +254,21 @@ func (app *App) ListUserRequests(c *gin.Context) {
 	var Requests []db.Request
 	app.DB.Find(&Requests, "user_id = ?", User.ID)
 
+
 	var ReturnRequests []TmpUserRequest
 	ReturnRequests = make([]TmpUserRequest, 0)
 	for _, r := range Requests {
+
+		// get all tags associated with request
+		var Tags []db.Tag
+		var StrTags []string
+		StrTags = make([]string, 0)
+		app.DB.Model(&r).Association("Tags").Find(&Tags)
+		for _, t := range Tags {
+			StrTags = append(StrTags, t.Name)
+		}
+
+
 		// 2) Check expired field - extra argument for that?
 		if r.ValidityPeriod.After(time.Now()) {
 			// 3) Only return what's needed.
@@ -276,11 +279,7 @@ func (app *App) ListUserRequests(c *gin.Context) {
 					13.9,
 					50.1,
 				},
-				[]TmpTag{
-					TmpTag{
-						"Food",
-					},
-				},
+				StrTags,
 				r.ValidityPeriod.Format(time.RFC3339),
 			})
 		}
