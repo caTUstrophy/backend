@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/jinzhu/gorm"
+	"github.com/nferruzzi/gormGIS"
 	"github.com/satori/go.uuid"
 
 	// TEMPORARY: Use whichever connector you need.
@@ -39,6 +40,10 @@ func InitDB() *gorm.DB {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		// We use postGIS
+		db.Exec("CREATE EXTENSION postgis")
+		db.Exec("CREATE EXTENSION postgis_topology")
 
 	} else if dbType == "mysql" {
 
@@ -90,6 +95,7 @@ func AddDefaultData(db *gorm.DB) {
 	db.CreateTable(&Offer{})
 	db.CreateTable(&Request{})
 	db.CreateTable(&Matching{})
+	db.CreateTable(&Area{})
 	// db.CreateTable(&Area{})
 
 	// Two default permission entities.
@@ -103,7 +109,27 @@ func AddDefaultData(db *gorm.DB) {
 	PermAdmin := Permission{
 		ID:          fmt.Sprintf("%s", uuid.NewV4()),
 		AccessRight: "admin",
+		Description: "This permission represents a registered and fully authorized user for a specified area in our system. Users with this permission can view all offers, requests and matches in the area they have this permission for. Also, they can create matches.",
+	}
+
+	PermSuperAdmin := Permission{
+		ID:          fmt.Sprintf("%s", uuid.NewV4()),
+		AccessRight: "superadmin",
 		Description: "This permission represents a registered and fully authorized user in our system. Users with this permission have full API access to our system.",
+	}
+
+	AreaTU := Area{
+		ID:          fmt.Sprintf("%s", uuid.NewV4()),
+		Name:        "TU Berlin",
+		Description: "The campus of the Technische Universität Berlin in Charlottenburg, Berlin.",
+		Boundaries:  []gormGIS.GeoPoint{gormGIS.GeoPoint{13.324401, 52.516872}, gormGIS.GeoPoint{13.322599, 52.514740}, gormGIS.GeoPoint{13.322679, 52.512611}, gormGIS.GeoPoint{13.322674, 52.511743}, gormGIS.GeoPoint{13.328280, 52.508302}, gormGIS.GeoPoint{13.331077, 52.512191}, gormGIS.GeoPoint{13.329763, 52.513787}, gormGIS.GeoPoint{13.324401, 52.516872}},
+	}
+
+	NoLocation := Area{
+		ID:          fmt.Sprintf("%s", uuid.NewV4()),
+		Name:        "CaTUstrophy System",
+		Description: "This is not a real location, this represents our system.",
+		Boundaries:  []gormGIS.GeoPoint{},
 	}
 
 	// Two default group entities.
@@ -111,15 +137,22 @@ func AddDefaultData(db *gorm.DB) {
 	GroupUser := Group{
 		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: true,
-		Location:     "worldwide",
+		Location:     AreaTU,
 		Permissions:  []Permission{PermUser},
 	}
 
 	GroupAdmin := Group{
 		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: false,
-		Location:     "worldwide",
+		Location:     AreaTU,
 		Permissions:  []Permission{PermAdmin},
+	}
+
+	GroupSuperAdmin := Group{
+		ID:           fmt.Sprintf("%s", uuid.NewV4()),
+		DefaultGroup: false,
+		Location:     NoLocation,
+		Permissions:  []Permission{PermSuperAdmin},
 	}
 
 	// Some default tag entities.
@@ -141,25 +174,17 @@ func AddDefaultData(db *gorm.DB) {
 		PreferredName: "The Boss Around Here",
 		Mail:          "admin@example.org",
 		PasswordHash:  "$2a$10$SkmaOImXqNS/PSWp65p1ougtA1N.o8r5qyu8M4RPTfGSMEf2k.Q1C",
-		Groups:        []Group{GroupAdmin},
+		Groups:        []Group{GroupSuperAdmin, GroupAdmin},
 		Enabled:       true,
 	}
-
-	// A default areas.
-	/*
-		AreaTU := Area{
-			ID:          fmt.Sprintf("%s", uuid.NewV4()),
-			Name:        "TU Berlin",
-			Description: "The campus of the Technische Universität Berlin in Charlottenburg, Berlin.",
-			Boundaries:  []Point{Point{13.324401, 52.516872}, Point{13.322599, 52.514740}, Point{13.322679, 52.512611}, Point{13.322674, 52.511743}, Point{13.328280, 52.508302}, Point{13.331077, 52.512191}, Point{13.329763, 52.513787}, Point{13.324401, 52.516872}},
-		}
-	*/
 
 	// Create the database elements for these default values.
 	db.Create(&PermUser)
 	db.Create(&PermAdmin)
+	db.Create(&PermSuperAdmin)
 	db.Create(&GroupUser)
 	db.Create(&GroupAdmin)
+	db.Create(&GroupSuperAdmin)
 	db.Create(&UserAdmin)
 	// db.Create(&AreaTU)
 

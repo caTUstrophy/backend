@@ -6,10 +6,16 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nferruzzi/gormGIS"
 	"github.com/satori/go.uuid"
 )
 
-/*
+type CreateAreaPayload struct {
+	Name        string             `conform:"trim" validate:"required"`
+	Description string             `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Boundaries  []gormGIS.GeoPoint `conform:"trim"`
+}
+
 func (app *App) CreateArea(c *gin.Context) {
 
 	// Check authorization for this function.
@@ -23,25 +29,26 @@ func (app *App) CreateArea(c *gin.Context) {
 		return
 	}
 
+	// check scope if we want it for admins only
+
 	// TODO: Change stub to real function.
 	c.JSON(http.StatusCreated, gin.H{
 		"ID":          fmt.Sprintf("%s", uuid.NewV4()),
 		"Name":        "Algeria",
 		"Description": "Mountain region hit by an earth quake of strength 4.0",
 		"Boundaries": struct {
-			Boundaries []db.Point
+			Boundaries []gormGIS.GeoPoint
 		}{
-			[]db.Point{
-				db.Point{3.389017, 36.416215},
-				db.Point{3.358667, 36.391414},
-				db.Point{3.391039, 36.362402},
-				db.Point{3.418206, 36.392172},
-				db.Point{3.389017, 36.416215},
+			[]gormGIS.GeoPoint{
+				gormGIS.GeoPoint{3.389017, 36.416215},
+				gormGIS.GeoPoint{3.358667, 36.391414},
+				gormGIS.GeoPoint{3.391039, 36.362402},
+				gormGIS.GeoPoint{3.418206, 36.392172},
+				gormGIS.GeoPoint{3.389017, 36.416215},
 			},
 		},
 	})
 }
-*/
 
 func (app *App) ListAreas(c *gin.Context) {
 

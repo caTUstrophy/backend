@@ -53,6 +53,14 @@ func InitAndConfig() *App {
 		db.AddDefaultData(app.DB)
 	}
 
+	// Save the super admin group
+	// Todo: this should be found via accesright = "superadmin", not via location = "CaTUstrophy System"
+	var noLocation db.Area
+	var groupSuperAdmin db.Group
+	app.DB.First(&noLocation, "name = ?", "CaTUstrophy System")
+	app.DB.First(&groupSuperAdmin, "location = ?", noLocation)
+	app.SuperAdmin = groupSuperAdmin
+
 	// Instantiate a new go-cache instance to hold the JWTs of user sessions.
 	app.Sessions = cache.New(app.SessionValidFor, 10*time.Second)
 

@@ -35,16 +35,6 @@ func (app *App) CreateMatching(c *gin.Context) {
 		return
 	}
 
-	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
-
-		// Signal client that the provided authorization was not sufficient.
-		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
 	var Payload CreateMatchingPayload
 
 	// Expect user struct fields in JSON request body.
@@ -120,6 +110,27 @@ func (app *App) CreateMatching(c *gin.Context) {
 	var Request db.Request
 	app.DB.First(&Request, "id = ?", Payload.Request)
 
+	// Now that we have the offer and the request, we can check if they are in an area where the user has permission to create matchings
+	offerOK := false
+	requestOK := false
+	//fit together := false
+
+	for _, areaOffer := range Offer.Areas {
+		offerOK = offerOK || app.CheckScope(User, areaOffer, "admin")
+	}
+	for _, areaRequest := range Request.Areas {
+		requestOK = requestOK || app.CheckScope(User, areaRequest, "admin")
+	}
+	// Check if user permissions are sufficient (user is admin).
+	if !(offerOK && requestOK) {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
 	// Save matching.
 	var Matching db.Matching
 	Matching.ID = fmt.Sprintf("%s", uuid.NewV4())
@@ -147,8 +158,44 @@ func (app *App) ListMatchings(c *gin.Context) {
 		return
 	}
 
+	region := c.Params.ByName("region")
+
+	// Validate sent region.
+	errs := app.Validator.Field(region, "required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C")
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs.(validator.ValidationErrors) {
+
+			if err.Tag == "required" {
+				errResp["region"] = "Is required"
+			} else if err.Tag == "excludesall" {
+				errResp["region"] = "Contains unallowed characters"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(http.StatusBadRequest, errResp)
+
+		return
+	}
+
+	var area db.Area
+	app.DB.First(&area, "where ID = ?", region)
 	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
+	if ok := app.CheckScope(User, area, "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, area, "admin"); !ok {
 
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
