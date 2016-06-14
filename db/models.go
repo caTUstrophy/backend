@@ -38,7 +38,8 @@ type Tag struct {
 type Offer struct {
 	ID             string `gorm:"primary_key"`
 	Name           string `gorm:"index;not null"`
-	User           User
+	User           User   `gorm:"ForeignKey:UserID;AssociationForeignKey:Refer"`
+	UserID         string
 	Location       string `gorm:"index;not null"`
 	Tags           []Tag  `gorm:"many2many:offer_tags"`
 	ValidityPeriod time.Time
@@ -48,7 +49,8 @@ type Offer struct {
 type Request struct {
 	ID             string `gorm:"primary_key"`
 	Name           string `gorm:"index;not null"`
-	User           User
+	User           User   `gorm:"ForeignKey:UserID;AssociationForeignKey:Refer"`
+	UserID         string
 	Location       string `gorm:"index;not null"`
 	Tags           []Tag  `gorm:"many2many:request_tags"`
 	ValidityPeriod time.Time

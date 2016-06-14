@@ -6,6 +6,7 @@ import (
 
 	"net/http"
 
+
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -84,6 +85,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 	Request.ID = fmt.Sprintf("%s", uuid.NewV4())
 	Request.Name = Payload.Name
 	Request.User = *User
+	Request.UserID = User.ID
 	Request.Location = Payload.Location
 	Request.Tags = make([]db.Tag, 0)
 
@@ -222,7 +224,7 @@ func (app *App) ListRequests(c *gin.Context) {
 func (app *App) ListUserRequests(c *gin.Context) {
 
 	// Check authorization for this function.
-	ok, _, message := app.Authorize(c.Request)
+	ok, User, message := app.Authorize(c.Request)
 	if !ok {
 
 		// Signal client an error and expect authorization.
@@ -231,6 +233,9 @@ func (app *App) ListUserRequests(c *gin.Context) {
 
 		return
 	}
+
+
+
 
 	// TODO: Change this stub to real function.
 	// 1) Only retrieve requests from user.
@@ -254,24 +259,35 @@ func (app *App) ListUserRequests(c *gin.Context) {
 		ValidityPeriod string
 	}
 
-	TmpResponse := []TmpUserRequest{
-		TmpUserRequest{
-			fmt.Sprintf("%s", uuid.NewV4()),
-			"Looking for bread",
-			TmpLocation{
-				13.9,
-				50.1,
-			},
-			[]TmpTag{
-				TmpTag{
-					"Food",
+	// 1) Only retrieve requests from user.
+	var Requests []db.Request
+	app.DB.Find(&Requests, "user_id = ?", User.ID)
+
+	var ReturnRequests []TmpUserRequest
+	ReturnRequests = make([]TmpUserRequest, 0)
+	for _, r := range Requests {
+		// 2) Check expired field - extra argument for that?
+		if r.ValidityPeriod.After(time.Now()) {
+			// 3) Only return what's needed.
+			ReturnRequests = append(ReturnRequests, TmpUserRequest{
+				r.ID,
+				r.Name,
+				TmpLocation{
+					13.9,
+					50.1,
 				},
-			},
-			time.Now().Format(time.RFC3339),
-		},
+				[]TmpTag{
+					TmpTag{
+						"Food",
+					},
+				},
+				r.ValidityPeriod.Format(time.RFC3339),
+			})
+		}
 	}
 
-	c.JSON(http.StatusOK, TmpResponse)
+
+	c.JSON(http.StatusOK, ReturnRequests)
 }
 
 func (app *App) UpdateUserRequest(c *gin.Context) {
