@@ -114,6 +114,7 @@ func (app *App) GetArea(c *gin.Context) {
 
 	// Select area based on supplied ID from database.
 	app.DB.First(&Area, "id = ?", areaID)
+	app.DB.Model(&Area).Association("Boundaries").Find(&Area.Boundaries)
 
 	c.JSON(http.StatusOK, Area)
 }
