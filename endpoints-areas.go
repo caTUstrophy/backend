@@ -5,7 +5,9 @@ import (
 
 	"net/http"
 
+	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
 	"github.com/nferruzzi/gormGIS"
 	"github.com/satori/go.uuid"
 )
@@ -63,38 +65,14 @@ func (app *App) ListAreas(c *gin.Context) {
 		return
 	}
 
-	type TmpPoint struct {
-		Longitude float32
-		Latitude  float32
-	}
+	var Areas []db.Area
 
-	type TmpArea struct {
-		ID          string
-		Name        string
-		Description string
-		Boundaries  []TmpPoint
-	}
+	// Retrieve all offers from database.
+	app.DB.Find(&Areas)
 
-	TmpResponse := []TmpArea{
-		TmpArea{
-			fmt.Sprintf("%s", uuid.NewV4()),
-			"Algeria",
-			"Mountain region hit by an earth quake of strength 4.0",
-			[]TmpPoint{
-				TmpPoint{3.389017, 36.416215},
-				TmpPoint{3.358667, 36.391414},
-				TmpPoint{3.391039, 36.362402},
-				TmpPoint{3.418206, 36.392172},
-				TmpPoint{3.389017, 36.416215},
-			},
-		},
-	}
-
-	// TODO: Change stub to real function.
-	c.JSON(http.StatusOK, TmpResponse)
+	c.JSON(http.StatusOK, Areas)
 }
 
-/*
 func (app *App) GetArea(c *gin.Context) {
 
 	// Check authorization for this function.
@@ -139,4 +117,3 @@ func (app *App) GetArea(c *gin.Context) {
 
 	c.JSON(http.StatusOK, Area)
 }
-*/

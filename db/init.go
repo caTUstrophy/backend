@@ -96,6 +96,7 @@ func AddDefaultData(db *gorm.DB) {
 	db.CreateTable(&Request{})
 	db.CreateTable(&Matching{})
 	db.CreateTable(&Area{})
+	db.CreateTable(&gormGIS.GeoPoint{})
 	// db.CreateTable(&Area{})
 
 	// Two default permission entities.

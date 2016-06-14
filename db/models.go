@@ -17,7 +17,7 @@ type Permission struct {
 type Group struct {
 	ID           string `gorm:"primary_key"`
 	DefaultGroup bool
-	Location     Area  `gorm:"ForeignKey:LocationId;AssociationForeignKey:Refer"`
+	Location     Area `gorm:"ForeignKey:LocationId;AssociationForeignKey:Refer"`
 	LocationId   string
 	Permissions  []Permission `gorm:"many2many:group_permissions"`
 }
@@ -71,6 +71,6 @@ type Matching struct {
 type Area struct {
 	ID          string `gorm:"primary_key"`
 	Name        string
-	Boundaries  []gormGIS.GeoPoint `sql:"type:geometry(Geometry,4326)"`
+	Boundaries  []gormGIS.GeoPoint `gorm:"many2many:areas_points";sql:"type:geometry(Geometry,4326)"`
 	Description string
 }
