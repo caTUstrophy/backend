@@ -138,6 +138,7 @@ func AddDefaultData(db *gorm.DB) {
 		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: true,
 		Location:     AreaTU,
+		LocationId:   AreaTU.ID,
 		Permissions:  []Permission{PermUser},
 	}
 
@@ -145,6 +146,7 @@ func AddDefaultData(db *gorm.DB) {
 		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: false,
 		Location:     AreaTU,
+		LocationId:   AreaTU.ID,
 		Permissions:  []Permission{PermAdmin},
 	}
 
@@ -152,6 +154,7 @@ func AddDefaultData(db *gorm.DB) {
 		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: false,
 		Location:     NoLocation,
+		LocationId:   "",
 		Permissions:  []Permission{PermSuperAdmin},
 	}
 
