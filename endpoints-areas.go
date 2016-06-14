@@ -57,8 +57,8 @@ func (app *App) ListAreas(c *gin.Context) {
 	}
 
 	type TmpPoint struct {
-		Longitude float32
-		Latitude  float32
+		Longitude float64
+		Latitude  float64
 	}
 
 	type TmpArea struct {

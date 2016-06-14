@@ -236,22 +236,42 @@ func (app *App) ListUserRequests(c *gin.Context) {
 	// 1) Only retrieve requests from user.
 	// 2) Check expired field - extra argument for that?
 	// 3) Only return what's needed.
-	c.JSON(http.StatusOK, gin.H{
-		"Name": "Looking for bread",
-		"Location": struct {
-			lon float32
-			lat float32
-		}{
-			13.9,
-			50.1,
+
+	type TmpLocation struct {
+		Longitude float64
+		Latitude  float64
+	}
+
+	type TmpTag struct {
+		Name string
+	}
+
+	type TmpUserRequest struct {
+		ID             string
+		Name           string
+		Location       TmpLocation
+		Tags           []TmpTag
+		ValidityPeriod string
+	}
+
+	TmpResponse := []TmpUserRequest{
+		TmpUserRequest{
+			fmt.Sprintf("%s", uuid.NewV4()),
+			"Looking for bread",
+			TmpLocation{
+				13.9,
+				50.1,
+			},
+			[]TmpTag{
+				TmpTag{
+					"Food",
+				},
+			},
+			time.Now().Format(time.RFC3339),
 		},
-		"Tags": struct {
-			Name string
-		}{
-			"Food",
-		},
-		"ValidityPeriod": time.Now().Format(time.RFC3339),
-	})
+	}
+
+	c.JSON(http.StatusOK, TmpResponse)
 }
 
 func (app *App) UpdateUserRequest(c *gin.Context) {
@@ -295,8 +315,8 @@ func (app *App) UpdateUserRequest(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Name": "Looking for COMPLETELY NEW bread",
 		"Location": struct {
-			lon float32
-			lat float32
+			Longitude float64
+			Latitude  float64
 		}{
 			14.0,
 			49.9,

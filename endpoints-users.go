@@ -144,11 +144,11 @@ func (app *App) GetUser(c *gin.Context) {
 			Permissions interface{}
 		}{
 			struct {
-				lon float32
-				lat float32
+				Longitude float64
+				Latitude  float64
 			}{
-				float32(13.5),
-				float32(50.2),
+				13.5,
+				50.2,
 			},
 			struct {
 				AccessRight string
@@ -185,8 +185,8 @@ func (app *App) UpdateUser(c *gin.Context) {
 			Permissions interface{}
 		}{
 			struct {
-				lon float32
-				lat float32
+				Longitude float64
+				Latitude  float64
 			}{
 				13.5,
 				50.2,

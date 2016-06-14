@@ -176,8 +176,8 @@ func (app *App) ListMatchings(c *gin.Context) {
 				"08f5588f-40c0-4ad1-9fd3-ce20e37903d3",
 			},
 			struct {
-				lon float32
-				lat float32
+				Longitude float64
+				Latitude  float64
 			}{
 				13.9,
 				50.1,
@@ -205,8 +205,8 @@ func (app *App) ListMatchings(c *gin.Context) {
 				"aaf84b79-ec0f-45df-9282-58850064fcbe",
 			},
 			struct {
-				lon float32
-				lat float32
+				Longitude float64
+				Latitude  float64
 			}{
 				13.9,
 				50.1,

@@ -235,22 +235,42 @@ func (app *App) ListUserOffers(c *gin.Context) {
 	// 1) Only retrieve offers from user.
 	// 2) Check expired field - extra argument for that?
 	// 3) Only return what's needed.
-	c.JSON(http.StatusOK, gin.H{
-		"Name": "Offering bread",
-		"Location": struct {
-			lon float32
-			lat float32
-		}{
-			12.7,
-			51.0,
+
+	type TmpLocation struct {
+		Longitude float64
+		Latitude  float64
+	}
+
+	type TmpTag struct {
+		Name string
+	}
+
+	type TmpUserOffer struct {
+		ID             string
+		Name           string
+		Location       TmpLocation
+		Tags           []TmpTag
+		ValidityPeriod string
+	}
+
+	TmpResponse := []TmpUserOffer{
+		TmpUserOffer{
+			fmt.Sprintf("%s", uuid.NewV4()),
+			"Offering bread",
+			TmpLocation{
+				12.7,
+				51.0,
+			},
+			[]TmpTag{
+				TmpTag{
+					"Food",
+				},
+			},
+			time.Now().Format(time.RFC3339),
 		},
-		"Tags": struct {
-			Name string
-		}{
-			"Food",
-		},
-		"ValidityPeriod": time.Now().Format(time.RFC3339),
-	})
+	}
+
+	c.JSON(http.StatusOK, TmpResponse)
 }
 
 func (app *App) UpdateUserOffer(c *gin.Context) {
@@ -294,8 +314,8 @@ func (app *App) UpdateUserOffer(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Name": "Offering COMPLETELY NEW bread",
 		"Location": struct {
-			lon float32
-			lat float32
+			Longitude float64
+			Latitude  float64
 		}{
 			15.5,
 			45.3,
