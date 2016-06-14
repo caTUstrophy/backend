@@ -246,7 +246,7 @@ func (app *App) ListUserRequests(c *gin.Context) {
 		ID             string
 		Name           string
 		Location       TmpLocation
-		Tags           []string
+		Tags           []db.Tag // IMO return []string instead, no need to know db.Tag.ID
 		ValidityPeriod string
 	}
 
@@ -259,29 +259,25 @@ func (app *App) ListUserRequests(c *gin.Context) {
 	ReturnRequests = make([]TmpUserRequest, 0)
 	for _, r := range Requests {
 
-		// get all tags associated with request
-		var Tags []db.Tag
-		var StrTags []string
-		StrTags = make([]string, 0)
-		app.DB.Model(&r).Association("Tags").Find(&Tags)
-		for _, t := range Tags {
-			StrTags = append(StrTags, t.Name)
-		}
-
-
 		// 2) Check expired field - extra argument for that?
 		if r.ValidityPeriod.After(time.Now()) {
-			// 3) Only return what's needed.
-			ReturnRequests = append(ReturnRequests, TmpUserRequest{
+			// find associated tags
+			app.DB.Model(&r).Association("Tags").Find(&r.Tags)
+
+			// 3) Only return what's needed
+			// TODO : replace through proper payload struct
+			req := TmpUserRequest{
 				r.ID,
 				r.Name,
 				TmpLocation{
 					13.9,
 					50.1,
 				},
-				StrTags,
+				r.Tags,
 				r.ValidityPeriod.Format(time.RFC3339),
-			})
+			}
+
+			ReturnRequests = append(ReturnRequests, req)
 		}
 	}
 
