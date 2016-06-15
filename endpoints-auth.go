@@ -90,6 +90,7 @@ func (app *App) CheckScope(user *db.User, location db.Area, permission string) b
 	for _, group := range user.Groups {
 
 		for _, groupPermission := range group.Permissions {
+
 			if groupPermission.AccessRight == "superadmin" {
 				return true
 			}

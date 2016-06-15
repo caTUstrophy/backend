@@ -43,9 +43,9 @@ type Offer struct {
 	Name           string `gorm:"index;not null"`
 	User           User
 	Location       gormGIS.GeoPoint `gorm:"not null"`
-	Areas          []Area           `gorm:"many2many:offer_areas"`
 	Tags           []Tag            `gorm:"many2many:offer_tags"`
 	ValidityPeriod time.Time
+	Matched        bool
 	Expired        bool
 }
 
@@ -54,9 +54,9 @@ type Request struct {
 	Name           string `gorm:"index;not null"`
 	User           User
 	Location       gormGIS.GeoPoint `gorm:"not null"`
-	Areas          []Area           `gorm:"many2many:request_areas"`
 	Tags           []Tag            `gorm:"many2many:request_tags"`
 	ValidityPeriod time.Time
+	Matched        bool
 	Expired        bool
 }
 
@@ -71,6 +71,8 @@ type Matching struct {
 type Area struct {
 	ID          string `gorm:"primary_key"`
 	Name        string
-	Boundaries  []gormGIS.GeoPoint `gorm:"many2many:areas_points";sql:"type:geometry(Geometry,4326)"`
+	Boundaries  GeoPolygon `sql:"type:geometry(Geometry,4326)"`
 	Description string
+	Offers      []Offer   `gorm:"many2many:area_offers"`
+	Requests    []Request `gorm:"many2many:area_requests"`
 }

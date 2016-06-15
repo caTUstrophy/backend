@@ -598,6 +598,7 @@ POST /matchings
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
+	"Area": required, UUID v4,
 	"Request": required, UUID v4,
 	"Offer": required, UUID v4
 }

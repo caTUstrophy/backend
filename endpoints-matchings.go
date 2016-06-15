@@ -16,6 +16,7 @@ import (
 // Structs.
 
 type CreateMatchingPayload struct {
+	Area    string `conform:"trim" validate:"required,uuid4"`
 	Request string `conform:"trim" validate:"required,uuid4"`
 	Offer   string `conform:"trim" validate:"required,uuid4"`
 }
@@ -110,19 +111,11 @@ func (app *App) CreateMatching(c *gin.Context) {
 	var Request db.Request
 	app.DB.First(&Request, "id = ?", Payload.Request)
 
-	// Now that we have the offer and the request, we can check if they are in an area where the user has permission to create matchings
-	offerOK := false
-	requestOK := false
-	//fit together := false
+	// Check if user has actually admin rights for specified area.
+	var ContainingArea db.Area
+	app.DB.First(&ContainingArea, "id = ?", Payload.Area)
 
-	for _, areaOffer := range Offer.Areas {
-		offerOK = offerOK || app.CheckScope(User, areaOffer, "admin")
-	}
-	for _, areaRequest := range Request.Areas {
-		requestOK = requestOK || app.CheckScope(User, areaRequest, "admin")
-	}
-	// Check if user permissions are sufficient (user is admin).
-	if !(offerOK && requestOK) {
+	if ok := app.CheckScope(User, ContainingArea, "admin"); !ok {
 
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
@@ -183,8 +176,9 @@ func (app *App) ListMatchings(c *gin.Context) {
 	}
 
 	var area db.Area
-	app.DB.First(&area, "where ID = ?", region)
-	// Check if user permissions are sufficient (user is admin).
+	app.DB.First(&area, "id = ?", region)
+
+	// Check if user permissions are sufficient (user is an admin).
 	if ok := app.CheckScope(User, area, "admin"); !ok {
 
 		// Signal client that the provided authorization was not sufficient.
