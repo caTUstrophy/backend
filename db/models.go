@@ -135,11 +135,3 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) map[string]in
 
 	return m
 }
-
-func CopyNestedModelArray(arr []interface{}, fields map[string]interface{}) []map[string]interface{} {
-	copied := make([]map[string]interface{}, len(arr))
-	for i, obj := range arr {
-		copied[i] = CopyNestedModel(obj, fields)
-	}
-	return copied
-}
