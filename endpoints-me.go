@@ -96,7 +96,7 @@ func (app *App) UpdateUser(c *gin.Context) {
 func (app *App) ListUserOffers(c *gin.Context) {
 
 	// Check authorization for this function.
-	ok, _, message := app.Authorize(c.Request)
+	ok, User, message := app.Authorize(c.Request)
 	if !ok {
 
 		// Signal client an error and expect authorization.
@@ -106,46 +106,32 @@ func (app *App) ListUserOffers(c *gin.Context) {
 		return
 	}
 
-	// TODO: Change this stub to real function.
-	// 1) Only retrieve offers from user.
-	// 2) Check expired field - extra argument for that?
-	// 3) Only return what's needed.
+	var Offers []db.Offer
+	app.DB.Preload("Tags").Find(&Offers, "user_id = ?", User.ID)
 
-	type TmpLocation struct {
-		Longitude float64
-		Latitude  float64
-	}
 
-	type TmpTag struct {
-		Name string
-	}
+	response := make([]interface{}, 0)
+	for _, o := range Offers {
 
-	type TmpUserOffer struct {
-		ID             string
-		Name           string
-		Location       TmpLocation
-		Tags           []TmpTag
-		ValidityPeriod string
-	}
+		// 2) Check expired field - extra argument for that?
+		if o.ValidityPeriod.After(time.Now()) {
 
-	TmpResponse := []TmpUserOffer{
-		TmpUserOffer{
-			fmt.Sprintf("%s", uuid.NewV4()),
-			"Offering bread",
-			TmpLocation{
-				12.7,
-				51.0,
-			},
-			[]TmpTag{
-				TmpTag{
-					"Food",
+			// 3) Only return what's needed
+			fields := map[string]interface{}{
+				"Name":"Name",
+				"Location":"Location",
+				"Tags":map[string]interface{}{
+					"Name":"Name",
 				},
-			},
-			time.Now().Format(time.RFC3339),
-		},
+			}
+
+			model := db.CopyNestedModel(o, fields)
+			response = append(response, model)
+		}
 	}
 
-	c.JSON(http.StatusOK, TmpResponse)
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (app *App) ListUserRequests(c *gin.Context) {
@@ -161,51 +147,30 @@ func (app *App) ListUserRequests(c *gin.Context) {
 		return
 	}
 
-	// TODO: Change this stub to real function.
-	// replace tmp location - once postgis branch merged
-
-	type TmpLocation struct {
-		Longitude float64
-		Latitude  float64
-	}
-
-	type TmpUserRequest struct {
-		ID             string
-		Name           string
-		Location       TmpLocation
-		Tags           []db.Tag // IMO return []string instead, no need to know db.Tag.ID
-		ValidityPeriod string
-	}
-
-	// 1) Only retrieve requests from user.
 	var Requests []db.Request
-	app.DB.Find(&Requests, "user_id = ?", User.ID)
+	app.DB.Preload("Tags").Find(&Requests, "user_id = ?", User.ID)
 
-	var ReturnRequests []TmpUserRequest
-	ReturnRequests = make([]TmpUserRequest, 0)
+
+	response := make([]interface{}, 0)
 	for _, r := range Requests {
 
 		// 2) Check expired field - extra argument for that?
 		if r.ValidityPeriod.After(time.Now()) {
-			// find associated tags
-			app.DB.Model(&r).Association("Tags").Find(&r.Tags)
 
 			// 3) Only return what's needed
-			// TODO : replace through proper payload struct
-			req := TmpUserRequest{
-				r.ID,
-				r.Name,
-				TmpLocation{
-					13.9,
-					50.1,
+			fields := map[string]interface{}{
+				"Name":"Name",
+				"Location":"Location",
+				"Tags":map[string]interface{}{
+					"Name":"Name",
 				},
-				r.Tags,
-				r.ValidityPeriod.Format(time.RFC3339),
 			}
 
-			ReturnRequests = append(ReturnRequests, req)
+			model := db.CopyNestedModel(r, fields)
+			response = append(response, model)
 		}
 	}
 
-	c.JSON(http.StatusOK, ReturnRequests)
+
+	c.JSON(http.StatusOK, response)
 }
