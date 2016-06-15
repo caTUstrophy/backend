@@ -157,68 +157,11 @@ func (app *App) CreateOffer(c *gin.Context) {
 	})
 }
 
-func (app *App) ListOffers(c *gin.Context) {
+func (app *App) GetOffer(c *gin.Context) {
 
-	// Check authorization for this function.
-	ok, User, message := app.Authorize(c.Request)
-	if !ok {
-
-		// Signal client an error and expect authorization.
-		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
-	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
-
-		// Signal client that the provided authorization was not sufficient.
-		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
-	region := c.Params.ByName("region")
-
-	// Validate sent region.
-	errs := app.Validator.Field(region, "required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C")
-	if errs != nil {
-
-		errResp := make(map[string]string)
-
-		// Iterate over all validation errors.
-		for _, err := range errs.(validator.ValidationErrors) {
-
-			if err.Tag == "required" {
-				errResp["region"] = "Is required"
-			} else if err.Tag == "excludesall" {
-				errResp["region"] = "Contains unallowed characters"
-			}
-		}
-
-		// Send prepared error message to client.
-		c.JSON(http.StatusBadRequest, errResp)
-
-		return
-	}
-
-	var Offers []db.Offer
-
-	// Retrieve all offers from database.
-	app.DB.Find(&Offers, "Location = ?", region)
-
-	// TODO: remove loop and exchange for preload
-	for i := 0; i < len(Offers); i++ {
-		app.DB.Select("name, id").First(&Offers[i].User, "mail = ?", User.Mail)
-	}
-
-	// Send back results to client.
-	c.JSON(http.StatusOK, Offers)
 }
 
-func (app *App) ListUserOffers(c *gin.Context) {
+func (app *App) UpdateOffer(c *gin.Context) {
 
 	// Check authorization for this function.
 	ok, _, message := app.Authorize(c.Request)
@@ -231,60 +174,7 @@ func (app *App) ListUserOffers(c *gin.Context) {
 		return
 	}
 
-	// TODO: Change this stub to real function.
-	// 1) Only retrieve offers from user.
-	// 2) Check expired field - extra argument for that?
-	// 3) Only return what's needed.
-
-	type TmpLocation struct {
-		Longitude float64
-		Latitude  float64
-	}
-
-	type TmpTag struct {
-		Name string
-	}
-
-	type TmpUserOffer struct {
-		ID             string
-		Name           string
-		Location       TmpLocation
-		Tags           []TmpTag
-		ValidityPeriod string
-	}
-
-	TmpResponse := []TmpUserOffer{
-		TmpUserOffer{
-			fmt.Sprintf("%s", uuid.NewV4()),
-			"Offering bread",
-			TmpLocation{
-				12.7,
-				51.0,
-			},
-			[]TmpTag{
-				TmpTag{
-					"Food",
-				},
-			},
-			time.Now().Format(time.RFC3339),
-		},
-	}
-
-	c.JSON(http.StatusOK, TmpResponse)
-}
-
-func (app *App) UpdateUserOffer(c *gin.Context) {
-
-	// Check authorization for this function.
-	ok, _, message := app.Authorize(c.Request)
-	if !ok {
-
-		// Signal client an error and expect authorization.
-		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
+	// TODO: Add edit rights for concerned user vs. admin.
 
 	offerID := c.Params.ByName("offerID")
 

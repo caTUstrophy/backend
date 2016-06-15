@@ -6,7 +6,6 @@ import (
 
 	"net/http"
 
-
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -159,133 +158,11 @@ func (app *App) CreateRequest(c *gin.Context) {
 	})
 }
 
-func (app *App) ListRequests(c *gin.Context) {
+func (app *App) GetRequest(c *gin.Context) {
 
-	// Check authorization for this function.
-	ok, User, message := app.Authorize(c.Request)
-	if !ok {
-
-		// Signal client an error and expect authorization.
-		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
-	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
-
-		// Signal client that the provided authorization was not sufficient.
-		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
-	region := c.Params.ByName("region")
-
-	// Validate sent region.
-	errs := app.Validator.Field(region, "required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C")
-	if errs != nil {
-
-		errResp := make(map[string]string)
-
-		// Iterate over all validation errors.
-		for _, err := range errs.(validator.ValidationErrors) {
-
-			if err.Tag == "required" {
-				errResp["region"] = "Is required"
-			} else if err.Tag == "excludesall" {
-				errResp["region"] = "Contains unallowed characters"
-			}
-		}
-
-		// Send prepared error message to client.
-		c.JSON(http.StatusBadRequest, errResp)
-
-		return
-	}
-
-	var Requests []db.Request
-
-	// Retrieve all requests from database.
-	// app.DB.Preload("User").Find(&Requests, "location = ?", region)
-	app.DB.Find(&Requests, "location = ?", region)
-
-	// TODO: remove loop and exchange for preload
-	for i := 0; i < len(Requests); i++ {
-		app.DB.Select("name, id").First(&Requests[i].User, "mail = ?", User.Mail)
-	}
-
-	// Send back results to client.
-	c.JSON(http.StatusOK, Requests)
 }
 
-func (app *App) ListUserRequests(c *gin.Context) {
-
-	// Check authorization for this function.
-	ok, User, message := app.Authorize(c.Request)
-	if !ok {
-
-		// Signal client an error and expect authorization.
-		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
-	// TODO: Change this stub to real function.
-	// replace tmp location - once postgis branch merged
-
-	type TmpLocation struct {
-		Longitude float64
-		Latitude  float64
-	}
-
-	type TmpUserRequest struct {
-		ID             string
-		Name           string
-		Location       TmpLocation
-		Tags           []db.Tag // IMO return []string instead, no need to know db.Tag.ID
-		ValidityPeriod string
-	}
-
-	// 1) Only retrieve requests from user.
-	var Requests []db.Request
-	app.DB.Find(&Requests, "user_id = ?", User.ID)
-
-
-	var ReturnRequests []TmpUserRequest
-	ReturnRequests = make([]TmpUserRequest, 0)
-	for _, r := range Requests {
-
-		// 2) Check expired field - extra argument for that?
-		if r.ValidityPeriod.After(time.Now()) {
-			// find associated tags
-			app.DB.Model(&r).Association("Tags").Find(&r.Tags)
-
-			// 3) Only return what's needed
-			// TODO : replace through proper payload struct
-			req := TmpUserRequest{
-				r.ID,
-				r.Name,
-				TmpLocation{
-					13.9,
-					50.1,
-				},
-				r.Tags,
-				r.ValidityPeriod.Format(time.RFC3339),
-			}
-
-			ReturnRequests = append(ReturnRequests, req)
-		}
-	}
-
-
-	c.JSON(http.StatusOK, ReturnRequests)
-}
-
-func (app *App) UpdateUserRequest(c *gin.Context) {
+func (app *App) UpdateRequest(c *gin.Context) {
 
 	// Check authorization for this function.
 	ok, _, message := app.Authorize(c.Request)
@@ -297,6 +174,8 @@ func (app *App) UpdateUserRequest(c *gin.Context) {
 
 		return
 	}
+
+	// TODO: Add edit rights for concerned user vs. admin.
 
 	requestID := c.Params.ByName("requestID")
 
