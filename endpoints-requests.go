@@ -25,11 +25,6 @@ type CreateRequestPayload struct {
 
 // Requests related functions.
 
-// Looks up all areas that match the location of this offer
-func (app *App) assignAreasToRequest(request db.Request) {
-
-}
-
 func (app *App) CreateRequest(c *gin.Context) {
 
 	// Check authorization for this function.
@@ -93,8 +88,10 @@ func (app *App) CreateRequest(c *gin.Context) {
 	Request.UserID = User.ID
 	Request.Location = Payload.Location
 	Request.Tags = make([]db.Tag, 0)
-	// The areas that match the location will be assigned outside
-	app.assignAreasToRequest(Request)
+
+	// Try to map the provided location to all containing regions.
+	app.mapLocationToRegions(Payload.Location, "Request")
+
 	// If tags were supplied, check if they exist in our system.
 	if len(Payload.Tags) > 0 {
 
