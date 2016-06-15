@@ -114,20 +114,10 @@ func (app *App) GetOffersForRegion(c *gin.Context) {
 		return
 	}
 
-	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
-
-		// Signal client that the provided authorization was not sufficient.
-		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
-	region := c.Params.ByName("region")
+	regionID := c.Params.ByName("regionID")
 
 	// Validate sent region.
-	errs := app.Validator.Field(region, "required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C")
+	errs := app.Validator.Field(regionID, "required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C")
 	if errs != nil {
 
 		errResp := make(map[string]string)
@@ -136,9 +126,9 @@ func (app *App) GetOffersForRegion(c *gin.Context) {
 		for _, err := range errs.(validator.ValidationErrors) {
 
 			if err.Tag == "required" {
-				errResp["region"] = "Is required"
+				errResp["regionID"] = "Is required"
 			} else if err.Tag == "excludesall" {
-				errResp["region"] = "Contains unallowed characters"
+				errResp["regionID"] = "Contains unallowed characters"
 			}
 		}
 
@@ -148,18 +138,21 @@ func (app *App) GetOffersForRegion(c *gin.Context) {
 		return
 	}
 
-	var Offers []db.Offer
+	var Region db.Area
+	app.DB.Preload("Users").Preload("Offers").First(&Region, "id = ?", regionID)
 
-	// Retrieve all offers from database.
-	app.DB.Find(&Offers, "Location = ?", region)
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, Region, "admin"); !ok {
 
-	// TODO: remove loop and exchange for preload
-	for i := 0; i < len(Offers); i++ {
-		app.DB.Select("name, id").First(&Offers[i].User, "mail = ?", User.Mail)
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
 	}
 
 	// Send back results to client.
-	c.JSON(http.StatusOK, Offers)
+	c.JSON(http.StatusOK, Region.Offers)
 }
 
 func (app *App) GetRequestsForRegion(c *gin.Context) {
@@ -175,20 +168,10 @@ func (app *App) GetRequestsForRegion(c *gin.Context) {
 		return
 	}
 
-	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
-
-		// Signal client that the provided authorization was not sufficient.
-		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
-	region := c.Params.ByName("region")
+	regionID := c.Params.ByName("regionID")
 
 	// Validate sent region.
-	errs := app.Validator.Field(region, "required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C")
+	errs := app.Validator.Field(regionID, "required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C")
 	if errs != nil {
 
 		errResp := make(map[string]string)
@@ -197,9 +180,9 @@ func (app *App) GetRequestsForRegion(c *gin.Context) {
 		for _, err := range errs.(validator.ValidationErrors) {
 
 			if err.Tag == "required" {
-				errResp["region"] = "Is required"
+				errResp["regionID"] = "Is required"
 			} else if err.Tag == "excludesall" {
-				errResp["region"] = "Contains unallowed characters"
+				errResp["regionID"] = "Contains unallowed characters"
 			}
 		}
 
@@ -209,19 +192,21 @@ func (app *App) GetRequestsForRegion(c *gin.Context) {
 		return
 	}
 
-	var Requests []db.Request
+	var Region db.Area
+	app.DB.Preload("Users").Preload("Requests").First(&Region, "id = ?", regionID)
 
-	// Retrieve all requests from database.
-	// app.DB.Preload("User").Find(&Requests, "location = ?", region)
-	app.DB.Find(&Requests, "location = ?", region)
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, Region, "admin"); !ok {
 
-	// TODO: remove loop and exchange for preload
-	for i := 0; i < len(Requests); i++ {
-		app.DB.Select("name, id").First(&Requests[i].User, "mail = ?", User.Mail)
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
 	}
 
 	// Send back results to client.
-	c.JSON(http.StatusOK, Requests)
+	c.JSON(http.StatusOK, Region.Requests)
 }
 
 func (app *App) GetMatchingsForRegion(c *gin.Context) {

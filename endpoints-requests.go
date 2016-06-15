@@ -166,35 +166,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 }
 
 func (app *App) GetRequest(c *gin.Context) {
-	// 1) Only retrieve requests from user.
-	var Requests []db.Request
-	app.DB.Find(&Requests, "user_id = ?", User.ID)
 
-
-	response := make([]interface{}, 0)
-	for _, r := range Requests {
-
-		// 2) Check expired field - extra argument for that?
-		if r.ValidityPeriod.After(time.Now()) {
-			// Load request.Tags
-			app.DB.Model(&r).Association("Tags").Find(&r.Tags)
-
-			// 3) Only return what's needed
-			fields := map[string]interface{}{
-				"Name":"Name",
-				"Location":"Location",
-				"Tags":map[string]interface{}{
-					"Name":"Name",
-				},
-			}
-
-			model := db.CopyNestedModel(r, fields)
-			response = append(response, model)
-		}
-	}
-
-
-	c.JSON(http.StatusOK, response)
 }
 
 func (app *App) UpdateRequest(c *gin.Context) {
