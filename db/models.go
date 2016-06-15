@@ -116,10 +116,10 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) map[string]in
 						for i := 0; i < slice.Len(); i++ {
 							sliceMapped[i] = CopyNestedModel(slice.Index(i).Interface(), nestedMap)
 						}
-						m[newKey] = sliceMapped
+						m[key] = sliceMapped
 					} else {
 						// if nested OBJECT
-						m[newKey] = CopyNestedModel(valInterface.Field(i).Interface(), nestedMap)
+						m[key] = CopyNestedModel(valInterface.Field(i).Interface(), nestedMap)
 					}
 				}
 
@@ -134,12 +134,4 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) map[string]in
 	}
 
 	return m
-}
-
-func CopyArrayNestedModels(arr []interface{}, fields map[string]interface{}) []map[string]interface{} {
-	copied := make([]map[string]interface{}, len(arr))
-	for i, obj := range arr {
-		copied[i] = CopyNestedModel(obj, fields)
-	}
-	return copied
 }
