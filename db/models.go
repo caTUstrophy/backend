@@ -2,6 +2,7 @@ package db
 
 import (
 	"time"
+    "reflect"
 )
 
 // Models
@@ -82,3 +83,27 @@ type Area struct {
 	Boundaries  []Point
 }
 */
+
+
+func CopyModel(i interface{}, fields []string) (map[string]interface{}) {
+	var m map[string]interface{}
+	m = make(map[string]interface{})
+
+	// get type of struct
+	s := reflect.ValueOf(i)
+	typeOfT := reflect.ValueOf(i).Type()
+
+	// iterate over fields of struct
+	for i := 0; i < s.NumField(); i++ {
+	    for _, field := range fields{
+			// set only fields specified in array
+	    	if typeOfT.Field(i).Name == field{
+	    		m[field] = s.Field(i).Interface()
+	    		break
+	    	}
+	    }
+	}
+
+	return m
+}
+	
