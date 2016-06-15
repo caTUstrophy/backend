@@ -25,8 +25,8 @@ type CreateRequestPayload struct {
 
 // Requests related functions.
 
-// Looks up all areas that match the location of this offer
-func (app *App) assignAreasToRequest(request db.Request) {
+// Looks up all regions that match the location of this offer
+func (app *App) assignRegionsToRequest(request db.Request) {
 
 }
 
@@ -93,8 +93,8 @@ func (app *App) CreateRequest(c *gin.Context) {
 	Request.UserID = User.ID
 	Request.Location = Payload.Location
 	Request.Tags = make([]db.Tag, 0)
-	// The areas that match the location will be assigned outside
-	app.assignAreasToRequest(Request)
+	// The regions that match the location will be assigned outside
+	app.assignRegionsToRequest(Request)
 	// If tags were supplied, check if they exist in our system.
 	if len(Payload.Tags) > 0 {
 

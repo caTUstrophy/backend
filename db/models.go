@@ -19,7 +19,7 @@ type Permission struct {
 type Group struct {
 	ID           string `gorm:"primary_key"`
 	DefaultGroup bool
-	Location     Area `gorm:"ForeignKey:LocationId;AssociationForeignKey:Refer"`
+	Location     Region `gorm:"ForeignKey:LocationId;AssociationForeignKey:Refer"`
 	LocationId   string
 	Permissions  []Permission `gorm:"many2many:group_permissions"`
 }
@@ -72,13 +72,13 @@ type Matching struct {
 	RequestId string
 }
 
-type Area struct {
+type Region struct {
 	ID          string `gorm:"primary_key"`
 	Name        string
 	Boundaries  GeoPolygon `sql:"type:geometry(Geometry,4326)"`
 	Description string
-	Offers      []Offer   `gorm:"many2many:area_offers"`
-	Requests    []Request `gorm:"many2many:area_requests"`
+	Offers      []Offer   `gorm:"many2many:region_offers"`
+	Requests    []Request `gorm:"many2many:region_requests"`
 }
 
 func CopyNestedModel(i interface{}, fields map[string]interface{}) map[string]interface{} {

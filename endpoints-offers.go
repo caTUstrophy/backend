@@ -25,8 +25,8 @@ type CreateOfferPayload struct {
 
 // Offers related functions.
 
-// TODO Looks up all areas that match the location of this offer
-func (app *App) assignAreasToOffer(offer db.Offer) {
+// TODO Looks up all regions that match the location of this offer
+func (app *App) assignRegionsToOffer(offer db.Offer) {
 
 }
 
@@ -92,8 +92,8 @@ func (app *App) CreateOffer(c *gin.Context) {
 	Offer.User = *User
 	Offer.Location = Payload.Location
 	Offer.Tags = make([]db.Tag, 0)
-	// The areas that fit the location will be assigned here
-	app.assignAreasToOffer(Offer)
+	// The regions that fit the location will be assigned here
+	app.assignRegionsToOffer(Offer)
 
 	// If tags were supplied, check if they exist in our system.
 	if len(Payload.Tags) > 0 {

@@ -63,9 +63,9 @@ func AddDefaultData(db *gorm.DB) {
 	db.DropTableIfExists(&Offer{})
 	db.DropTableIfExists(&Request{})
 	db.DropTableIfExists(&Matching{})
-	db.DropTableIfExists(&Area{})
-	db.DropTableIfExists("area_offers")
-	db.DropTableIfExists("area_requests")
+	db.DropTableIfExists(&Region{})
+	db.DropTableIfExists("region_offers")
+	db.DropTableIfExists("region_requests")
 	db.DropTableIfExists("group_permissions")
 	db.DropTableIfExists("offer_tags")
 	db.DropTableIfExists("request_tags")
@@ -79,7 +79,7 @@ func AddDefaultData(db *gorm.DB) {
 	db.CreateTable(&Offer{})
 	db.CreateTable(&Request{})
 	db.CreateTable(&Matching{})
-	db.CreateTable(&Area{})
+	db.CreateTable(&Region{})
 
 	// Three default permission entities.
 
@@ -92,7 +92,7 @@ func AddDefaultData(db *gorm.DB) {
 	PermAdmin := Permission{
 		ID:          fmt.Sprintf("%s", uuid.NewV4()),
 		AccessRight: "admin",
-		Description: "This permission represents a registered and fully authorized user for a specified area in our system. Users with this permission can view all offers, requests and matches in the area they have this permission for. Also, they can create matches.",
+		Description: "This permission represents a registered and fully authorized user for a specified region in our system. Users with this permission can view all offers, requests and matches in the region they have this permission for. Also, they can create matches.",
 	}
 
 	PermSuperAdmin := Permission{
@@ -101,14 +101,14 @@ func AddDefaultData(db *gorm.DB) {
 		Description: "This permission represents a registered and fully authorized user in our system. Users with this permission have full API access to our system.",
 	}
 
-	AreaTU := Area{
+	RegionTU := Region{
 		ID:          fmt.Sprintf("%s", uuid.NewV4()),
 		Name:        "TU Berlin",
 		Description: "The campus of the Technische Universität Berlin in Charlottenburg, Berlin.",
 		Boundaries:  GeoPolygon{[]gormGIS.GeoPoint{gormGIS.GeoPoint{13.324401, 52.516872}, gormGIS.GeoPoint{13.322599, 52.514740}, gormGIS.GeoPoint{13.322679, 52.512611}, gormGIS.GeoPoint{13.322674, 52.511743}, gormGIS.GeoPoint{13.328280, 52.508302}, gormGIS.GeoPoint{13.331077, 52.512191}, gormGIS.GeoPoint{13.329763, 52.513787}, gormGIS.GeoPoint{13.324401, 52.516872}}},
 	}
 
-	NoLocation := Area{
+	NoLocation := Region{
 		ID:          fmt.Sprintf("%s", uuid.NewV4()),
 		Name:        "CaTUstrophy System",
 		Description: "This is not a real location, this represents our system.",
@@ -120,16 +120,16 @@ func AddDefaultData(db *gorm.DB) {
 	GroupUser := Group{
 		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: true,
-		Location:     AreaTU,
-		LocationId:   AreaTU.ID,
+		Location:     RegionTU,
+		LocationId:   RegionTU.ID,
 		Permissions:  []Permission{PermUser},
 	}
 
 	GroupAdmin := Group{
 		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: false,
-		Location:     AreaTU,
-		LocationId:   AreaTU.ID,
+		Location:     RegionTU,
+		LocationId:   RegionTU.ID,
 		Permissions:  []Permission{PermAdmin},
 	}
 
@@ -172,7 +172,7 @@ func AddDefaultData(db *gorm.DB) {
 	db.Create(&GroupAdmin)
 	db.Create(&GroupSuperAdmin)
 	db.Create(&UserAdmin)
-	db.Create(&AreaTU)
+	db.Create(&RegionTU)
 	db.Create(&NoLocation)
 
 	for _, Tag := range Tags {

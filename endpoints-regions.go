@@ -11,7 +11,7 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-type CreateAreaPayload struct {
+type CreateRegionPayload struct {
 	Name        string             `conform:"trim" validate:"required"`
 	Description string             `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 	Boundaries  []gormGIS.GeoPoint `conform:"trim"`
@@ -53,29 +53,29 @@ func (app *App) CreateRegion(c *gin.Context) {
 
 func (app *App) ListRegions(c *gin.Context) {
 
-	var Areas []db.Area
+	var Regions []db.Region
 
 	// Retrieve all offers from database.
-	app.DB.Find(&Areas)
+	app.DB.Find(&Regions)
 
-	c.JSON(http.StatusOK, Areas)
+	c.JSON(http.StatusOK, Regions)
 }
 
 func (app *App) GetRegion(c *gin.Context) {
 
-	// Retrieve area ID from request URL.
-	areaID := app.getUUID(c, "areaID")
-	if areaID == "" {
+	// Retrieve region ID from request URL.
+	regionID := app.getUUID(c, "regionID")
+	if regionID == "" {
 		return
 	}
 
-	var Area db.Area
+	var Region db.Region
 
-	// Select area based on supplied ID from database.
-	app.DB.First(&Area, "id = ?", areaID)
-	app.DB.Model(&Area).Association("Boundaries").Find(&Area.Boundaries)
+	// Select region based on supplied ID from database.
+	app.DB.First(&Region, "id = ?", regionID)
+	app.DB.Model(&Region).Association("Boundaries").Find(&Region.Boundaries)
 
-	c.JSON(http.StatusOK, Area)
+	c.JSON(http.StatusOK, Region)
 }
 
 func (app *App) UpdateRegion(c *gin.Context) {
@@ -100,7 +100,7 @@ func (app *App) GetOffersForRegion(c *gin.Context) {
 		return
 	}
 
-	var Region db.Area
+	var Region db.Region
 	app.DB.Preload("Users").Preload("Offers").First(&Region, "id = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
@@ -135,7 +135,7 @@ func (app *App) GetRequestsForRegion(c *gin.Context) {
 		return
 	}
 
-	var Region db.Area
+	var Region db.Region
 	app.DB.Preload("Users").Preload("Requests").First(&Region, "id = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
