@@ -28,20 +28,26 @@ to fetch all dependencies of this project.
 
 **4)** Create an `.env` file suited to your deployment. For this, copy the provided `.env.example` to `.env` and edit it to your needs. **Choose strong secret keys!**
 
-**5)** Set up a Postgres database. Create a Postgres user and set a password for that user. Then add these information to your just created environment `.env` file. As above, have a look at the `.env.example` for a description of which values you have to set.
+**5)** Add PostGIS to your database. Run in your psql
+```
+CREATE EXTENSION postgis;
+CREATE EXTENSION postgis_topology;
+```
 
-**6)** Build the project via
+**6)** Set up a Postgres database. Create a Postgres user and set a password for that user. Then add these information to your just created environment `.env` file. As above, have a look at the `.env.example` for a description of which values you have to set.
+
+**7)** Build the project via
 ```bash
 $ go build
 ```
 
-**7a)** If you are running the project the first time or after you dropped the database to start fresh, start the backend via
+**8a)** If you are running the project the first time or after you dropped the database to start fresh, start the backend via
 ```bash
 $ ./backend --init
 ```
 This will create the tables and fill in some default needed content.
 
-**7b)** Alternatively - and in the most common case - start it with
+**8b)** Alternatively - and in the most common case - start it with
 ```bash
 $ ./backend
 ```
@@ -65,30 +71,40 @@ Four roles are present in this model:
 * unregistered user **(U)**: not yet present in our system
 * not-logged-in user **(N)**: registered, but not authorized user
 * logged-in user **(L)**: registered and authorized user
+* logged-in and concerned user **(C)**: user is involved in e.g. a matching
 * admin **(A)**: registered, authorized and privileged user
 
-| Functionality          | Needed privilege | HTTP verb | Endpoint       | API version | Done? |
-| ---------------------- | ---------------- | --------- | -------------- | ----------- | ----- |
-| Registration           | U                | POST      | /users         | MVP         | ✔    |
-| Login                  | N                | POST      | /auth          | MVP         | ✔    |
-| Renew auth token       | L                | GET       | /auth          | MVP         | ✔    |
-| Logout                 | L                | DELETE    | /auth          | MVP         | ✔    |
-| Own profile            | L                | GET       | /me            | 2.0         |       |
-| Update own profile     | L                | POST      | /me            | 2.0         |       |
-| List offers region x   | A                | GET       | /offers/x      | MVP         | ✔    |
-| List own offers        | L                | GET       | /me/offers     | 2.0         |       |
-| List requests region x | A                | GET       | /requests/x    | MVP         | ✔    |
-| List own requests      | L                | GET       | /me/requests   | 2.0         |       |
-| Create offer           | L                | POST      | /offers        | MVP         | ✔    |
-| Create request         | L                | POST      | /requests      | MVP         | ✔    |
-| Update own offer x     | L                | PUT       | /me/offers/x   | 2.0         |       |
-| Update own request x   | L                | PUT       | /me/requests/x | 2.0         |       |
-| Create matching        | A                | POST      | /matchings     | MVP         | ✔    |
-| List matchings         | A                | GET       | /matchings     | 2.0         |       |
-| Get matching x         | L                | GET       | /matchings/x   | MVP         | ✔    |
-| Create an area         | L                | POST      | /areas         | 2.0         |       |
-| List areas             | L                | GET       | /areas         | 2.0         |       |
-| Update area x          | L                | PUT       | /areas/x       | 2.0         |       |
+The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
+
+| Functionality                       | Role | HTTP verb | Endpoint                     | API version | Done? |
+| ----------------------------------- | ---- | --------- | ---------------------------- | ----------- | ----- |
+| Login                               | N    | POST      | /auth                        | MVP         | ✔    |
+| Renew auth token                    | L    | GET       | /auth                        | MVP         | ✔    |
+| Logout                              | L    | DELETE    | /auth                        | MVP         | ✔    |
+| Create user                         | U    | POST      | /users                       | MVP         | ✔    |
+| List users                          | A    | GET       | /users                       | 3.0         |       |
+| Get user `userID`                   | A    | GET       | /users/:userID               | 3.0         |       |
+| Update user `userID`                | A    | PUT       | /users/:userID               | 3.0         |       |
+| Create offer                        | L    | POST      | /offers                      | MVP         | ✔    |
+| Get offer `offerID`                 | A    | GET       | /offers/:offerID             | MVP         | ✔    |
+| Update offer `offerID`              | C    | PUT       | /offers/:offerID             | 3.0         |       |
+| Create request                      | L    | POST      | /requests                    | MVP         | ✔    |
+| Get request `requestID`             | A    | GET       | /requests/:requestID         | MVP         | ✔    |
+| Update request `requestID`          | C    | PUT       | /requests/:requestID         | 3.0         |       |
+| Create matching                     | A    | POST      | /matchings                   | MVP         | ✔    |
+| Get matching `matchingID`           | C    | GET       | /matchings/:matchingID       | MVP         | ✔    |
+| Update matching `matchingID`        | A    | PUT       | /matchings/:matchingID       | 3.0         |       |
+| Create a region                     | L    | POST      | /regions                     | 2.0         |       |
+| List regions                        | U    | GET       | /regions                     | 2.0         | ✔    |
+| Get region `regionID`               | U    | GET       | /regions/:regionID           | 2.0         |       |
+| Update region `regionID`            | A    | PUT       | /regions/:regionID           | 2.0         |       |
+| List offers in region  `regionID`   | A    | GET       | /regions/:regionID/offers    | 2.0         |       |
+| List requests in region `regionID`  | A    | GET       | /regions/:regionID/requests  | 2.0         |       |
+| List matchings in region `regionID` | A    | GET       | /regions/:regionID/matchings | 2.0         |       |
+| Own profile                         | L    | GET       | /me                          | 2.0         |       |
+| Update own profile                  | L    | PUT       | /me                          | 2.0         |       |
+| List own offers                     | L    | GET       | /me/offers                   | 2.0         |       |
+| List own requests                   | L    | GET       | /me/requests                 | 2.0         |       |
 
 
 ### What is inside a JWT?
@@ -115,7 +131,7 @@ Please note that further identification fields may be added in the future.
 ### Detailed request information
 
 
-#### Registration
+#### Create user (registration)
 
 **Request:**
 
@@ -592,6 +608,7 @@ POST /matchings
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
+	"Area": required, UUID v4,
 	"Request": required, UUID v4,
 	"Offer": required, UUID v4
 }

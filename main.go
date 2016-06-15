@@ -44,33 +44,37 @@ func main() {
 		ValidateHeaders: false,
 	}))
 
-	// Define endpoint to handler mapping.
-	app.Router.POST("/users", app.CreateUser)
+	// Define our endpoints.
+
 	app.Router.POST("/auth", app.Login)
 	app.Router.GET("/auth", app.RenewToken)
 	app.Router.DELETE("/auth", app.Logout)
 
-	app.Router.GET("/me", app.GetUser)
-	app.Router.POST("/me", app.UpdateUser)
-
-	app.Router.GET("/offers/:region", app.ListOffers)
-	app.Router.GET("/me/offers", app.ListUserOffers)
-	app.Router.GET("/requests/:region", app.ListRequests)
-	app.Router.GET("/me/requests", app.ListUserRequests)
+	app.Router.POST("/users", app.CreateUser)
 
 	app.Router.POST("/offers", app.CreateOffer)
-	app.Router.POST("/requests", app.CreateRequest)
+	app.Router.GET("/offers/:offerID", app.GetOffer)
+	app.Router.PUT("/offers/:offerID", app.UpdateOffer)
 
-	app.Router.PUT("/me/offers/:offerID", app.UpdateUserOffer)
-	app.Router.PUT("/me/requests/:requestID", app.UpdateUserRequest)
+	app.Router.POST("/requests", app.CreateRequest)
+	app.Router.GET("/requests/:requestID", app.GetRequest)
+	app.Router.PUT("/requests/:requestID", app.UpdateRequest)
 
 	app.Router.POST("/matchings", app.CreateMatching)
-	app.Router.GET("/matchings", app.ListMatchings)
 	app.Router.GET("/matchings/:matchingID", app.GetMatching)
 
-	// app.Router.POST("/areas", app.CreateArea)
-	app.Router.GET("/areas", app.ListAreas)
-	// app.Router.GET("/areas/:areaID", app.GetArea)
+	app.Router.POST("/regions", app.CreateRegion)
+	app.Router.GET("/regions", app.ListRegions)
+	app.Router.GET("/regions/:regionID", app.GetRegion)
+	app.Router.PUT("/regions/:regionID", app.UpdateRegion)
+	app.Router.GET("/regions/:regionID/requests", app.GetRequestsForRegion)
+	app.Router.GET("/regions/:regionID/offers", app.GetOffersForRegion)
+	app.Router.GET("/regions/:regionID/matchings", app.GetMatchingsForRegion)
+
+	app.Router.GET("/me", app.GetUser)
+	app.Router.PUT("/me", app.UpdateUser)
+	app.Router.GET("/me/offers", app.ListUserOffers)
+	app.Router.GET("/me/requests", app.ListUserRequests)
 
 	// Run our application.
 	app.Router.Run(fmt.Sprintf("%s:%s", app.IP, app.Port))

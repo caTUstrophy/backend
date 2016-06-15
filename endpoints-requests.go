@@ -6,24 +6,29 @@ import (
 
 	"net/http"
 
-
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/leebenson/conform"
+	"github.com/nferruzzi/gormGIS"
 	"github.com/satori/go.uuid"
 )
 
 // Structs.
 
 type CreateRequestPayload struct {
-	Name           string   `conform:"trim" validate:"required"`
-	Location       string   `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	ValidityPeriod string   `conform:"trim" validate:"required"`
+	Name           string           `conform:"trim" validate:"required"`
+	Location       gormGIS.GeoPoint `conform:"trim" validate:"required"`
+	Tags           []string         `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	ValidityPeriod string           `conform:"trim" validate:"required"`
 }
 
 // Requests related functions.
+
+// Looks up all areas that match the location of this offer
+func (app *App) assignAreasToRequest(request db.Request) {
+
+}
 
 func (app *App) CreateRequest(c *gin.Context) {
 
@@ -88,7 +93,8 @@ func (app *App) CreateRequest(c *gin.Context) {
 	Request.UserID = User.ID
 	Request.Location = Payload.Location
 	Request.Tags = make([]db.Tag, 0)
-
+	// The areas that match the location will be assigned outside
+	app.assignAreasToRequest(Request)
 	// If tags were supplied, check if they exist in our system.
 	if len(Payload.Tags) > 0 {
 
@@ -159,97 +165,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 	})
 }
 
-func (app *App) ListRequests(c *gin.Context) {
-
-	// Check authorization for this function.
-	ok, User, message := app.Authorize(c.Request)
-	if !ok {
-
-		// Signal client an error and expect authorization.
-		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
-	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
-
-		// Signal client that the provided authorization was not sufficient.
-		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
-	region := c.Params.ByName("region")
-
-	// Validate sent region.
-	errs := app.Validator.Field(region, "required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C")
-	if errs != nil {
-
-		errResp := make(map[string]string)
-
-		// Iterate over all validation errors.
-		for _, err := range errs.(validator.ValidationErrors) {
-
-			if err.Tag == "required" {
-				errResp["region"] = "Is required"
-			} else if err.Tag == "excludesall" {
-				errResp["region"] = "Contains unallowed characters"
-			}
-		}
-
-		// Send prepared error message to client.
-		c.JSON(http.StatusBadRequest, errResp)
-
-		return
-	}
-
-	var Requests []db.Request
-
-	// Retrieve all requests from database.
-	// app.DB.Preload("User").Find(&Requests, "location = ?", region)
-	app.DB.Find(&Requests, "location = ?", region)
-
-	// TODO: remove loop and exchange for preload
-	for i := 0; i < len(Requests); i++ {
-		app.DB.Select("name, id").First(&Requests[i].User, "mail = ?", User.Mail)
-	}
-
-	// Send back results to client.
-	c.JSON(http.StatusOK, Requests)
-}
-
-func (app *App) ListUserRequests(c *gin.Context) {
-
-	// Check authorization for this function.
-	ok, User, message := app.Authorize(c.Request)
-	if !ok {
-
-		// Signal client an error and expect authorization.
-		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
-	// TODO: Change this stub to real function.
-	// replace tmp location - once postgis branch merged
-
-	type TmpLocation struct {
-		Longitude float64
-		Latitude  float64
-	}
-
-	type TmpUserRequest struct {
-		ID             string
-		Name           string
-		Location       TmpLocation
-		Tags           []db.Tag // IMO return []string instead, no need to know db.Tag.ID
-		ValidityPeriod string
-	}
-
+func (app *App) GetRequest(c *gin.Context) {
 	// 1) Only retrieve requests from user.
 	var Requests []db.Request
 	app.DB.Find(&Requests, "user_id = ?", User.ID)
@@ -281,7 +197,7 @@ func (app *App) ListUserRequests(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func (app *App) UpdateUserRequest(c *gin.Context) {
+func (app *App) UpdateRequest(c *gin.Context) {
 
 	// Check authorization for this function.
 	ok, _, message := app.Authorize(c.Request)
@@ -293,6 +209,8 @@ func (app *App) UpdateUserRequest(c *gin.Context) {
 
 		return
 	}
+
+	// TODO: Add edit rights for concerned user vs. admin.
 
 	requestID := c.Params.ByName("requestID")
 
