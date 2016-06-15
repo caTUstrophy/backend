@@ -8,14 +8,17 @@ import (
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
+	"github.com/nferruzzi/gormGIS"
 	"github.com/satori/go.uuid"
 )
 
-func (app *App) CreateRegion(c *gin.Context) {
-
+type CreateAreaPayload struct {
+	Name        string             `conform:"trim" validate:"required"`
+	Description string             `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Boundaries  []gormGIS.GeoPoint `conform:"trim"`
 }
 
-func (app *App) ListRegions(c *gin.Context) {
+func (app *App) CreateRegion(c *gin.Context) {
 
 	// Check authorization for this function.
 	ok, _, message := app.Authorize(c.Request)
@@ -28,43 +31,68 @@ func (app *App) ListRegions(c *gin.Context) {
 		return
 	}
 
-	type TmpPoint struct {
-		Longitude float64
-		Latitude  float64
-	}
-
-	type TmpArea struct {
-		ID          string
-		Name        string
-		Description string
-		Boundaries  []TmpPoint
-	}
-
-	TmpResponse := []TmpArea{
-		TmpArea{
-			fmt.Sprintf("%s", uuid.NewV4()),
-			"Algeria",
-			"Mountain region hit by an earth quake of strength 4.0",
-			[]TmpPoint{
-				TmpPoint{3.389017, 36.416215},
-				TmpPoint{3.358667, 36.391414},
-				TmpPoint{3.391039, 36.362402},
-				TmpPoint{3.418206, 36.392172},
-				TmpPoint{3.389017, 36.416215},
-			},
-		},
-	}
+	// check scope if we want it for admins only
 
 	// TODO: Change stub to real function.
-	c.JSON(http.StatusOK, TmpResponse)
+	c.JSON(http.StatusCreated, gin.H{
+		"ID":          fmt.Sprintf("%s", uuid.NewV4()),
+		"Name":        "Algeria",
+		"Description": "Mountain region hit by an earth quake of strength 4.0",
+		"Boundaries": struct {
+			Boundaries []gormGIS.GeoPoint
+		}{
+			[]gormGIS.GeoPoint{
+				gormGIS.GeoPoint{3.389017, 36.416215},
+				gormGIS.GeoPoint{3.358667, 36.391414},
+				gormGIS.GeoPoint{3.391039, 36.362402},
+				gormGIS.GeoPoint{3.418206, 36.392172},
+				gormGIS.GeoPoint{3.389017, 36.416215},
+			},
+		},
+	})
+}
+
+func (app *App) ListRegions(c *gin.Context) {
+
+	var Areas []db.Area
+
+	// Retrieve all offers from database.
+	app.DB.Find(&Areas)
+
+	c.JSON(http.StatusOK, Areas)
 }
 
 func (app *App) GetRegion(c *gin.Context) {
+
+	// Retrieve area ID from request URL.
+	areaID := c.Params.ByName("areaID")
+
+	errs := app.Validator.Field(areaID, "required,uuid4")
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs.(validator.ValidationErrors) {
+
+			if err.Tag == "required" {
+				errResp[err.Field] = "Is required"
+			} else if err.Tag == "uuid4" {
+				errResp[err.Field] = "Needs to be an UUID version 4"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(http.StatusBadRequest, errResp)
+
+		return
+	}
 
 	var Area db.Area
 
 	// Select area based on supplied ID from database.
 	app.DB.First(&Area, "id = ?", areaID)
+	app.DB.Model(&Area).Association("Boundaries").Find(&Area.Boundaries)
 
 	c.JSON(http.StatusOK, Area)
 }

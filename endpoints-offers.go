@@ -10,19 +10,25 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/leebenson/conform"
+	"github.com/nferruzzi/gormGIS"
 	"github.com/satori/go.uuid"
 )
 
 // Structs.
 
 type CreateOfferPayload struct {
-	Name           string   `conform:"trim" validate:"required"`
-	Location       string   `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	ValidityPeriod string   `conform:"trim" validate:"required"`
+	Name           string           `conform:"trim" validate:"required"`
+	Location       gormGIS.GeoPoint `conform:"trim" validate:"required"`
+	Tags           []string         `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	ValidityPeriod string           `conform:"trim" validate:"required"`
 }
 
 // Offers related functions.
+
+// TODO Looks up all areas that match the location of this offer
+func (app *App) assignAreasToOffer(offer db.Offer) {
+
+}
 
 func (app *App) CreateOffer(c *gin.Context) {
 
@@ -86,6 +92,8 @@ func (app *App) CreateOffer(c *gin.Context) {
 	Offer.User = *User
 	Offer.Location = Payload.Location
 	Offer.Tags = make([]db.Tag, 0)
+	// The areas that fit the location will be assigned here
+	app.assignAreasToOffer(Offer)
 
 	// If tags were supplied, check if they exist in our system.
 	if len(Payload.Tags) > 0 {

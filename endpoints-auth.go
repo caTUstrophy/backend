@@ -80,7 +80,7 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 	return true, &User, ""
 }
 
-func (app *App) CheckScope(user *db.User, location string, permission string) bool {
+func (app *App) CheckScope(user *db.User, location db.Area, permission string) bool {
 
 	// Check if User.Groups contains a group with location.
 	// * No  -> false
@@ -89,7 +89,14 @@ func (app *App) CheckScope(user *db.User, location string, permission string) bo
 	// Fast, because the typical user is member of few groups.
 	for _, group := range user.Groups {
 
-		if group.Location == location {
+		for _, groupPermission := range group.Permissions {
+
+			if groupPermission.AccessRight == "superadmin" {
+				return true
+			}
+		}
+
+		if group.Location.ID == location.ID {
 
 			// Fast, because there are not so many different permissions.
 			for _, groupPermission := range group.Permissions {
