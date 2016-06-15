@@ -255,34 +255,30 @@ func (app *App) ListUserRequests(c *gin.Context) {
 	app.DB.Find(&Requests, "user_id = ?", User.ID)
 
 
-	var ReturnRequests []TmpUserRequest
-	ReturnRequests = make([]TmpUserRequest, 0)
+	response := make([]interface{}, 0)
 	for _, r := range Requests {
 
 		// 2) Check expired field - extra argument for that?
 		if r.ValidityPeriod.After(time.Now()) {
-			// find associated tags
+			// Load request.Tags
 			app.DB.Model(&r).Association("Tags").Find(&r.Tags)
 
 			// 3) Only return what's needed
-			// TODO : replace through proper payload struct
-			req := TmpUserRequest{
-				r.ID,
-				r.Name,
-				TmpLocation{
-					13.9,
-					50.1,
+			fields := map[string]interface{}{
+				"Name":"Name",
+				"Location":"Location",
+				"Tags":map[string]interface{}{
+					"Name":"Name",
 				},
-				r.Tags,
-				r.ValidityPeriod.Format(time.RFC3339),
 			}
 
-			ReturnRequests = append(ReturnRequests, req)
+			model := db.CopyNestedModel(r, fields)
+			response = append(response, model)
 		}
 	}
 
 
-	c.JSON(http.StatusOK, ReturnRequests)
+	c.JSON(http.StatusOK, response)
 }
 
 func (app *App) UpdateUserRequest(c *gin.Context) {
