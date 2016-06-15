@@ -92,6 +92,7 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) (map[string]i
 	// iterate over all fields that will be copied
 	for key := range fields {
 		var exists = false
+		newKey, _ := fields[key].(string)
 
 		// search for field in source type
 		for i := 0; i < valInterface.NumField(); i++ {
@@ -102,7 +103,7 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) (map[string]i
 
 	    		if !nested {
 	    			// NOT nested -> copy value directly
-					m[key] = valInterface.Field(i).Interface()
+					m[newKey] = valInterface.Field(i).Interface()
 				} else { 
 
 					// NESTED copied via recursion
@@ -114,10 +115,10 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) (map[string]i
 						for i:=0; i<slice.Len(); i++ {
 					        sliceMapped[i] = CopyNestedModel(slice.Index(i).Interface(), nestedMap)
 					    }
-					    m[key] = sliceMapped
+					    m[newKey] = sliceMapped
 					} else {
 						// if nested OBJECT
-						m[key] = CopyNestedModel(valInterface.Field(i).Interface(), nestedMap)
+						m[newKey] = CopyNestedModel(valInterface.Field(i).Interface(), nestedMap)
 					}
 
 				}
