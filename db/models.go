@@ -1,9 +1,9 @@
 package db
 
 import (
-	"time"
 	"fmt"
-    "reflect"
+	"reflect"
+	"time"
 
 	"github.com/nferruzzi/gormGIS"
 )
@@ -45,7 +45,7 @@ type Offer struct {
 	Name           string `gorm:"index;not null"`
 	User           User   `gorm:"ForeignKey:UserID;AssociationForeignKey:Refer"`
 	UserID         string
-	Location       gormGIS.GeoPoint `gorm:"not null"`
+	Location       gormGIS.GeoPoint `gorm:"not null" sql:"type:geometry(Geometry,4326)"`
 	Tags           []Tag            `gorm:"many2many:offer_tags"`
 	ValidityPeriod time.Time
 	Matched        bool
@@ -57,7 +57,7 @@ type Request struct {
 	Name           string `gorm:"index;not null"`
 	User           User   `gorm:"ForeignKey:UserID;AssociationForeignKey:Refer"`
 	UserID         string
-	Location       gormGIS.GeoPoint `gorm:"not null"`
+	Location       gormGIS.GeoPoint `gorm:"not null" sql:"type:geometry(Geometry,4326)"`
 	Tags           []Tag            `gorm:"many2many:request_tags"`
 	ValidityPeriod time.Time
 	Matched        bool
@@ -81,7 +81,7 @@ type Area struct {
 	Requests    []Request `gorm:"many2many:area_requests"`
 }
 
-func CopyNestedModel(i interface{}, fields map[string]interface{}) (map[string]interface{}) {
+func CopyNestedModel(i interface{}, fields map[string]interface{}) map[string]interface{} {
 	var m map[string]interface{}
 	m = make(map[string]interface{})
 
@@ -92,18 +92,19 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) (map[string]i
 	// iterate over all fields that will be copied
 	for key := range fields {
 		var exists = false
+		newKey, _ := fields[key].(string)
 
 		// search for field in source type
 		for i := 0; i < valInterface.NumField(); i++ {
-	    	if typeOfT.Field(i).Name == key{
+			if typeOfT.Field(i).Name == key {
 
-	    		// check for nesting through type assertion 
-	    		nestedMap, nested := fields[key].(map[string]interface{})
+				// check for nesting through type assertion
+				nestedMap, nested := fields[key].(map[string]interface{})
 
-	    		if !nested {
-	    			// NOT nested -> copy value directly
-					m[key] = valInterface.Field(i).Interface()
-				} else { 
+				if !nested {
+					// NOT nested -> copy value directly
+					m[newKey] = valInterface.Field(i).Interface()
+				} else {
 
 					// NESTED copied via recursion
 					var slice = reflect.ValueOf(valInterface.Field(i).Interface())
@@ -111,20 +112,20 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) (map[string]i
 					// if nested ARRAY
 					if valInterface.Field(i).Kind() == reflect.Slice {
 						sliceMapped := make([]interface{}, slice.Len())
-						for i:=0; i<slice.Len(); i++ {
-					        sliceMapped[i] = CopyNestedModel(slice.Index(i).Interface(), nestedMap)
-					    }
-					    m[key] = sliceMapped
+
+						for i := 0; i < slice.Len(); i++ {
+							sliceMapped[i] = CopyNestedModel(slice.Index(i).Interface(), nestedMap)
+						}
+						m[newKey] = sliceMapped
 					} else {
 						// if nested OBJECT
-						m[key] = CopyNestedModel(valInterface.Field(i).Interface(), nestedMap)
+						m[newKey] = CopyNestedModel(valInterface.Field(i).Interface(), nestedMap)
 					}
-
 				}
 
 				exists = true
-	    		break
-		    }
+				break
+			}
 		}
 
 		if !exists {
@@ -133,4 +134,12 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) (map[string]i
 	}
 
 	return m
+}
+
+func CopyArrayNestedModels(arr []interface{}, fields map[string]interface{}) []map[string]interface{} {
+	copied := make([]map[string]interface{}, len(arr))
+	for i, obj := range arr {
+		copied[i] = CopyNestedModel(obj, fields)
+	}
+	return copied
 }

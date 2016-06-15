@@ -1,11 +1,13 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 )
 
-func getUUID(c *gin.Context, par string) {
+func (app *App) getUUID(c *gin.Context, par string) string {
 	parID := c.Params.ByName(par)
 	errs := app.Validator.Field(parID, "required,uuid4")
 	if errs != nil {
@@ -24,8 +26,7 @@ func getUUID(c *gin.Context, par string) {
 
 		// Send prepared error message to client.
 		c.JSON(http.StatusBadRequest, errResp)
-
-		return
+		return ""
 	}
 	return parID
 }

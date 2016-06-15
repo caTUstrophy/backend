@@ -166,36 +166,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 }
 
 func (app *App) GetRequest(c *gin.Context) {
-	// 1) Only retrieve requests from user.
-	var Requests []db.Request
 
-	requestID := getUUID("requestID")
-
-	app.DB.Find(&Requests, "id = ?", requestID)
-
-	response := make([]interface{}, 0)
-	for _, r := range Requests {
-
-		// 2) Check expired field - extra argument for that?
-		if r.ValidityPeriod.After(time.Now()) {
-			// Load request.Tags
-			app.DB.Model(&r).Association("Tags").Find(&r.Tags)
-
-			// 3) Only return what's needed
-			fields := map[string]interface{}{
-				"Name":     "Name",
-				"Location": "Location",
-				"Tags": map[string]interface{}{
-					"Name": "Name",
-				},
-			}
-
-			model := db.CopyNestedModel(r, fields)
-			response = append(response, model)
-		}
-	}
-
-	c.JSON(http.StatusOK, response)
 }
 
 func (app *App) UpdateRequest(c *gin.Context) {
@@ -213,7 +184,10 @@ func (app *App) UpdateRequest(c *gin.Context) {
 
 	// TODO: Add edit rights for concerned user vs. admin.
 
-	requestID := getUUID("requestID")
+	requestID := app.getUUID(c, "requestID")
+	if requestID == "" {
+		return
+	}
 
 	// TODO: Change this stub to real function.
 	c.JSON(http.StatusOK, gin.H{

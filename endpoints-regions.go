@@ -7,7 +7,6 @@ import (
 
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator"
 	"github.com/nferruzzi/gormGIS"
 	"github.com/satori/go.uuid"
 )
@@ -65,7 +64,10 @@ func (app *App) ListRegions(c *gin.Context) {
 func (app *App) GetRegion(c *gin.Context) {
 
 	// Retrieve area ID from request URL.
-	areaID := getUUID("areaID")
+	areaID := app.getUUID(c, "areaID")
+	if areaID == "" {
+		return
+	}
 
 	var Area db.Area
 
@@ -93,8 +95,16 @@ func (app *App) GetOffersForRegion(c *gin.Context) {
 		return
 	}
 
+	regionID := app.getUUID(c, "regionID")
+	if regionID == "" {
+		return
+	}
+
+	var Region db.Area
+	app.DB.Preload("Users").Preload("Offers").First(&Region, "id = ?", regionID)
+
 	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
+	if ok := app.CheckScope(User, Region, "admin"); !ok {
 
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
@@ -103,20 +113,8 @@ func (app *App) GetOffersForRegion(c *gin.Context) {
 		return
 	}
 
-	region := getUUID("regionID")
-
-	var Offers []db.Offer
-
-	// Retrieve all offers from database.
-	app.DB.Find(&Offers, "Location = ?", region)
-
-	// TODO: remove loop and exchange for preload
-	for i := 0; i < len(Offers); i++ {
-		app.DB.Select("name, id").First(&Offers[i].User, "mail = ?", User.Mail)
-	}
-
 	// Send back results to client.
-	c.JSON(http.StatusOK, Offers)
+	c.JSON(http.StatusOK, Region.Offers)
 }
 
 func (app *App) GetRequestsForRegion(c *gin.Context) {
@@ -132,8 +130,16 @@ func (app *App) GetRequestsForRegion(c *gin.Context) {
 		return
 	}
 
+	regionID := app.getUUID(c, "regionID")
+	if regionID == "" {
+		return
+	}
+
+	var Region db.Area
+	app.DB.Preload("Users").Preload("Requests").First(&Region, "id = ?", regionID)
+
 	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
+	if ok := app.CheckScope(User, Region, "admin"); !ok {
 
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
@@ -142,21 +148,8 @@ func (app *App) GetRequestsForRegion(c *gin.Context) {
 		return
 	}
 
-	region := getUUID("regionID")
-
-	var Requests []db.Request
-
-	// Retrieve all requests from database.
-	// app.DB.Preload("User").Find(&Requests, "location = ?", region)
-	app.DB.Find(&Requests, "location = ?", region)
-
-	// TODO: remove loop and exchange for preload
-	for i := 0; i < len(Requests); i++ {
-		app.DB.Select("name, id").First(&Requests[i].User, "mail = ?", User.Mail)
-	}
-
 	// Send back results to client.
-	c.JSON(http.StatusOK, Requests)
+	c.JSON(http.StatusOK, Region.Requests)
 }
 
 func (app *App) GetMatchingsForRegion(c *gin.Context) {

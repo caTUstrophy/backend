@@ -86,10 +86,10 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | Get user `userID`                   | A    | GET       | /users/:userID               | 3.0         |       |
 | Update user `userID`                | A    | PUT       | /users/:userID               | 3.0         |       |
 | Create offer                        | L    | POST      | /offers                      | MVP         | ✔    |
-| Get offer `offerID`                 | A    | GET       | /offers/:offerID             | MVP         | ✔    |
+| Get offer `offerID`                 | A    | GET       | /offers/:offerID             | 2.0         |       |
 | Update offer `offerID`              | C    | PUT       | /offers/:offerID             | 3.0         |       |
 | Create request                      | L    | POST      | /requests                    | MVP         | ✔    |
-| Get request `requestID`             | A    | GET       | /requests/:requestID         | MVP         | ✔    |
+| Get request `requestID`             | A    | GET       | /requests/:requestID         | 2.0         |       |
 | Update request `requestID`          | C    | PUT       | /requests/:requestID         | 3.0         |       |
 | Create matching                     | A    | POST      | /matchings                   | MVP         | ✔    |
 | Get matching `matchingID`           | C    | GET       | /matchings/:matchingID       | MVP         | ✔    |

@@ -184,7 +184,10 @@ func (app *App) UpdateOffer(c *gin.Context) {
 
 	// TODO: Add edit rights for concerned user vs. admin.
 
-	offerID := getUUID("offerID")
+	offerID := app.getUUID(c, "offerID")
+	if offerID == "" {
+		return
+	}
 
 	// TODO: Change this stub to real function.
 	c.JSON(http.StatusOK, gin.H{

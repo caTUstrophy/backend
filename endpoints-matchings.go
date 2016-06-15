@@ -151,7 +151,10 @@ func (app *App) GetMatching(c *gin.Context) {
 		return
 	}
 
-	matchingID := getUUID("matchingID")
+	matchingID := app.getUUID(c, "matchingID")
+	if matchingID == "" {
+		return
+	}
 
 	var Matching db.Matching
 
@@ -175,7 +178,10 @@ func (app *App) ListMatchings(c *gin.Context) {
 		return
 	}
 
-	region := getUUID("regionID")
+	region := app.getUUID(c, "regionID")
+	if region == "" {
+		return
+	}
 
 	var area db.Area
 	app.DB.First(&area, "id = ?", region)
