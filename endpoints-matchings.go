@@ -151,29 +151,7 @@ func (app *App) GetMatching(c *gin.Context) {
 		return
 	}
 
-	matchingID := c.Params.ByName("matchingID")
-
-	// Validate sent matchingID.
-	errs := app.Validator.Field(matchingID, "required,uuid4")
-	if errs != nil {
-
-		errResp := make(map[string]string)
-
-		// Iterate over all validation errors.
-		for _, err := range errs.(validator.ValidationErrors) {
-
-			if err.Tag == "required" {
-				errResp["matchingID"] = "Is required"
-			} else if err.Tag == "uuid4" {
-				errResp["matchingID"] = "Needs to be an UUID version 4"
-			}
-		}
-
-		// Send prepared error message to client.
-		c.JSON(http.StatusBadRequest, errResp)
-
-		return
-	}
+	matchingID := getUUID("matchingID")
 
 	var Matching db.Matching
 
@@ -197,42 +175,10 @@ func (app *App) ListMatchings(c *gin.Context) {
 		return
 	}
 
-	region := c.Params.ByName("region")
-
-	// Validate sent region.
-	errs := app.Validator.Field(region, "required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C")
-	if errs != nil {
-
-		errResp := make(map[string]string)
-
-		// Iterate over all validation errors.
-		for _, err := range errs.(validator.ValidationErrors) {
-
-			if err.Tag == "required" {
-				errResp["region"] = "Is required"
-			} else if err.Tag == "excludesall" {
-				errResp["region"] = "Contains unallowed characters"
-			}
-		}
-
-		// Send prepared error message to client.
-		c.JSON(http.StatusBadRequest, errResp)
-
-		return
-	}
+	region := getUUID("regionID")
 
 	var area db.Area
 	app.DB.First(&area, "id = ?", region)
-
-	// Check if user permissions are sufficient (user is an admin).
-	if ok := app.CheckScope(User, area, "admin"); !ok {
-
-		// Signal client that the provided authorization was not sufficient.
-		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, area, "admin"); !ok {

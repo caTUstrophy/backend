@@ -184,29 +184,7 @@ func (app *App) UpdateOffer(c *gin.Context) {
 
 	// TODO: Add edit rights for concerned user vs. admin.
 
-	offerID := c.Params.ByName("offerID")
-
-	// Validate sent offerID.
-	errs := app.Validator.Field(offerID, "required,uuid4")
-	if errs != nil {
-
-		errResp := make(map[string]string)
-
-		// Iterate over all validation errors.
-		for _, err := range errs.(validator.ValidationErrors) {
-
-			if err.Tag == "required" {
-				errResp["offerID"] = "Is required"
-			} else if err.Tag == "uuid4" {
-				errResp["offerID"] = "Needs to be an UUID version 4"
-			}
-		}
-
-		// Send prepared error message to client.
-		c.JSON(http.StatusBadRequest, errResp)
-
-		return
-	}
+	offerID := getUUID("offerID")
 
 	// TODO: Change this stub to real function.
 	c.JSON(http.StatusOK, gin.H{

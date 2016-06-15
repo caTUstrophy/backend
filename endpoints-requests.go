@@ -168,8 +168,10 @@ func (app *App) CreateRequest(c *gin.Context) {
 func (app *App) GetRequest(c *gin.Context) {
 	// 1) Only retrieve requests from user.
 	var Requests []db.Request
-	app.DB.Find(&Requests, "user_id = ?", User.ID)
 
+	requestID := getUUID("requestID")
+
+	app.DB.Find(&Requests, "id = ?", requestID)
 
 	response := make([]interface{}, 0)
 	for _, r := range Requests {
@@ -181,10 +183,10 @@ func (app *App) GetRequest(c *gin.Context) {
 
 			// 3) Only return what's needed
 			fields := map[string]interface{}{
-				"Name":"Name",
-				"Location":"Location",
-				"Tags":map[string]interface{}{
-					"Name":"Name",
+				"Name":     "Name",
+				"Location": "Location",
+				"Tags": map[string]interface{}{
+					"Name": "Name",
 				},
 			}
 
@@ -192,7 +194,6 @@ func (app *App) GetRequest(c *gin.Context) {
 			response = append(response, model)
 		}
 	}
-
 
 	c.JSON(http.StatusOK, response)
 }
@@ -212,29 +213,7 @@ func (app *App) UpdateRequest(c *gin.Context) {
 
 	// TODO: Add edit rights for concerned user vs. admin.
 
-	requestID := c.Params.ByName("requestID")
-
-	// Validate sent requestID.
-	errs := app.Validator.Field(requestID, "required,uuid4")
-	if errs != nil {
-
-		errResp := make(map[string]string)
-
-		// Iterate over all validation errors.
-		for _, err := range errs.(validator.ValidationErrors) {
-
-			if err.Tag == "required" {
-				errResp["requestID"] = "Is required"
-			} else if err.Tag == "uuid4" {
-				errResp["requestID"] = "Needs to be an UUID version 4"
-			}
-		}
-
-		// Send prepared error message to client.
-		c.JSON(http.StatusBadRequest, errResp)
-
-		return
-	}
+	requestID := getUUID("requestID")
 
 	// TODO: Change this stub to real function.
 	c.JSON(http.StatusOK, gin.H{

@@ -65,28 +65,7 @@ func (app *App) ListRegions(c *gin.Context) {
 func (app *App) GetRegion(c *gin.Context) {
 
 	// Retrieve area ID from request URL.
-	areaID := c.Params.ByName("areaID")
-
-	errs := app.Validator.Field(areaID, "required,uuid4")
-	if errs != nil {
-
-		errResp := make(map[string]string)
-
-		// Iterate over all validation errors.
-		for _, err := range errs.(validator.ValidationErrors) {
-
-			if err.Tag == "required" {
-				errResp[err.Field] = "Is required"
-			} else if err.Tag == "uuid4" {
-				errResp[err.Field] = "Needs to be an UUID version 4"
-			}
-		}
-
-		// Send prepared error message to client.
-		c.JSON(http.StatusBadRequest, errResp)
-
-		return
-	}
+	areaID := getUUID("areaID")
 
 	var Area db.Area
 
@@ -124,29 +103,7 @@ func (app *App) GetOffersForRegion(c *gin.Context) {
 		return
 	}
 
-	region := c.Params.ByName("region")
-
-	// Validate sent region.
-	errs := app.Validator.Field(region, "required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C")
-	if errs != nil {
-
-		errResp := make(map[string]string)
-
-		// Iterate over all validation errors.
-		for _, err := range errs.(validator.ValidationErrors) {
-
-			if err.Tag == "required" {
-				errResp["region"] = "Is required"
-			} else if err.Tag == "excludesall" {
-				errResp["region"] = "Contains unallowed characters"
-			}
-		}
-
-		// Send prepared error message to client.
-		c.JSON(http.StatusBadRequest, errResp)
-
-		return
-	}
+	region := getUUID("regionID")
 
 	var Offers []db.Offer
 
@@ -185,29 +142,7 @@ func (app *App) GetRequestsForRegion(c *gin.Context) {
 		return
 	}
 
-	region := c.Params.ByName("region")
-
-	// Validate sent region.
-	errs := app.Validator.Field(region, "required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C")
-	if errs != nil {
-
-		errResp := make(map[string]string)
-
-		// Iterate over all validation errors.
-		for _, err := range errs.(validator.ValidationErrors) {
-
-			if err.Tag == "required" {
-				errResp["region"] = "Is required"
-			} else if err.Tag == "excludesall" {
-				errResp["region"] = "Contains unallowed characters"
-			}
-		}
-
-		// Send prepared error message to client.
-		c.JSON(http.StatusBadRequest, errResp)
-
-		return
-	}
+	region := getUUID("regionID")
 
 	var Requests []db.Request
 
