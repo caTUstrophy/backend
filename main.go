@@ -51,7 +51,7 @@ func main() {
 	app.Router.DELETE("/auth", app.Logout)
 
 	app.Router.GET("/me", app.GetUser)
-	app.Router.POST("/me", app.UpdateUser)
+	app.Router.PUT("/me", app.UpdateUser)
 
 	app.Router.GET("/offers/:region", app.ListOffers)
 	app.Router.GET("/me/offers", app.ListUserOffers)

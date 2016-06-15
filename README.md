@@ -74,7 +74,7 @@ Four roles are present in this model:
 | Renew auth token       | L                | GET       | /auth          | MVP         | ✔    |
 | Logout                 | L                | DELETE    | /auth          | MVP         | ✔    |
 | Own profile            | L                | GET       | /me            | 2.0         |       |
-| Update own profile     | L                | POST      | /me            | 2.0         |       |
+| Update own profile     | L                | PUT       | /me            | 2.0         |       |
 | List offers region x   | A                | GET       | /offers/x      | MVP         | ✔    |
 | List own offers        | L                | GET       | /me/offers     | 2.0         |       |
 | List requests region x | A                | GET       | /requests/x    | MVP         | ✔    |
