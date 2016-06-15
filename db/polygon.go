@@ -9,7 +9,6 @@ import (
 	"database/sql/driver"
 	"encoding/binary"
 	"encoding/hex"
-
 	"github.com/nferruzzi/gormGIS"
 )
 
@@ -45,9 +44,24 @@ func (p *GeoPolygon) Scan(val interface{}) error {
 		return err
 	}
 
-	if err := binary.Read(r, byteOrder, p); err != nil {
+	// TODO: Evaluate this. Might be two fields.
+	var wkbTmp uint64
+	if err := binary.Read(r, byteOrder, &wkbTmp); err != nil {
 		return err
 	}
+
+	// Now extract the real points from well-known binary.
+	var point gormGIS.GeoPoint
+	polygon := make([]gormGIS.GeoPoint, 0)
+
+	pErr := binary.Read(r, byteOrder, &point)
+	for pErr == nil {
+		polygon = append(polygon, point)
+		pErr = binary.Read(r, byteOrder, &point)
+	}
+
+	// Save collected points in GeoPolygon structure.
+	p.Points = polygon
 
 	return nil
 }
