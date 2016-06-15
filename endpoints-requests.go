@@ -11,19 +11,25 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/leebenson/conform"
+	"github.com/nferruzzi/gormGIS"
 	"github.com/satori/go.uuid"
 )
 
 // Structs.
 
 type CreateRequestPayload struct {
-	Name           string   `conform:"trim" validate:"required"`
-	Location       string   `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	ValidityPeriod string   `conform:"trim" validate:"required"`
+	Name           string           `conform:"trim" validate:"required"`
+	Location       gormGIS.GeoPoint `conform:"trim" validate:"required"`
+	Tags           []string         `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	ValidityPeriod string           `conform:"trim" validate:"required"`
 }
 
 // Requests related functions.
+
+// Looks up all areas that match the location of this offer
+func (app *App) assignAreasToRequest(request db.Request) {
+
+}
 
 func (app *App) CreateRequest(c *gin.Context) {
 
@@ -88,7 +94,8 @@ func (app *App) CreateRequest(c *gin.Context) {
 	Request.UserID = User.ID
 	Request.Location = Payload.Location
 	Request.Tags = make([]db.Tag, 0)
-
+	// The areas that match the location will be assigned outside
+	app.assignAreasToRequest(Request)
 	// If tags were supplied, check if they exist in our system.
 	if len(Payload.Tags) > 0 {
 
@@ -172,16 +179,6 @@ func (app *App) ListRequests(c *gin.Context) {
 		return
 	}
 
-	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, "worldwide", "admin"); !ok {
-
-		// Signal client that the provided authorization was not sufficient.
-		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
 	region := c.Params.ByName("region")
 
 	// Validate sent region.
@@ -206,11 +203,24 @@ func (app *App) ListRequests(c *gin.Context) {
 		return
 	}
 
+	var area db.Area
+	app.DB.First(&area, "where ID = ?", c.Params.ByName("region"))
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, area, "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
 	var Requests []db.Request
 
 	// Retrieve all requests from database.
 	// app.DB.Preload("User").Find(&Requests, "location = ?", region)
-	app.DB.Find(&Requests, "location = ?", region)
+	app.DB.Find(&Requests, "location = ?", area)
 
 	// TODO: remove loop and exchange for preload
 	for i := 0; i < len(Requests); i++ {

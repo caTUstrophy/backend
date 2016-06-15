@@ -1,8 +1,10 @@
 package db
 
 import (
+	"reflect"
 	"time"
-    "reflect"
+
+	"github.com/nferruzzi/gormGIS"
 )
 
 // Models
@@ -16,7 +18,8 @@ type Permission struct {
 type Group struct {
 	ID           string `gorm:"primary_key"`
 	DefaultGroup bool
-	Location     string       `gorm:"index"`
+	Location     Area `gorm:"ForeignKey:LocationId;AssociationForeignKey:Refer"`
+	LocationId   string
 	Permissions  []Permission `gorm:"many2many:group_permissions"`
 }
 
@@ -41,9 +44,10 @@ type Offer struct {
 	Name           string `gorm:"index;not null"`
 	User           User   `gorm:"ForeignKey:UserID;AssociationForeignKey:Refer"`
 	UserID         string
-	Location       string `gorm:"index;not null"`
-	Tags           []Tag  `gorm:"many2many:offer_tags"`
+	Location       gormGIS.GeoPoint `gorm:"not null"`
+	Tags           []Tag            `gorm:"many2many:offer_tags"`
 	ValidityPeriod time.Time
+	Matched        bool
 	Expired        bool
 }
 
@@ -52,9 +56,10 @@ type Request struct {
 	Name           string `gorm:"index;not null"`
 	User           User   `gorm:"ForeignKey:UserID;AssociationForeignKey:Refer"`
 	UserID         string
-	Location       string `gorm:"index;not null"`
-	Tags           []Tag  `gorm:"many2many:request_tags"`
+	Location       gormGIS.GeoPoint `gorm:"not null"`
+	Tags           []Tag            `gorm:"many2many:request_tags"`
 	ValidityPeriod time.Time
+	Matched        bool
 	Expired        bool
 }
 
@@ -66,26 +71,16 @@ type Matching struct {
 	RequestId string
 }
 
-// TODO: Add an area representation similar to this.
-//       Make use of PostGIS and Postgres native geometric types.
-//       Points will NOT be represented like this.
-
-/*
-type Point struct {
-	Longitude float32
-	Latitude  float32
-}
-
 type Area struct {
 	ID          string `gorm:"primary_key"`
 	Name        string
+	Boundaries  GeoPolygon `sql:"type:geometry(Geometry,4326)"`
 	Description string
-	Boundaries  []Point
+	Offers      []Offer   `gorm:"many2many:area_offers"`
+	Requests    []Request `gorm:"many2many:area_requests"`
 }
-*/
 
-
-func CopyModel(i interface{}, fields []string) (map[string]interface{}) {
+func CopyModel(i interface{}, fields []string) map[string]interface{} {
 	var m map[string]interface{}
 	m = make(map[string]interface{})
 
@@ -95,15 +90,14 @@ func CopyModel(i interface{}, fields []string) (map[string]interface{}) {
 
 	// iterate over fields of struct
 	for i := 0; i < s.NumField(); i++ {
-	    for _, field := range fields{
+		for _, field := range fields {
 			// set only fields specified in array
-	    	if typeOfT.Field(i).Name == field{
-	    		m[field] = s.Field(i).Interface()
-	    		break
-	    	}
-	    }
+			if typeOfT.Field(i).Name == field {
+				m[field] = s.Field(i).Interface()
+				break
+			}
+		}
 	}
 
 	return m
 }
-	

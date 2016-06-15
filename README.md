@@ -28,20 +28,26 @@ to fetch all dependencies of this project.
 
 **4)** Create an `.env` file suited to your deployment. For this, copy the provided `.env.example` to `.env` and edit it to your needs. **Choose strong secret keys!**
 
-**5)** Set up a Postgres database. Create a Postgres user and set a password for that user. Then add these information to your just created environment `.env` file. As above, have a look at the `.env.example` for a description of which values you have to set.
+**5)** Add PostGIS to your database. Run in your psql
+```
+CREATE EXTENSION postgis;
+CREATE EXTENSION postgis_topology;
+```
 
-**6)** Build the project via
+**6)** Set up a Postgres database. Create a Postgres user and set a password for that user. Then add these information to your just created environment `.env` file. As above, have a look at the `.env.example` for a description of which values you have to set.
+
+**7)** Build the project via
 ```bash
 $ go build
 ```
 
-**7a)** If you are running the project the first time or after you dropped the database to start fresh, start the backend via
+**8a)** If you are running the project the first time or after you dropped the database to start fresh, start the backend via
 ```bash
 $ ./backend --init
 ```
 This will create the tables and fill in some default needed content.
 
-**7b)** Alternatively - and in the most common case - start it with
+**8b)** Alternatively - and in the most common case - start it with
 ```bash
 $ ./backend
 ```
@@ -67,6 +73,7 @@ Four roles are present in this model:
 * logged-in user **(L)**: registered and authorized user
 * admin **(A)**: registered, authorized and privileged user
 
+<<<<<<< HEAD
 | Functionality          | Needed privilege | HTTP verb | Endpoint       | API version | Done? |
 | ---------------------- | ---------------- | --------- | -------------- | ----------- | ----- |
 | Registration           | U                | POST      | /users         | MVP         | ✔    |
@@ -89,6 +96,30 @@ Four roles are present in this model:
 | Create an area         | L                | POST      | /areas         | 2.0         |       |
 | List areas             | L                | GET       | /areas         | 2.0         |       |
 | Update area x          | L                | PUT       | /areas/x       | 2.0         |       |
+=======
+| Functionality          		| Needed privilege | HTTP verb | Endpoint       		| API version | Done? |
+| ----------------------------- | ---------------- | --------- | ---------------------- | ----------- | ----- |
+| Registration           		| U                | POST      | /users         		| MVP         | ✔     |
+| Login                  		| N                | POST      | /auth          		| MVP         | ✔     |
+| Renew auth token       		| L                | GET       | /auth          		| MVP         | ✔     |
+| Logout                 		| L                | DELETE    | /auth          		| MVP         | ✔     |
+| Own profile            		| L                | GET       | /me            		| 2.0         |       |
+| Update own profile     		| L                | POST      | /me            		| 2.0         |       |
+| List offers region x   		| A                | GET       | /offers/x      		| MVP         | ✔     |
+| List own offers        		| L                | GET       | /me/offers     		| 2.0         |       |
+| List requests region x 		| A                | GET       | /requests/x    		| MVP         | ✔     |
+| List own requests      		| L                | GET       | /me/requests   		| 2.0         |       |
+| Create offer           		| L                | POST      | /offers        		| MVP         | ✔     |
+| Create request         		| L                | POST      | /requests      		| MVP         | ✔     |
+| Update own offer x     		| L                | PUT       | /me/offers/x   		| 2.0         |       |
+| Update own request x   		| L                | PUT       | /me/requests/x 		| 2.0         |       |
+| Create matching        		| A                | POST      | /matchings     		| MVP         | ✔     |
+| List matchings of region x	| A                | GET       | /matchings/region/x	| 2.0         |       |
+| Get matching x         		| L                | GET       | /matchings/ID/x   		| MVP         | ✔     |
+| Create an area         		| L                | POST      | /areas         		| 2.0         |       |
+| List areas             		| L                | GET       | /areas         		| 2.0         |       |
+| Update area x          		| L                | PUT       | /areas/x       		| 2.0         |       |
+>>>>>>> gormgis
 
 
 ### What is inside a JWT?
@@ -592,6 +623,7 @@ POST /matchings
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
+	"Area": required, UUID v4,
 	"Request": required, UUID v4,
 	"Offer": required, UUID v4
 }

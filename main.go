@@ -65,8 +65,8 @@ func main() {
 	app.Router.PUT("/me/requests/:requestID", app.UpdateUserRequest)
 
 	app.Router.POST("/matchings", app.CreateMatching)
-	app.Router.GET("/matchings", app.ListMatchings)
-	app.Router.GET("/matchings/:matchingID", app.GetMatching)
+	app.Router.GET("/matchings/region/:region", app.ListMatchings)
+	app.Router.GET("/matchings/ID/:matchingID", app.GetMatching)
 
 	// app.Router.POST("/areas", app.CreateArea)
 	app.Router.GET("/areas", app.ListAreas)
