@@ -80,7 +80,7 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 	return true, &User, ""
 }
 
-func (app *App) CheckScope(user *db.User, location db.Area, permission string) bool {
+func (app *App) CheckScope(user *db.User, location db.Region, permission string) bool {
 
 	// Check if User.Groups contains a group with location.
 	// * No  -> false

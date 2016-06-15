@@ -16,7 +16,7 @@ import (
 // Structs.
 
 type CreateMatchingPayload struct {
-	Area    string `conform:"trim" validate:"required,uuid4"`
+	Region  string `conform:"trim" validate:"required,uuid4"`
 	Request string `conform:"trim" validate:"required,uuid4"`
 	Offer   string `conform:"trim" validate:"required,uuid4"`
 }
@@ -111,11 +111,11 @@ func (app *App) CreateMatching(c *gin.Context) {
 	var Request db.Request
 	app.DB.First(&Request, "id = ?", Payload.Request)
 
-	// Check if user has actually admin rights for specified area.
-	var ContainingArea db.Area
-	app.DB.First(&ContainingArea, "id = ?", Payload.Area)
+	// Check if user has actually admin rights for specified region.
+	var ContainingRegion db.Region
+	app.DB.First(&ContainingRegion, "id = ?", Payload.Region)
 
-	if ok := app.CheckScope(User, ContainingArea, "admin"); !ok {
+	if ok := app.CheckScope(User, ContainingRegion, "admin"); !ok {
 
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
@@ -178,16 +178,16 @@ func (app *App) ListMatchings(c *gin.Context) {
 		return
 	}
 
-	region := app.getUUID(c, "regionID")
-	if region == "" {
+	regionID := app.getUUID(c, "regionID")
+	if regionID == "" {
 		return
 	}
 
-	var area db.Area
-	app.DB.First(&area, "id = ?", region)
+	var region db.Region
+	app.DB.First(&region, "id = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, area, "admin"); !ok {
+	if ok := app.CheckScope(User, region, "admin"); !ok {
 
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
