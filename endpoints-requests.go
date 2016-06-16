@@ -14,6 +14,20 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+var fieldsGetRequest = map[string]interface{}{
+	"ID":       "ID",
+	"Name":     "Name",
+	"Location": "Location",
+	"Tags": map[string]interface{}{
+		"Name": "Name",
+	},
+	"User": map[string]interface{}{
+		"ID":   "ID",
+		"Name": "Name",
+		"Mail": "Mail",
+	},
+}
+
 // Structs.
 
 type CreateRequestPayload struct {
@@ -179,29 +193,26 @@ func (app *App) GetRequest(c *gin.Context) {
 
 		return
 	}
-
-	// get offer id
+	// Load request
 	requestID := app.getUUID(c, "requestID")
-	if requestID == "" {
-		return
-	}
-	// find all regions that offer is in
-	var Regions []db.Region
-	app.DB.Preload("Requests").Find(&Regions, "requests_id =  ?", requestID)
+	var request db.Request
 
-	// check for permission in all regions - one priviliged group is enough to edit
-	if ok := app.CheckScopes(User, Regions, "admin"); !ok {
+	app.DB.Preload("Regions").Preload("Tags").First(&request, "id = ?", requestID)
+	app.DB.Model(&request).Related(&request.User)
+
+	// Check if user is admin in any region of this request
+	hasPerm := app.CheckScope(user, db.Region{}, "superadmin")
+	if hasPerm := app.CheckScopes(User, request.Regions, "admin"); !hasPerm {
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
 		c.Status(http.StatusUnauthorized)
 
 		return
 	}
-
-	var Request db.Request
-	app.DB.First(&Request, "id = ?", requestID)
-
-	c.JSON(http.StatusOK, Request)
+	// He or she can have it, if he or she wants it so bad
+	model := CopyNestedModel(request, fieldsGetRequest)
+	c.JSON(http.StatusOK, model)
+	return
 }
 
 func (app *App) UpdateRequest(c *gin.Context) {

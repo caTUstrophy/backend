@@ -12,23 +12,23 @@ import (
 )
 
 var fieldsGetUser = map[string]interface{}{
-	"Name":"Name",
-	"PreferredName":"PreferredName",
-	"Mail":"Mail",
-	"MailVerified":"MailVerified",
-	"Groups":map[string]interface{}{
-		"Permissions":map[string]interface{}{
-			"AccessRight":"AccessRight",
+	"Name":          "Name",
+	"PreferredName": "PreferredName",
+	"Mail":          "Mail",
+	"MailVerified":  "MailVerified",
+	"Groups": map[string]interface{}{
+		"Permissions": map[string]interface{}{
+			"AccessRight": "AccessRight",
 		},
 	},
 }
 
 var fieldsListUserOffers = map[string]interface{}{
-	"ID":"ID",
-	"Name":"Name",
-	"Location":"Location",
-	"Tags":map[string]interface{}{
-		"Name":"Name",
+	"ID":       "ID",
+	"Name":     "Name",
+	"Location": "Location",
+	"Tags": map[string]interface{}{
+		"Name": "Name",
 	},
 	"ValidityPeriod":"ValidityPeriod",
 	"Matched":"Matched",
@@ -36,19 +36,16 @@ var fieldsListUserOffers = map[string]interface{}{
 }
 
 var fieldsListUserRequests = map[string]interface{}{
-	"ID":"ID",
-	"Name":"Name",
-	"Location":"Location",
-	"Tags":map[string]interface{}{
-		"Name":"Name",
+	"ID":       "ID",
+	"Name":     "Name",
+	"Location": "Location",
+	"Tags": map[string]interface{}{
+		"Name": "Name",
 	},
 	"ValidityPeriod":"ValidityPeriod",
 	"Matched":"Matched",
 	"Expired":"Expired",
 }
-
-
-
 
 func (app *App) GetUser(c *gin.Context) {
 
@@ -65,7 +62,7 @@ func (app *App) GetUser(c *gin.Context) {
 
 	var obj db.User
 	app.DB.Preload("Groups").Preload("Groups.Permissions").First(&obj, "id = ?", User.ID)
-	response := db.CopyNestedModel(obj, fieldsGetUser)
+	response := CopyNestedModel(obj, fieldsGetUser)
 	c.JSON(http.StatusOK, response)
 }
 
@@ -126,18 +123,16 @@ func (app *App) ListUserOffers(c *gin.Context) {
 	var Offers []db.Offer
 	app.DB.Preload("Tags").Find(&Offers, "user_id = ?", User.ID)
 
-
 	response := make([]interface{}, 0)
 	for _, o := range Offers {
 		// 2) Check expired field - extra argument for that?
 		if o.ValidityPeriod.After(time.Now()) {
 
 			// 3) Only return what's needed
-			model := db.CopyNestedModel(o, fieldsListUserOffers)
+			model := CopyNestedModel(o, fieldsListUserOffers)
 			response = append(response, model)
 		}
 	}
-
 
 	c.JSON(http.StatusOK, response)
 }
@@ -163,11 +158,10 @@ func (app *App) ListUserRequests(c *gin.Context) {
 		// 2) Check expired field - extra argument for that?
 		if r.ValidityPeriod.After(time.Now()) {
 			// 3) Only return what's needed
-			model := db.CopyNestedModel(r, fieldsListUserRequests)
+			model := CopyNestedModel(r, fieldsListUserRequests)
 			response = append(response, model)
 		}
 	}
-
 
 	c.JSON(http.StatusOK, response)
 }
