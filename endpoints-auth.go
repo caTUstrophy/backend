@@ -10,6 +10,7 @@ import (
 
 	"github.com/caTUstrophy/backend/db"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go/request"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/leebenson/conform"
@@ -26,12 +27,14 @@ type LoginPayload struct {
 
 // Authorization related functions.
 
+// Check if provided authorization data in request
+// is correct and all validity checks are positive.
 func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 
 	jwtSigningSecret := []byte(os.Getenv("JWT_SIGNING_SECRET"))
 
 	// Extract JWT from request headers.
-	requestJWT, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
+	requestJWT, err := request.ParseFromRequest(req, request.AuthorizationHeaderExtractor, func(token *jwt.Token) (interface{}, error) {
 		// Verfiy that JWT was signed with correct algorithm.
 
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -61,8 +64,10 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 		}
 	}
 
+	claims := requestJWT.Claims.(jwt.MapClaims)
+
 	// Check if an entry with mail from JWT exists in our session store.
-	email := requestJWT.Claims["iss"].(string)
+	email := claims["iss"].(string)
 	sessionJWTInterface, found := app.Sessions.Get(email)
 	if !found {
 		return false, nil, "JWT was invalid"
@@ -80,11 +85,9 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 	return true, &User, ""
 }
 
+// Checks if the supplied user is allowed to execute
+// operations labelled with permission for a given region.
 func (app *App) CheckScope(user *db.User, location db.Region, permission string) bool {
-
-	// Check if User.Groups contains a group with location.
-	// * No  -> false
-	// * Yes -> Has this group the necessary permission?
 
 	// Fast, because the typical user is member of few groups.
 	for _, group := range user.Groups {
@@ -95,8 +98,11 @@ func (app *App) CheckScope(user *db.User, location db.Region, permission string)
 				return true
 			}
 		}
-		fmt.Print("location id", location.ID)
-		if location.ID == "" { // if someone wants to check only for superadmin without location, he can give an empty location
+
+		// If someone wants to check only for superadmin without location,
+		// an empty location is sufficient. Otherwise, the location has
+		// to be present.
+		if location.ID == "" {
 			return false
 		}
 
@@ -116,15 +122,17 @@ func (app *App) CheckScope(user *db.User, location db.Region, permission string)
 	return false
 }
 
-// copy pasted the function to
+// Check supplied user's access to multiple regions.
 func (app *App) CheckScopes(user *db.User, locations []db.Region, permission string) bool {
-	// check for superadmin privilege
+
+	// Check for superadmin privilege.
 	if su := app.CheckScope(user, db.Region{}, "superadmin"); su {
 		return true
 	}
 
-	// iterate over regions until region with permission was found
+	// Iterate over regions until region with permission is found.
 	for _, Region := range locations {
+
 		if ok := app.CheckScope(user, Region, "admin"); ok {
 			return true
 		}
@@ -134,6 +142,7 @@ func (app *App) CheckScopes(user *db.User, locations []db.Region, permission str
 	return false
 }
 
+// Produce a JWT and store it in application's session cache.
 func (app *App) makeToken(c *gin.Context, user *db.User) string {
 
 	// Retrieve the session signing key from environment.
@@ -147,13 +156,15 @@ func (app *App) makeToken(c *gin.Context, user *db.User) string {
 	// Create a JWT with claims to identify user.
 	sessionJWT := jwt.New(jwt.SigningMethodHS512)
 
+	claims := sessionJWT.Claims.(jwt.MapClaims)
+
 	// Add these claims.
 	// TODO: Add important claims for security!
 	//       Hash(PasswordHash)? Needs database call, which is what we want to avoid.
-	sessionJWT.Claims["iss"] = user.Mail
-	sessionJWT.Claims["iat"] = nowTime.Format(time.RFC3339)
-	sessionJWT.Claims["nbf"] = nowTime.Add((-1 * time.Minute)).Format(time.RFC3339)
-	sessionJWT.Claims["exp"] = expTime
+	claims["iss"] = user.Mail
+	claims["iat"] = nowTime.Format(time.RFC3339)
+	claims["nbf"] = nowTime.Add((-1 * time.Minute)).Format(time.RFC3339)
+	claims["exp"] = expTime
 
 	sessionJWTString, err := sessionJWT.SignedString([]byte(jwtSigningSecret))
 	if err != nil {

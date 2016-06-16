@@ -47,6 +47,30 @@ type CreateRegionPayload struct {
 	Boundaries  []gormGIS.GeoPoint `conform:"trim"`
 }
 
+var fieldsListRegions = map[string]interface{}{
+	"ID":   "ID",
+	"Name": "Name",
+	"Boundaries": map[string]interface{}{
+		"Points": map[string]interface{}{
+			"Lng": "lng",
+			"Lat": "lat",
+		},
+	},
+	"Description": "Description",
+}
+
+var fieldsGetRegion = map[string]interface{}{
+	"ID":   "ID",
+	"Name": "Name",
+	"Boundaries": map[string]interface{}{
+		"Points": map[string]interface{}{
+			"Lng": "lng",
+			"Lat": "lat",
+		},
+	},
+	"Description": "Description",
+}
+
 func (app *App) CreateRegion(c *gin.Context) {
 
 	// Check authorization for this function.
@@ -109,7 +133,14 @@ func (app *App) ListRegions(c *gin.Context) {
 	// Retrieve all offers from database.
 	app.DB.Find(&Regions)
 
-	c.JSON(http.StatusOK, Regions)
+	models := make([]map[string]interface{}, len(Regions))
+
+	// Iterate over all regions in database return and marshal it.
+	for i, region := range Regions {
+		models[i] = CopyNestedModel(region, fieldsListRegions)
+	}
+
+	c.JSON(http.StatusOK, models)
 }
 
 func (app *App) GetRegion(c *gin.Context) {
@@ -124,9 +155,11 @@ func (app *App) GetRegion(c *gin.Context) {
 
 	// Select region based on supplied ID from database.
 	app.DB.First(&Region, "id = ?", regionID)
-	app.DB.Model(&Region).Association("Boundaries").Find(&Region.Boundaries)
 
-	c.JSON(http.StatusOK, Region)
+	// Only expose necessary fields in JSON response.
+	model := CopyNestedModel(Region, fieldsGetRegion)
+
+	c.JSON(http.StatusOK, model)
 }
 
 func (app *App) UpdateRegion(c *gin.Context) {
