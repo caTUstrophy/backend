@@ -17,10 +17,13 @@ import (
 // Structs.
 
 type CreateRequestPayload struct {
-	Name           string           `conform:"trim" validate:"required"`
-	Location       gormGIS.GeoPoint `conform:"trim" validate:"required"`
-	Tags           []string         `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	ValidityPeriod string           `conform:"trim" validate:"required"`
+	Name     string `conform:"trim" validate:"required"`
+	Location struct {
+		Longitude float64 `json:"lng" conform:"trim"`
+		Latitude  float64 `json:"lat" conform:"trim"`
+	} `validate:"dive,required"`
+	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	ValidityPeriod string   `conform:"trim" validate:"required"`
 }
 
 // Requests related functions.
@@ -91,7 +94,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 	Request.Name = Payload.Name
 	Request.User = *User
 	Request.UserID = User.ID
-	Request.Location = Payload.Location
+	Request.Location = gormGIS.GeoPoint{Lng: Payload.Location.Longitude, Lat: Payload.Location.Latitude}
 	Request.Tags = make([]db.Tag, 0)
 	// The regions that match the location will be assigned outside
 	app.assignRegionsToRequest(Request)
