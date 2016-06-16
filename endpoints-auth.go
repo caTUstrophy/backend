@@ -10,6 +10,7 @@ import (
 
 	"github.com/caTUstrophy/backend/db"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go/request"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/leebenson/conform"
@@ -33,7 +34,7 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 	jwtSigningSecret := []byte(os.Getenv("JWT_SIGNING_SECRET"))
 
 	// Extract JWT from request headers.
-	requestJWT, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
+	requestJWT, err := request.ParseFromRequest(req, request.AuthorizationHeaderExtractor, func(token *jwt.Token) (interface{}, error) {
 		// Verfiy that JWT was signed with correct algorithm.
 
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -63,8 +64,10 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 		}
 	}
 
+	claims := requestJWT.Claims.(jwt.MapClaims)
+
 	// Check if an entry with mail from JWT exists in our session store.
-	email := requestJWT.Claims["iss"].(string)
+	email := claims["iss"].(string)
 	sessionJWTInterface, found := app.Sessions.Get(email)
 	if !found {
 		return false, nil, "JWT was invalid"
@@ -153,13 +156,15 @@ func (app *App) makeToken(c *gin.Context, user *db.User) string {
 	// Create a JWT with claims to identify user.
 	sessionJWT := jwt.New(jwt.SigningMethodHS512)
 
+	claims := sessionJWT.Claims.(jwt.MapClaims)
+
 	// Add these claims.
 	// TODO: Add important claims for security!
 	//       Hash(PasswordHash)? Needs database call, which is what we want to avoid.
-	sessionJWT.Claims["iss"] = user.Mail
-	sessionJWT.Claims["iat"] = nowTime.Format(time.RFC3339)
-	sessionJWT.Claims["nbf"] = nowTime.Add((-1 * time.Minute)).Format(time.RFC3339)
-	sessionJWT.Claims["exp"] = expTime
+	claims["iss"] = user.Mail
+	claims["iat"] = nowTime.Format(time.RFC3339)
+	claims["nbf"] = nowTime.Add((-1 * time.Minute)).Format(time.RFC3339)
+	claims["exp"] = expTime
 
 	sessionJWTString, err := sessionJWT.SignedString([]byte(jwtSigningSecret))
 	if err != nil {
