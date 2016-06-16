@@ -30,6 +30,9 @@ var fieldsListUserOffers = map[string]interface{}{
 	"Tags": map[string]interface{}{
 		"Name": "Name",
 	},
+	"ValidityPeriod":"ValidityPeriod",
+	"Matched":"Matched",
+	"Expired":"Expired",
 }
 
 var fieldsListUserRequests = map[string]interface{}{
@@ -39,6 +42,9 @@ var fieldsListUserRequests = map[string]interface{}{
 	"Tags": map[string]interface{}{
 		"Name": "Name",
 	},
+	"ValidityPeriod":"ValidityPeriod",
+	"Matched":"Matched",
+	"Expired":"Expired",
 }
 
 func (app *App) GetUser(c *gin.Context) {
