@@ -15,6 +15,20 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+var fieldsGetOffer = map[string]interface{}{
+	"ID":       "ID",
+	"Name":     "Name",
+	"Location": "Location",
+	"Tags": map[string]interface{}{
+		"Name": "Name",
+	},
+	"User": map[string]interface{}{
+		"ID":   "ID",
+		"Name": "Name",
+		"Mail": "Mail",
+	},
+}
+
 // Structs.
 
 type CreateOfferPayload struct {
@@ -172,7 +186,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 
 func (app *App) GetOffer(c *gin.Context) {
 	// Check authorization for this function.
-	ok, User, message := app.Authorize(c.Request)
+	ok, user, message := app.Authorize(c.Request)
 	if !ok {
 
 		// Signal client an error and expect authorization.
@@ -182,17 +196,15 @@ func (app *App) GetOffer(c *gin.Context) {
 		return
 	}
 
-	// get offer id
+	// Load offer
 	offerID := app.getUUID(c, "offerID")
-	if offerID == "" {
-		return
-	}
-	// find all regions that offer is in
-	var Regions []db.Region
-	app.DB.Preload("Offers").Find(&Regions, "offers_id =  ?", offerID)
+	var offer db.Offer
 
-	// check for permission in all regions - one priviliged group is enough to edit
-	if ok := app.CheckScopes(User, Regions, "admin"); !ok {
+	app.DB.Preload("Regions").Preload("Tags").First(&offer, "id = ?", offerID)
+	app.DB.Model(&offer).Related(&offer.User)
+
+	// Check if user is admin in any region of this offer
+	if ok := app.CheckScopes(user, offer.Regions, "admin"); !ok {
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
 		c.Status(http.StatusUnauthorized)
@@ -200,10 +212,10 @@ func (app *App) GetOffer(c *gin.Context) {
 		return
 	}
 
-	var Offer db.Offer
-	app.DB.First(&Offer, "id = ?", offerID)
-
-	c.JSON(http.StatusOK, Offer)
+	// He or she can have it, if he or she wants it so bad
+	model := CopyNestedModel(offer, fieldsGetOffer)
+	c.JSON(http.StatusOK, model)
+	return
 }
 
 func (app *App) UpdateOffer(c *gin.Context) {
