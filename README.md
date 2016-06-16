@@ -28,7 +28,7 @@ to fetch all dependencies of this project.
 
 **4)** Create an `.env` file suited to your deployment. For this, copy the provided `.env.example` to `.env` and edit it to your needs. **Choose strong secret keys!**
 
-**5)** Add PostGIS to your database. Run in your psql
+**5)** Add PostGIS to your database. Run in your psql **(as a superuser)**
 ```
 CREATE EXTENSION postgis;
 CREATE EXTENSION postgis_topology;
