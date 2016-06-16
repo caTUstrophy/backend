@@ -26,10 +26,7 @@ var fieldsGetUser = map[string]interface{}{
 var fieldsListUserOffers = map[string]interface{}{
 	"ID":"ID",
 	"Name":"Name",
-	"Location":map[string]interface{}{
-		"Lat":"lat",
-		"Lng":"lng",
-	},
+	"Location":"Location",
 	"Tags":map[string]interface{}{
 		"Name":"Name",
 	},
@@ -41,10 +38,7 @@ var fieldsListUserOffers = map[string]interface{}{
 var fieldsListUserRequests = map[string]interface{}{
 	"ID":"ID",
 	"Name":"Name",
-	"Location":map[string]interface{}{
-		"Lat":"lat",
-		"Lng":"lng",
-	},
+	"Location":"Location",
 	"Tags":map[string]interface{}{
 		"Name":"Name",
 	},
