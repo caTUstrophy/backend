@@ -24,19 +24,27 @@ var fieldsGetUser = map[string]interface{}{
 }
 
 var fieldsListUserOffers = map[string]interface{}{
+	"ID":"ID",
 	"Name":"Name",
 	"Location":"Location",
 	"Tags":map[string]interface{}{
 		"Name":"Name",
 	},
+	"ValidityPeriod":"ValidityPeriod",
+	"Matched":"Matched",
+	"Expired":"Expired",
 }
 
 var fieldsListUserRequests = map[string]interface{}{
+	"ID":"ID",
 	"Name":"Name",
 	"Location":"Location",
 	"Tags":map[string]interface{}{
 		"Name":"Name",
 	},
+	"ValidityPeriod":"ValidityPeriod",
+	"Matched":"Matched",
+	"Expired":"Expired",
 }
 
 
