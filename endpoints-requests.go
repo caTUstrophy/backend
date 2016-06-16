@@ -14,6 +14,20 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+var fieldsGetRequest = map[string]interface{}{
+	"ID":       "ID",
+	"Name":     "Name",
+	"Location": "Location",
+	"Tags": map[string]interface{}{
+		"Name": "Name",
+	},
+	"User": map[string]interface{}{
+		"ID":   "ID",
+		"Name": "Name",
+		"Mail": "Mail",
+	},
+}
+
 // Structs.
 
 type CreateRequestPayload struct {
@@ -166,7 +180,35 @@ func (app *App) CreateRequest(c *gin.Context) {
 }
 
 func (app *App) GetRequest(c *gin.Context) {
+	// Check authorization for this function.
+	ok, user, message := app.Authorize(c.Request)
+	if !ok {
 
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+	// Load request
+	requestID := app.getUUID(c, "requestID")
+	var request db.Request
+
+	app.DB.Preload("Regions").Preload("Tags").First(&request, "id = ?", requestID)
+	app.DB.Model(&request).Related(&request.User)
+
+	// Check if user is admin in any region of this request
+	if ok := app.CheckScopes(user, request.Regions, "admin"); !ok {
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+	// He or she can have it, if he or she wants it so bad
+	model := CopyNestedModel(request, fieldsGetRequest)
+	c.JSON(http.StatusOK, model)
+	return
 }
 
 func (app *App) UpdateRequest(c *gin.Context) {

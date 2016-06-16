@@ -95,6 +95,10 @@ func (app *App) CheckScope(user *db.User, location db.Region, permission string)
 				return true
 			}
 		}
+		fmt.Print("location id", location.ID)
+		if location.ID == "" { // if someone wants to check only for superadmin without location, he can give an empty location
+			return false
+		}
 
 		if group.Location.ID == location.ID {
 
@@ -105,6 +109,24 @@ func (app *App) CheckScope(user *db.User, location db.Region, permission string)
 					return true
 				}
 			}
+		}
+	}
+
+	// No group found that gives permission to user.
+	return false
+}
+
+// copy pasted the function to
+func (app *App) CheckScopes(user *db.User, locations []db.Region, permission string) bool {
+	// check for superadmin privilege
+	if su := app.CheckScope(user, db.Region{}, "superadmin"); su {
+		return true;
+	}
+
+	// iterate over regions until region with permission was found
+	for _, Region := range locations {
+		if ok := app.CheckScope(user, Region, "admin"); ok {
+			return true
 		}
 	}
 

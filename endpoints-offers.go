@@ -14,6 +14,20 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+var fieldsGetOffer = map[string]interface{}{
+	"ID":       "ID",
+	"Name":     "Name",
+	"Location": "Location",
+	"Tags": map[string]interface{}{
+		"Name": "Name",
+	},
+	"User": map[string]interface{}{
+		"ID":   "ID",
+		"Name": "Name",
+		"Mail": "Mail",
+	},
+}
+
 // Structs.
 
 type CreateOfferPayload struct {
@@ -165,7 +179,37 @@ func (app *App) CreateOffer(c *gin.Context) {
 }
 
 func (app *App) GetOffer(c *gin.Context) {
+	// Check authorization for this function.
+	ok, user, message := app.Authorize(c.Request)
+	if !ok {
 
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Load offer
+	offerID := app.getUUID(c, "offerID")
+	var offer db.Offer
+
+	app.DB.Preload("Regions").Preload("Tags").First(&offer, "id = ?", offerID)
+	app.DB.Model(&offer).Related(&offer.User)
+
+	// Check if user is admin in any region of this offer
+	if ok := app.CheckScopes(user, offer.Regions, "admin"); !ok {
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// He or she can have it, if he or she wants it so bad
+	model := CopyNestedModel(offer, fieldsGetOffer)
+	c.JSON(http.StatusOK, model)
+	return
 }
 
 func (app *App) UpdateOffer(c *gin.Context) {

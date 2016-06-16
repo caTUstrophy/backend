@@ -47,6 +47,7 @@ type Offer struct {
 	UserID         string
 	Location       gormGIS.GeoPoint `gorm:"not null" sql:"type:geometry(Geometry,4326)"`
 	Tags           []Tag            `gorm:"many2many:offer_tags"`
+	Regions        []Region         `gorm:"many2many:region_offers"`
 	ValidityPeriod time.Time
 	Matched        bool
 	Expired        bool
@@ -59,6 +60,7 @@ type Request struct {
 	UserID         string
 	Location       gormGIS.GeoPoint `gorm:"not null" sql:"type:geometry(Geometry,4326)"`
 	Tags           []Tag            `gorm:"many2many:request_tags"`
+	Regions        []Region         `gorm:"many2many:region_requests"`
 	ValidityPeriod time.Time
 	Matched        bool
 	Expired        bool
