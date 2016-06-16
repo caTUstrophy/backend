@@ -143,7 +143,7 @@ func (app *App) GetOffersForRegion(c *gin.Context) {
 		return
 	}
 	model := make([]map[string]interface{}, len(Region.Offers))
-	for offer := range Region.Offers {
+	for _, offer := range Region.Offers {
 		model = append(model, CopyNestedModel(offer, fieldsGetOffersForRegion))
 	}
 	// Send back results to client.
@@ -181,7 +181,7 @@ func (app *App) GetRequestsForRegion(c *gin.Context) {
 		return
 	}
 	model := make([]map[string]interface{}, len(Region.Requests))
-	for offer := range Region.Requests {
+	for _, offer := range Region.Requests {
 		model = append(model, CopyNestedModel(offer, fieldsGetRequestsForRegion))
 	}
 	// Send back results to client.
