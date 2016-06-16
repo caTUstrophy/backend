@@ -112,6 +112,19 @@ func (app *App) CheckScope(user *db.User, location db.Region, permission string)
 	return false
 }
 
+// copy pasted the function to
+func (app *App) CheckScopes(user *db.User, locations []db.Region, permission string) bool {
+	// iterate over regions until region with permission was found
+	for _, Region := range locations {
+		if ok := app.CheckScope(user, Region, "admin"); ok {
+			return true
+		}
+	}
+
+	// No group found that gives permission to user.
+	return false
+}
+
 func (app *App) makeToken(c *gin.Context, user *db.User) string {
 
 	// Retrieve the session signing key from environment.

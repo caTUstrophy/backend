@@ -171,7 +171,39 @@ func (app *App) CreateOffer(c *gin.Context) {
 }
 
 func (app *App) GetOffer(c *gin.Context) {
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
 
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// get offer id
+	offerID := app.getUUID(c, "offerID")
+	if offerID == "" {
+		return
+	}
+	// find all regions that offer is in
+	var Regions []db.Region
+	app.DB.Preload("Offers").Find(&Regions, "offers_id =  ?", offerID)
+
+	// check for permission in all regions - one priviliged group is enough to edit
+	if ok := app.CheckScopes(User, Regions, "admin"); !ok {
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	var Offer db.Offer
+	app.DB.First(&Offer, "id = ?", offerID)
+
+	c.JSON(http.StatusOK, Offer)
 }
 
 func (app *App) UpdateOffer(c *gin.Context) {
