@@ -60,25 +60,46 @@ func (app *App) CreateRegion(c *gin.Context) {
 		return
 	}
 
-	// check scope if we want it for admins only
+	var Payload CreateRegionPayload
 
-	// TODO: Change stub to real function.
-	c.JSON(http.StatusCreated, gin.H{
-		"ID":          fmt.Sprintf("%s", uuid.NewV4()),
-		"Name":        "Algeria",
-		"Description": "Mountain region hit by an earth quake of strength 4.0",
-		"Boundaries": struct {
-			Boundaries []gormGIS.GeoPoint
-		}{
-			[]gormGIS.GeoPoint{
-				gormGIS.GeoPoint{3.389017, 36.416215},
-				gormGIS.GeoPoint{3.358667, 36.391414},
-				gormGIS.GeoPoint{3.391039, 36.362402},
-				gormGIS.GeoPoint{3.418206, 36.392172},
-				gormGIS.GeoPoint{3.389017, 36.416215},
-			},
-		},
-	})
+	// Expect offer struct fields for creation in JSON request body.
+	err := c.BindJSON(&Payload)
+	if err != nil {
+
+		// Check if error was caused by failed unmarshalling string -> []string.
+		//if err.Error() == "json: cannot unmarshal string into Go value of type []string" {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Tags": "Provide an array, not a string",
+		})
+
+		return
+		//}
+	}
+
+	// Validate sent offer creation data.
+	conform.Strings(&Payload)
+	errs := app.Validator.Struct(&Payload)
+
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs.(validator.ValidationErrors) {
+
+			if err.Tag == "required" {
+				errResp[err.Field] = "Is required"
+			} else if err.Tag == "excludesall" {
+				errResp[err.Field] = "Contains unallowed characters"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(http.StatusBadRequest, errResp)
+
+		return
+	}
 }
 
 func (app *App) ListRegions(c *gin.Context) {
