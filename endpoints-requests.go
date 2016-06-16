@@ -184,7 +184,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 
 func (app *App) GetRequest(c *gin.Context) {
 	// Check authorization for this function.
-	ok, User, message := app.Authorize(c.Request)
+	ok, user, message := app.Authorize(c.Request)
 	if !ok {
 
 		// Signal client an error and expect authorization.
@@ -201,8 +201,7 @@ func (app *App) GetRequest(c *gin.Context) {
 	app.DB.Model(&request).Related(&request.User)
 
 	// Check if user is admin in any region of this request
-	hasPerm := app.CheckScope(user, db.Region{}, "superadmin")
-	if hasPerm := app.CheckScopes(User, request.Regions, "admin"); !hasPerm {
+	if ok := app.CheckScopes(user, request.Regions, "admin"); !ok {
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
 		c.Status(http.StatusUnauthorized)
