@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"net/http"
@@ -17,10 +18,13 @@ import (
 // Structs.
 
 type CreateOfferPayload struct {
-	Name           string           `conform:"trim" validate:"required"`
-	Location       gormGIS.GeoPoint `conform:"trim" validate:"required"`
-	Tags           []string         `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	ValidityPeriod string           `conform:"trim" validate:"required"`
+	Name     string `conform:"trim" validate:"required"`
+	Location struct {
+		Longitude float64 `json:"lng" conform:"trim"`
+		Latitude  float64 `json:"lat" conform:"trim"`
+	} `validate:"dive,required"`
+	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	ValidityPeriod string   `conform:"trim" validate:"required"`
 }
 
 // Offers related functions.
@@ -90,7 +94,8 @@ func (app *App) CreateOffer(c *gin.Context) {
 	Offer.ID = fmt.Sprintf("%s", uuid.NewV4())
 	Offer.Name = Payload.Name
 	Offer.User = *User
-	Offer.Location = Payload.Location
+	Offer.Location = gormGIS.GeoPoint{Lng: Payload.Location.Longitude, Lat: Payload.Location.Latitude}
+	log.Println(Offer.Location.String())
 	Offer.Tags = make([]db.Tag, 0)
 	// The regions that fit the location will be assigned here
 	app.assignRegionsToOffer(Offer)
