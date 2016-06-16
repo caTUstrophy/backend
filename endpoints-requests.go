@@ -180,6 +180,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 }
 
 func (app *App) GetRequest(c *gin.Context) {
+
 	// Check authorization for this function.
 	ok, user, message := app.Authorize(c.Request)
 	if !ok {
@@ -190,25 +191,29 @@ func (app *App) GetRequest(c *gin.Context) {
 
 		return
 	}
-	// Load request
-	requestID := app.getUUID(c, "requestID")
-	var request db.Request
 
+	// Parse requestID from HTTP request.
+	requestID := app.getUUID(c, "requestID")
+
+	// Load request from database.
+	var request db.Request
 	app.DB.Preload("Regions").Preload("Tags").First(&request, "id = ?", requestID)
 	app.DB.Model(&request).Related(&request.User)
 
-	// Check if user is admin in any region of this request
+	// Check if user is admin in any region of this request.
 	if ok := app.CheckScopes(user, request.Regions, "admin"); !ok {
+
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
 		c.Status(http.StatusUnauthorized)
 
 		return
 	}
-	// He or she can have it, if he or she wants it so bad
+
+	// He or she can have it, if he or she wants it so badly! :)
 	model := CopyNestedModel(request, fieldsGetRequest)
+
 	c.JSON(http.StatusOK, model)
-	return
 }
 
 func (app *App) UpdateRequest(c *gin.Context) {
