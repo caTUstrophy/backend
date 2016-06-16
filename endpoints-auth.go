@@ -95,6 +95,10 @@ func (app *App) CheckScope(user *db.User, location db.Region, permission string)
 				return true
 			}
 		}
+		fmt.Print("location id", location.ID)
+		if location.ID == "" { // if someone wants to check only for superadmin without location, he can give an empty location
+			return false
+		}
 
 		if group.Location.ID == location.ID {
 
