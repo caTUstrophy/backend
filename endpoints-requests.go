@@ -48,11 +48,6 @@ type CreateRequestPayload struct {
 
 // Requests related functions.
 
-// Looks up all regions that match the location of this offer
-func (app *App) assignRegionsToRequest(request db.Request) {
-
-}
-
 func (app *App) CreateRequest(c *gin.Context) {
 
 	// Check authorization for this function.
@@ -116,8 +111,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 	Request.UserID = User.ID
 	Request.Location = gormGIS.GeoPoint{Lng: Payload.Location.Longitude, Lat: Payload.Location.Latitude}
 	Request.Tags = make([]db.Tag, 0)
-	// The regions that match the location will be assigned outside
-	app.assignRegionsToRequest(Request)
+
 	// If tags were supplied, check if they exist in our system.
 	if len(Payload.Tags) > 0 {
 
@@ -174,6 +168,9 @@ func (app *App) CreateRequest(c *gin.Context) {
 		Request.ValidityPeriod = PayloadTime
 		Request.Expired = false
 	}
+
+	// Try to map the provided location to all containing regions.
+	app.mapLocationToRegions(Request)
 
 	// Save request to database.
 	app.DB.Create(&Request)
