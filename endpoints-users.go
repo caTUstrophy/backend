@@ -14,6 +14,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var fieldsCreateUser = map[string]interface{}{
+	"ID":   "ID",
+	"Name": "Name",
+	"Mail": "Mail",
+	"Groups": map[string]interface{}{
+		"ID": "ID",
+	},
+}
+
 // Structs
 
 type CreateUserPayload struct {
@@ -110,12 +119,15 @@ func (app *App) CreateUser(c *gin.Context) {
 	// Create user object in database.
 	app.DB.Create(&User)
 
+	model := CopyNestedModel(User, fieldsCreateUser)
+
 	// On success: return ID of newly created user.
-	c.JSON(http.StatusCreated, gin.H{
+	c.JSON(http.StatusOK, model)
+	/*c.JSON(http.StatusCreated, gin.H{
 		"ID":            User.ID,
 		"Name":          User.Name,
 		"PreferredName": User.PreferredName,
 		"Mail":          User.Mail,
 		"Groups":        User.Groups,
-	})
+	})*/
 }

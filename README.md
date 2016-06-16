@@ -86,10 +86,10 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | Get user `userID`                   | A    | GET       | /users/:userID               | 3.0         |       |
 | Update user `userID`                | A    | PUT       | /users/:userID               | 3.0         |       |
 | Create offer                        | L    | POST      | /offers                      | MVP         | ✔    |
-| Get offer `offerID`                 | A    | GET       | /offers/:offerID             | 2.0         |       |
+| Get offer `offerID`                 | A    | GET       | /offers/:offerID             | 2.0         | ✔     |
 | Update offer `offerID`              | C    | PUT       | /offers/:offerID             | 3.0         |       |
 | Create request                      | L    | POST      | /requests                    | MVP         | ✔    |
-| Get request `requestID`             | A    | GET       | /requests/:requestID         | 2.0         |       |
+| Get request `requestID`             | A    | GET       | /requests/:requestID         | 2.0         | ✔      |
 | Update request `requestID`          | C    | PUT       | /requests/:requestID         | 3.0         |       |
 | Create matching                     | A    | POST      | /matchings                   | MVP         | ✔    |
 | Get matching `matchingID`           | C    | GET       | /matchings/:matchingID       | MVP         | ✔    |
@@ -148,31 +148,20 @@ POST /users
 
 **Response:**
 
-Success (**Currently!** Format will change very soon!)
-
 ```
 201 Created
-
 {
-	"ID": UUID v4,
-	"Mail": string,
-	"Name": string,
-	"PreferredName": string,
+	"ID": UUID v4
+	"Mail": string
+	"Name": string
 	"Groups": [
-		{
-			"ID": UUID v4,
-			"DefaultGroup": boolean,
-			"Location": string,
-			"Permissions": [
-	            {
-	                "ID": UUID v4,
-	                "AccessRight": string,
-	                "Description": string
-	            }
-            ]
-		}
-	]
+				{
+					"ID": UUID v4
+				},
+				...
+			  ]
 }
+
 ```
 
 
@@ -215,8 +204,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 200 OK
 
 {
-    "AccessToken": string/jwt,
-    "ExpiresIn": int
+    "AccessToken": string/jwt
 }
 ```
 
@@ -262,11 +250,28 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 Success
 
 ```
+{
+	"Groups": [
+				{
+					"Permissions": [
+									{
+										"AccessRight": "user"
+									}
+									], ...
+-
+				}, ..
+				]
+	"Mail": string
+	"MailVerified": bool
+	"Name": string
+	"PreferredName": string
+}
 ```
 
 Fail
 
 ```
+401 - Unauthorized
 ```
 
 
@@ -275,7 +280,7 @@ Fail
 **Request:**
 
 ```
-POST /me
+PUT /me
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
@@ -300,7 +305,7 @@ Fail
 **Request:**
 
 ```
-GET /offers/x
+GET region/:regionID/offers
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
@@ -313,16 +318,25 @@ Success
 
 [
 	{
-		{
-			"Name": string,
-			"Tags": string array,
-			"ValidityPeriod": RFC3339 date,
-			"Location": string,
-			"User": {
-				"ID": UUID v4,
-				"Name": string
-			}
+		"ID": UUID v4,
+		"Name": string
+		"Location": {
+			"lng": float64,
+			"lat": float64
 		}
+		Tags: [
+				{
+					"Name": string
+				}, ...
+		]
+		User: {
+			"ID": UUID v4,
+			"Mail": string,
+			"Name": string
+		},
+		"ValidityPeriod": ARF3339 Date,
+		"Matched": bool,
+		"Expired": bool
 	}, 
 	...
 ]
@@ -353,6 +367,25 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 Success
 
 ```
+[
+	{
+		"ID": UUID v4,
+		"Name": string
+		"Location": {
+			"lng": float64,
+			"lat": float64
+		}
+		Tags: [
+				{
+					"Name": string
+				}, ...
+		]
+		"ValidityPeriod": ARF3339 Date,
+		"Matched": bool,
+		"Expired": bool
+	}, 
+	...
+]
 ```
 
 Fail
@@ -361,12 +394,12 @@ Fail
 ```
 
 
-#### List requests for region x
+#### List requests for region
 
 **Request:**
 
 ```
-GET /requests/x
+GET region/:regionID/requests/
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
@@ -379,16 +412,25 @@ Success
 
 [
 	{
-		{
-			"Name": string,
-			"Tags": string array,
-			"ValidityPeriod": RFC3339 date,
-			"Location": string,
-			"User": {
-				"ID": UUID v4,
-				"Name": string
-			}
+		"ID": UUID v4,
+		"Name": string
+		"Location": {
+			"lng": float64,
+			"lat": float64
 		}
+		Tags: [
+				{
+					"Name": string
+				}, ...
+		]
+		User: {
+			"ID": UUID v4,
+			"Mail": string,
+			"Name": string
+		},
+		"ValidityPeriod": ARF3339 Date,
+		"Matched": bool,
+		"Expired": bool
 	}, 
 	...
 ]
@@ -397,11 +439,7 @@ Success
 Fail
 
 ```
-400 Bad Request
-
-{
-	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
-}
+401 Unauthorized
 ```
 
 
@@ -419,13 +457,32 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 Success
 
 ```
+[
+	{
+		"ID": UUID v4,
+		"Name": string
+		"Location": {
+			"lng": float64,
+			"lat": float64
+		}
+		Tags: [
+				{
+					"Name": string
+				}, ...
+		]
+		"ValidityPeriod": ARF3339 Date,
+		"Matched": bool,
+		"Expired": bool
+	}, 
+	...
+]
 ```
 
 Fail
 
 ```
+401 Unauthorized
 ```
-
 
 #### Create offer
 
@@ -439,7 +496,10 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 	"Name": required, string,
 	"Tags": optional, string array,
 	"ValidityPeriod": required, RFC3339 date,
-	"Location": required, string
+	"Location": {
+		"lng": float64,
+		"lat": float64
+	}
 }
 ```
 
@@ -453,29 +513,32 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 	"Name": "hugs",
 	"Tags": ["tag", "another tag"],
 	"ValidityPeriod": "2017-11-01T22:08:41+00:00",
-	"Location": "worldwide"
+	"Location": {
+		"lng": 12.3
+		"lat": 0.0
+	}
 }
 ```
 
 **Response:**
 
-Success (**Currently!** Format will change very soon!):
 
 ```
 201 Created
 
 {
 	"ID": UUID v4,
-	"Location": string,
-	"Name": string,
-	"Tags": [
-		{
-			"ID": UUID v4,
-			"Name": string
-		},
-		...
-	],
-	"ValidityPeriod": RFC3339 date
+	"Name": string
+	"Location": {
+		"lng": float64,
+		"lat": float64
+	}
+	Tags: [
+			{
+				"Name": string
+			}, ...
+	]
+	"ValidityPeriod": ARF3339 Date,
 }
 ```
 
@@ -512,30 +575,35 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 	"Name": required, string,
 	"Tags": optional, string array,
 	"ValidityPeriod": required, RFC3339 date,
-	"Location": required, string
+	"Location": {
+		"lng": float64,
+		"lat": float64
+	}
 }
 ```
 
 **Response:**
 
-Success (**Currently!** Format will change very soon!):
 
 ```
 201 Created
 
 {
 	"ID": UUID v4,
-	"Location": string,
-	"Name": string,
-	"Tags": [
-		{
-			"ID": UUID v4,
-			"Name": string
-		},
-		...
-	],
-	"ValidityPeriod": RFC3339 date
-}
+	"Name": string
+	"Location": {
+		"lng": float64,
+		"lat": float64
+	}
+	Tags: [
+			{
+				"Name": string
+			}, ...
+	]
+	"ValidityPeriod": ARF3339 Date,
+	"Matched": bool,
+	"Expired": bool
+},
 ```
 
 Fail:

@@ -24,9 +24,12 @@ var fieldsGetUser = map[string]interface{}{
 }
 
 var fieldsListUserOffers = map[string]interface{}{
-	"ID":       "ID",
-	"Name":     "Name",
-	"Location": "Location",
+	"ID":   "ID",
+	"Name": "Name",
+	"Location": map[string]interface{}{
+		"Lng": "lng",
+		"Lat": "lat",
+	},
 	"Tags": map[string]interface{}{
 		"Name": "Name",
 	},
@@ -36,9 +39,12 @@ var fieldsListUserOffers = map[string]interface{}{
 }
 
 var fieldsListUserRequests = map[string]interface{}{
-	"ID":       "ID",
-	"Name":     "Name",
-	"Location": "Location",
+	"ID":   "ID",
+	"Name": "Name",
+	"Location": map[string]interface{}{
+		"Lng": "lng",
+		"Lat": "lat",
+	},
 	"Tags": map[string]interface{}{
 		"Name": "Name",
 	},
@@ -123,7 +129,7 @@ func (app *App) ListUserOffers(c *gin.Context) {
 	var Offers []db.Offer
 	app.DB.Preload("Tags").Find(&Offers, "user_id = ?", User.ID)
 
-	response := make([]interface{}, 0)
+	response := make([]interface{}, len(Offers))
 	for _, o := range Offers {
 		// 2) Check expired field - extra argument for that?
 		if o.ValidityPeriod.After(time.Now()) {
@@ -153,7 +159,7 @@ func (app *App) ListUserRequests(c *gin.Context) {
 	var Requests []db.Request
 	app.DB.Preload("Tags").Find(&Requests, "user_id = ?", User.ID)
 
-	response := make([]interface{}, 0)
+	response := make([]interface{}, len(Requests))
 	for _, r := range Requests {
 		// 2) Check expired field - extra argument for that?
 		if r.ValidityPeriod.After(time.Now()) {
