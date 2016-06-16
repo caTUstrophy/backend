@@ -16,9 +16,12 @@ import (
 )
 
 var fieldsGetOffer = map[string]interface{}{
-	"ID":       "ID",
-	"Name":     "Name",
-	"Location": "Location",
+	"ID":   "ID",
+	"Name": "Name",
+	"Location": map[string]interface{}{
+		"Lng": "lng",
+		"Lat": "lat",
+	},
 	"Tags": map[string]interface{}{
 		"Name": "Name",
 	},
@@ -108,6 +111,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 	Offer.ID = fmt.Sprintf("%s", uuid.NewV4())
 	Offer.Name = Payload.Name
 	Offer.User = *User
+	Offer.UserID = User.ID
 	Offer.Location = gormGIS.GeoPoint{Lng: Payload.Location.Longitude, Lat: Payload.Location.Latitude}
 	log.Println(Offer.Location.String())
 	Offer.Tags = make([]db.Tag, 0)

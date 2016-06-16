@@ -15,12 +15,18 @@ import (
 )
 
 var fieldsGetRequest = map[string]interface{}{
-	"ID":       "ID",
-	"Name":     "Name",
-	"Location": "Location",
+	"ID":   "ID",
+	"Name": "Name",
+	"Location": map[string]interface{}{
+		"Lng": "lng",
+		"Lat": "lat",
+	},
 	"Tags": map[string]interface{}{
 		"Name": "Name",
 	},
+	"ValidityPeriod": "ValidityPeriod",
+	"Matched":        "Matched",
+	"Expired":        "Expired",
 	"User": map[string]interface{}{
 		"ID":   "ID",
 		"Name": "Name",

@@ -108,20 +108,13 @@ func AddDefaultData(db *gorm.DB) {
 		Boundaries:  GeoPolygon{[]gormGIS.GeoPoint{gormGIS.GeoPoint{13.324401, 52.516872}, gormGIS.GeoPoint{13.322599, 52.514740}, gormGIS.GeoPoint{13.322679, 52.512611}, gormGIS.GeoPoint{13.322674, 52.511743}, gormGIS.GeoPoint{13.328280, 52.508302}, gormGIS.GeoPoint{13.331077, 52.512191}, gormGIS.GeoPoint{13.329763, 52.513787}, gormGIS.GeoPoint{13.324401, 52.516872}}},
 	}
 
-	NoLocation := Region{
-		ID:          fmt.Sprintf("%s", uuid.NewV4()),
-		Name:        "CaTUstrophy System",
-		Description: "This is not a real location, this represents our system.",
-		Boundaries:  GeoPolygon{[]gormGIS.GeoPoint{}},
-	}
-
 	// Three default group entities.
 
 	GroupUser := Group{
 		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: true,
-		Location:     RegionTU,
-		LocationId:   RegionTU.ID,
+		Location:     Region{},
+		LocationId:   "",
 		Permissions:  []Permission{PermUser},
 	}
 
@@ -136,7 +129,7 @@ func AddDefaultData(db *gorm.DB) {
 	GroupSuperAdmin := Group{
 		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: false,
-		Location:     NoLocation,
+		Location:     Region{},
 		LocationId:   "",
 		Permissions:  []Permission{PermSuperAdmin},
 	}
@@ -173,7 +166,6 @@ func AddDefaultData(db *gorm.DB) {
 	db.Create(&GroupSuperAdmin)
 	db.Create(&UserAdmin)
 	db.Create(&RegionTU)
-	db.Create(&NoLocation)
 
 	for _, Tag := range Tags {
 		db.Create(&Tag)

@@ -11,6 +11,36 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+var fieldsGetOffersForRegion = map[string]interface{}{
+	"ID":   "ID",
+	"Name": "Name",
+	"Location": map[string]interface{}{
+		"Lng": "lng",
+		"Lat": "lat",
+	},
+	"Tags": map[string]interface{}{
+		"Name": "Name",
+	},
+	"ValidityPeriod": "ValidityPeriod",
+	"Matched":        "Matched",
+	"Expired":        "Expired",
+}
+
+var fieldsGetRequestsForRegion = map[string]interface{}{
+	"ID":   "ID",
+	"Name": "Name",
+	"Location": map[string]interface{}{
+		"Lng": "lng",
+		"Lat": "lat",
+	},
+	"Tags": map[string]interface{}{
+		"Name": "Name",
+	},
+	"ValidityPeriod": "ValidityPeriod",
+	"Matched":        "Matched",
+	"Expired":        "Expired",
+}
+
 type CreateRegionPayload struct {
 	Name        string             `conform:"trim" validate:"required"`
 	Description string             `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
@@ -53,7 +83,7 @@ func (app *App) CreateRegion(c *gin.Context) {
 
 func (app *App) ListRegions(c *gin.Context) {
 
-	var Regions []db.Region
+	Regions := []db.Region{}
 
 	// Retrieve all offers from database.
 	app.DB.Find(&Regions)
@@ -101,7 +131,7 @@ func (app *App) GetOffersForRegion(c *gin.Context) {
 	}
 
 	var Region db.Region
-	app.DB.Preload("Users").Preload("Offers").First(&Region, "id = ?", regionID)
+	app.DB.Preload("Offers").First(&Region, "id = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
@@ -112,9 +142,12 @@ func (app *App) GetOffersForRegion(c *gin.Context) {
 
 		return
 	}
-
+	model := make([]map[string]interface{}, len(Region.Offers))
+	for offer := range Region.Offers {
+		model = append(model, CopyNestedModel(offer, fieldsGetOffersForRegion))
+	}
 	// Send back results to client.
-	c.JSON(http.StatusOK, Region.Offers)
+	c.JSON(http.StatusOK, model)
 }
 
 func (app *App) GetRequestsForRegion(c *gin.Context) {
@@ -136,7 +169,7 @@ func (app *App) GetRequestsForRegion(c *gin.Context) {
 	}
 
 	var Region db.Region
-	app.DB.Preload("Users").Preload("Requests").First(&Region, "id = ?", regionID)
+	app.DB.Preload("Requests").First(&Region, "id = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
@@ -147,9 +180,12 @@ func (app *App) GetRequestsForRegion(c *gin.Context) {
 
 		return
 	}
-
+	model := make([]map[string]interface{}, len(Region.Requests))
+	for offer := range Region.Requests {
+		model = append(model, CopyNestedModel(offer, fieldsGetRequestsForRegion))
+	}
 	// Send back results to client.
-	c.JSON(http.StatusOK, Region.Requests)
+	c.JSON(http.StatusOK, model)
 }
 
 func (app *App) GetMatchingsForRegion(c *gin.Context) {

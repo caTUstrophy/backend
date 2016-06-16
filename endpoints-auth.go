@@ -120,7 +120,7 @@ func (app *App) CheckScope(user *db.User, location db.Region, permission string)
 func (app *App) CheckScopes(user *db.User, locations []db.Region, permission string) bool {
 	// check for superadmin privilege
 	if su := app.CheckScope(user, db.Region{}, "superadmin"); su {
-		return true;
+		return true
 	}
 
 	// iterate over regions until region with permission was found
