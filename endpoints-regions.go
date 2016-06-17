@@ -7,6 +7,8 @@ import (
 
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
+	"github.com/leebenson/conform"
 	"github.com/nferruzzi/gormGIS"
 	"github.com/satori/go.uuid"
 )
@@ -41,34 +43,27 @@ var fieldsGetRequestsForRegion = map[string]interface{}{
 	"Expired":        "Expired",
 }
 
+var fieldsRegion = map[string]interface{}{
+	"ID":   "ID",
+	"Name": "Name",
+	"Boundaries": map[string]interface{}{
+		"Points": map[string]interface{}{
+			"Lng": "lng",
+			"Lat": "lat",
+		},
+	},
+	"Description": "Description",
+}
+
+type createLocation struct {
+	Lng float64 `json:"lng" conform:"trim"`
+	Lat float64 `json:"lat" conform:"trim"`
+}
+
 type CreateRegionPayload struct {
-	Name        string             `conform:"trim" validate:"required"`
-	Description string             `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Boundaries  []gormGIS.GeoPoint `conform:"trim"`
-}
-
-var fieldsListRegions = map[string]interface{}{
-	"ID":   "ID",
-	"Name": "Name",
-	"Boundaries": map[string]interface{}{
-		"Points": map[string]interface{}{
-			"Lng": "lng",
-			"Lat": "lat",
-		},
-	},
-	"Description": "Description",
-}
-
-var fieldsGetRegion = map[string]interface{}{
-	"ID":   "ID",
-	"Name": "Name",
-	"Boundaries": map[string]interface{}{
-		"Points": map[string]interface{}{
-			"Lng": "lng",
-			"Lat": "lat",
-		},
-	},
-	"Description": "Description",
+	Name        string           `conform:"trim" validate:"required"`
+	Description string           `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Region      []createLocation `validate:"dive,required"`
 }
 
 func (app *App) CreateRegion(c *gin.Context) {
@@ -84,25 +79,63 @@ func (app *App) CreateRegion(c *gin.Context) {
 		return
 	}
 
-	// check scope if we want it for admins only
+	var Payload CreateRegionPayload
 
-	// TODO: Change stub to real function.
-	c.JSON(http.StatusCreated, gin.H{
-		"ID":          fmt.Sprintf("%s", uuid.NewV4()),
-		"Name":        "Algeria",
-		"Description": "Mountain region hit by an earth quake of strength 4.0",
-		"Boundaries": struct {
-			Boundaries []gormGIS.GeoPoint
-		}{
-			[]gormGIS.GeoPoint{
-				gormGIS.GeoPoint{3.389017, 36.416215},
-				gormGIS.GeoPoint{3.358667, 36.391414},
-				gormGIS.GeoPoint{3.391039, 36.362402},
-				gormGIS.GeoPoint{3.418206, 36.392172},
-				gormGIS.GeoPoint{3.389017, 36.416215},
-			},
-		},
-	})
+	// Expect offer struct fields for creation in JSON request body.
+	err := c.BindJSON(&Payload)
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Couldn't marshal JSON",
+		})
+
+		return
+	}
+
+	// Validate sent offer creation data.
+	conform.Strings(&Payload)
+	errs := app.Validator.Struct(&Payload)
+
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs.(validator.ValidationErrors) {
+
+			if err.Tag == "required" {
+				errResp[err.Field] = "Is required"
+			} else if err.Tag == "excludesall" {
+				errResp[err.Field] = "Contains unallowed characters"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(http.StatusBadRequest, errResp)
+
+		return
+	}
+
+	// Save Region
+	var Region db.Region
+	Region.ID = fmt.Sprintf("%s", uuid.NewV4())
+	Region.Name = Payload.Name
+	Region.Description = Payload.Description
+
+	Points := make([]gormGIS.GeoPoint, len(Payload.Region))
+
+	for i, point := range Payload.Region {
+		Points[i] = gormGIS.GeoPoint{Lng: point.Lng, Lat: point.Lat}
+	}
+
+	Region.Boundaries = db.GeoPolygon{
+		Points: Points,
+	}
+
+	app.DB.Create(&Region)
+
+	model := CopyNestedModel(Region, fieldsRegion)
+	c.JSON(http.StatusCreated, model)
 }
 
 func (app *App) ListRegions(c *gin.Context) {
@@ -116,7 +149,7 @@ func (app *App) ListRegions(c *gin.Context) {
 
 	// Iterate over all regions in database return and marshal it.
 	for i, region := range Regions {
-		models[i] = CopyNestedModel(region, fieldsListRegions)
+		models[i] = CopyNestedModel(region, fieldsRegion)
 	}
 
 	c.JSON(http.StatusOK, models)
@@ -136,7 +169,7 @@ func (app *App) GetRegion(c *gin.Context) {
 	app.DB.First(&Region, "id = ?", regionID)
 
 	// Only expose necessary fields in JSON response.
-	model := CopyNestedModel(Region, fieldsGetRegion)
+	model := CopyNestedModel(Region, fieldsRegion)
 
 	c.JSON(http.StatusOK, model)
 }
