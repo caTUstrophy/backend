@@ -55,6 +55,12 @@ var fieldsRegion = map[string]interface{}{
 	"Description": "Description",
 }
 
+var fieldsMatching = map[string]interface{}{
+	"ID":        "ID",
+	"RegionId":  "RegionId",
+	"RequestId": "RequestId",
+}
+
 type createLocation struct {
 	Lng float64 `json:"lng" conform:"trim"`
 	Lat float64 `json:"lat" conform:"trim"`
@@ -262,4 +268,41 @@ func (app *App) GetRequestsForRegion(c *gin.Context) {
 
 func (app *App) GetMatchingsForRegion(c *gin.Context) {
 
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	regionID := app.getUUID(c, "regionID")
+	if regionID == "" {
+		return
+	}
+
+	var region db.Region
+	app.DB.First(&region, "id = ?", regionID)
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, region, "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	var matchings []db.Matching
+	app.DB.Model(&region).Related(&matchings)
+
+	model := make([]map[string]interface{}, len(matchings))
+	for i, matching := range matchings {
+		model[i] = CopyNestedModel(matching, fieldsMatching)
+	}
+	c.JSON(http.StatusOK, model)
 }
