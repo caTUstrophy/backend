@@ -66,7 +66,9 @@ type Request struct {
 
 type Matching struct {
 	ID        string `gorm:"primary_key"`
-	Offer     Offer  `gorm:"ForeignKey:OfferId;AssociationForeignKey:Refer"`
+	Region    Region `gorm:"ForeignKey:RegionId;AssociationForeignKey:Refer"`
+	RegionId  string
+	Offer     Offer `gorm:"ForeignKey:OfferId;AssociationForeignKey:Refer"`
 	OfferId   string
 	Request   Request `gorm:"ForeignKey:RequestId;AssociationForeignKey:Refer"`
 	RequestId string
@@ -77,6 +79,7 @@ type Region struct {
 	Name        string
 	Boundaries  GeoPolygon `sql:"type:geometry(Geometry,4326)"`
 	Description string
+	Matchings   []Matching
 	Offers      []Offer   `gorm:"many2many:region_offers"`
 	Requests    []Request `gorm:"many2many:region_requests"`
 }

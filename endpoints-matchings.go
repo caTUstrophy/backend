@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"net/http"
 
@@ -127,6 +126,7 @@ func (app *App) CreateMatching(c *gin.Context) {
 	// Save matching.
 	var Matching db.Matching
 	Matching.ID = fmt.Sprintf("%s", uuid.NewV4())
+	Matching.RegionId = Payload.Region
 	Matching.OfferId = Payload.Offer
 	Matching.Offer = Offer
 	Matching.RequestId = Payload.Request
@@ -163,99 +163,4 @@ func (app *App) GetMatching(c *gin.Context) {
 
 	// Send back results to client.
 	c.JSON(http.StatusOK, Matching)
-}
-
-func (app *App) ListMatchings(c *gin.Context) {
-
-	// Check authorization for this function.
-	ok, User, message := app.Authorize(c.Request)
-	if !ok {
-
-		// Signal client an error and expect authorization.
-		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
-	regionID := app.getUUID(c, "regionID")
-	if regionID == "" {
-		return
-	}
-
-	var region db.Region
-	app.DB.First(&region, "id = ?", regionID)
-
-	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, region, "admin"); !ok {
-
-		// Signal client that the provided authorization was not sufficient.
-		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
-	// TODO: Change this stub to real function.
-	// 1) Check for expired fields in offers and requests - via extra argument?
-	c.JSON(http.StatusOK, gin.H{
-		"Offer": struct {
-			ID             string
-			Name           string
-			User           interface{}
-			Location       interface{}
-			Tags           interface{}
-			ValidityPeriod string
-		}{
-			"a55b22de-5955-4d2a-9078-1479bda097e7",
-			"Offering bread",
-			struct {
-				ID string
-			}{
-				"08f5588f-40c0-4ad1-9fd3-ce20e37903d3",
-			},
-			struct {
-				Longitude float64
-				Latitude  float64
-			}{
-				13.9,
-				50.1,
-			},
-			struct {
-				Name string
-			}{
-				"Food",
-			},
-			time.Now().Format(time.RFC3339),
-		},
-		"Request": struct {
-			ID             string
-			Name           string
-			User           interface{}
-			Location       interface{}
-			Tags           interface{}
-			ValidityPeriod string
-		}{
-			"adbe5c76-e3ac-4dee-90a4-d85054c64bdd",
-			"Looking for bread",
-			struct {
-				ID string
-			}{
-				"aaf84b79-ec0f-45df-9282-58850064fcbe",
-			},
-			struct {
-				Longitude float64
-				Latitude  float64
-			}{
-				13.9,
-				50.1,
-			},
-			struct {
-				Name string
-			}{
-				"Food",
-			},
-			time.Now().Format(time.RFC3339),
-		},
-	})
 }
