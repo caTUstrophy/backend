@@ -100,22 +100,22 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | [Get offer `offerID`](#get-offer-with-offerid)                  | A    | GET       | /offers/:offerID             | 2.0         | ✔    |
 | [Update offer `offerID`](#update-offer-with-offerid)            | C    | PUT       | /offers/:offerID             | 3.0         |       |
 | [Create request](#create-request)                               | L    | POST      | /requests                    | MVP         | ✔    |
-| Get request `requestID`                                         | A    | GET       | /requests/:requestID         | 2.0         | ✔    |
-| Update request `requestID`                                      | C    | PUT       | /requests/:requestID         | 3.0         |       |
-| Create matching                                                 | A    | POST      | /matchings                   | MVP         | ✔    |
-| Get matching `matchingID`                                       | C    | GET       | /matchings/:matchingID       | MVP         | ✔    |
-| Update matching `matchingID`                                    | A    | PUT       | /matchings/:matchingID       | 3.0         |       |
-| Create a region                                                 | L    | POST      | /regions                     | 2.0         |       |
-| List regions                                                    | U    | GET       | /regions                     | 2.0         | ✔    |
-| Get region `regionID`                                           | U    | GET       | /regions/:regionID           | 2.0         |       |
-| Update region `regionID`                                        | A    | PUT       | /regions/:regionID           | 2.0         |       |
-| List offers in region  `regionID`                               | A    | GET       | /regions/:regionID/offers    | 2.0         |       |
-| List requests in region `regionID`                              | A    | GET       | /regions/:regionID/requests  | 2.0         |       |
-| List matchings in region `regionID`                             | A    | GET       | /regions/:regionID/matchings | 2.0         |       |
-| [Own profile](#own-profile)                                     | L    | GET       | /me                          | 2.0         |       |
-| [Update own profile](#update-own-profile)                       | L    | PUT       | /me                          | 2.0         |       |
-| [List own offers](#list-own-offers)                             | L    | GET       | /me/offers                   | 2.0         |       |
-| [List own requests](#list-own-requests)                         | L    | GET       | /me/requests                 | 2.0         |       |
+| [Get request `requestID`](#get-request-with-requestid)          | A    | GET       | /requests/:requestID         | 2.0         | ✔    |
+| [Update request `requestID`](#update-request-with-requestid)    | C    | PUT       | /requests/:requestID         | 3.0         |       |
+| [Create matching](#create-matching)                             | A    | POST      | /matchings                   | MVP         | ✔    |
+| [Get matching `matchingID`](#get-matching-with-matchingid)      | C    | GET       | /matchings/:matchingID       | MVP         | ✔    |
+| [Update matching `matchingID`](#update-matching-with-matchingid)| A    | PUT       | /matchings/:matchingID       | 3.0         |       |
+| [Create a region](#create-region)                               | L    | POST      | /regions                     | 2.0         | ✔    |
+| [List regions](#list-regions)                                   | U    | GET       | /regions                     | 2.0         | ✔    |
+| [Get region `regionID`](#get-region-regionid)                   | U    | GET       | /regions/:regionID           | 2.0         | ✔    |
+| [Update region `regionID`](#update-region-with-regionid)        | A    | PUT       | /regions/:regionID           | 3.0         |       |
+| [List offers in region `regionID`](#list-offers-in-region-with-regionid) | A | GET | /regions/:regionID/offers    | 2.0         | ✔    |
+| [List requests in region `regionID`](#list-requests-in-region-with-regionid) | A | GET | /regions/:regionID/requests | 2.0      | ✔    |
+| [List matchings in region `regionID`](#list-matchings-in-region-with-regionid) | A | GET | /regions/:regionID/matchings | 2.0   | ✔    |
+| [Own profile](#own-profile)                                     | L    | GET       | /me                          | 2.0         | ✔    |
+| [Update own profile](#update-own-profile)                       | L    | PUT       | /me                          | 3.0         |       |
+| [List own offers](#list-own-offers)                             | L    | GET       | /me/offers                   | 2.0         | ✔    |
+| [List own requests](#list-own-requests)                         | L    | GET       | /me/requests                 | 2.0         | ✔    |
 
 
 ### What is inside a JWT?
@@ -441,7 +441,7 @@ Fail:
 ```
 
 
-### Update offer with `offerID`
+#### Update offer with `offerID`
 
 **Request:**
 
@@ -524,6 +524,8 @@ Fail:
 
 #### Get request with `requestID`
 
+**Request:**
+
 ```
 GET /requests/:requestID
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
@@ -544,105 +546,28 @@ Fail:
 ```
 
 
-#### List offers for region x
+#### Update request with `requestID`
 
 **Request:**
 
 ```
-GET region/:regionID/offers
+PUT /requests/:requestID
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
-```
-
-**Response:**
-
-Success
-
-```
-200 OK
-
-[
-	{
-		"ID": UUID v4,
-		"Name": string
-		"Location": {
-			"lng": float64,
-			"lat": float64
-		}
-		Tags: [
-				{
-					"Name": string
-				}, ...
-		]
-		User: {
-			"ID": UUID v4,
-			"Mail": string,
-			"Name": string
-		},
-		"ValidityPeriod": RFC3339 Date,
-		"Matched": bool,
-		"Expired": bool
-	}, 
-	...
-]
-```
-
-Fail
-
-```
-400 Bad Request
 
 {
-	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
 ```
 
-
-#### List requests for region
-
-**Request:**
-
-```
-GET region/:regionID/requests/
-Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
-```
-
 **Response:**
 
-Success
+Success:
 
 ```
-200 OK
-
-[
-	{
-		"ID": UUID v4,
-		"Name": string
-		"Location": {
-			"lng": float64,
-			"lat": float64
-		}
-		Tags: [
-				{
-					"Name": string
-				}, ...
-		]
-		User: {
-			"ID": UUID v4,
-			"Mail": string,
-			"Name": string
-		},
-		"ValidityPeriod": RFC3339 Date,
-		"Matched": bool,
-		"Expired": bool
-	}, 
-	...
-]
 ```
 
-Fail
+Fail:
 
 ```
-401 Unauthorized
 ```
 
 
@@ -655,7 +580,7 @@ POST /matchings
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
-	"Area": required, UUID v4,
+	"Region": required, UUID v4,
 	"Request": required, UUID v4,
 	"Offer": required, UUID v4
 }
@@ -663,7 +588,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success (**Currently!** Format will change very soon!):
+Success:
 
 ```
 201 Created
@@ -671,29 +596,7 @@ Success (**Currently!** Format will change very soon!):
 {
 	"ID": UUID v4,
 	"OfferId": UUID v4,
-	"RequestId": UUID v4,
-	"Offer": {
-		"ID": UUID v4,
-		"Name": string,
-		"User": {
-			<currently empty user object>
-		},
-		"Location": string,
-		"Tags": null,
-		"ValidityPeriod": RFC3339 date,
-		"Expired": boolean
-	},
-	"Request": {
-		"ID": UUID v4,
-		"Name": string,
-		"User": {
-			<currently empty user object>
-		},
-		"Location": string,
-		"Tags": null,
-		"ValidityPeriod": RFC3339 date,
-		"Expired": boolean
-	}
+	"RequestId": UUID v4
 }
 ```
 
@@ -708,34 +611,12 @@ Fail:
 ```
 
 
-#### List matchings
+#### Get matching with `matchingID`
 
 **Request:**
 
 ```
-GET /matchings
-Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
-```
-
-**Response:**
-
-Success:
-
-```
-```
-
-Fail:
-
-```
-```
-
-
-#### Get matching x
-
-**Request:**
-
-```
-GET /matchings/x
+GET /matchings/:matchingID
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
@@ -747,20 +628,9 @@ Success:
 200 OK
 
 {
-	"Request": {
-		"ID": UUID v4,
-		"Name": string,
-		"Tags": string array,
-		"ValidityPeriod": RFC3339 date,
-		"Location": string
-	},
-	"Offer": {
-		"ID": UUID v4,
-		"Name": string,
-		"Tags": string array,
-		"ValidityPeriod": RFC3339 date,
-		"Location": string
-	},
+	"ID": UUID v4,
+	"OfferId": UUID v4,
+	"RequestId": UUID v4
 }
 ```
 
@@ -775,12 +645,12 @@ Fail:
 ```
 
 
-### Create region
+#### Update matching with `matchingID`
 
 **Request:**
 
 ```
-POST /regions
+PUT /matchings/:matchingID
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
@@ -800,7 +670,55 @@ Fail:
 ```
 
 
-### List regions
+#### Create region
+
+**Request:**
+
+```
+POST /regions
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+	"Name": "Circle",
+	"Description": "Very roundy",
+	"Region": [
+		{
+			"lat": 52.521652565946304,
+			"lng":13.414478302001953
+		},
+		...
+	]
+}
+```
+
+**Response:**
+
+Success:
+
+```
+{
+	"ID": UUID v4,
+	"Description": string,
+	"Name": string,
+	"Boundaries": {
+		"Points": [
+			{
+				"lat": float64,
+				"lng": float64
+			},
+			...
+		]
+	}
+}
+```
+
+Fail:
+
+```
+```
+
+
+#### List regions
 
 **Request:**
 
@@ -813,6 +731,23 @@ GET /regions
 Success:
 
 ```
+[
+	{
+		"ID": UUID v4,
+		"Description": string,
+		"Name": string,
+		"Boundaries": {
+			"Points": [
+				{
+					"lat": float64,
+					"lng": float64
+				},
+				...
+			]
+		}
+	},
+	...
+]
 ```
 
 Fail:
@@ -821,7 +756,42 @@ Fail:
 ```
 
 
-### Update region with `regionID`
+#### Get region `regionID`
+
+**Request:**
+
+```
+GET /regions/:regionID
+```
+
+**Response:**
+
+Success:
+
+```
+{
+	"ID": UUID v4,
+	"Description": string,
+	"Name": string,
+	"Boundaries": {
+		"Points": [
+			{
+				"lat": float64,
+				"lng": float64
+			},
+			...
+		]
+	}
+}
+```
+
+Fail:
+
+```
+```
+
+
+#### Update region with `regionID`
 
 ```
 PUT /regions/x
@@ -836,6 +806,148 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 Success:
 
 ```
+```
+
+Fail:
+
+```
+```
+
+
+#### List offers in region with `regionID`
+
+**Request:**
+
+```
+GET /regions/:regionID/offers
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success:
+
+```
+200 OK
+
+[
+	{
+		"ID": UUID v4,
+		"Name": string,
+		"Location": {
+			"lat": float64,
+			"lng": float64
+		},
+		Tags: [
+				{
+					"Name": string
+				},
+				...
+		],
+		"ValidityPeriod": RFC3339 Date
+		"Matched": bool,
+		"Expired": bool
+	},
+	...
+]
+```
+
+Fail:
+
+```
+```
+
+
+#### List requests in region with `regionID`
+
+**Request:**
+
+```
+GET region/:regionID/requests/
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success:
+
+```
+200 OK
+
+[
+	{
+		"ID": UUID v4,
+		"Name": string,
+		"Location": {
+			"lng": float64,
+			"lat": float64
+		},
+		Tags: [
+				{
+					"Name": string
+				},
+				...
+		],
+		User: {
+			"ID": UUID v4,
+			"Mail": string,
+			"Name": string
+		},
+		"ValidityPeriod": RFC3339 Date,
+		"Matched": bool,
+		"Expired": bool
+	}, 
+	...
+]
+```
+
+Fail:
+
+```
+```
+
+
+#### List matchings in region with `regionID`
+
+**Request:**
+
+```
+GET /regions/:regionID/matchings
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success:
+
+```
+200 OK
+
+[
+	{
+		"ID": UUID v4,
+		"Name": string,
+		"Location": {
+			"lng": float64,
+			"lat": float64
+		},
+		Tags: [
+				{
+					"Name": string
+				},
+				...
+		],
+		User: {
+			"ID": UUID v4,
+			"Mail": string,
+			"Name": string
+		},
+		"ValidityPeriod": RFC3339 Date,
+		"Matched": bool,
+		"Expired": bool
+	}, 
+	...
+]
 ```
 
 Fail:
