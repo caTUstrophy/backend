@@ -14,6 +14,20 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+// Structs
+
+type CreateOfferPayload struct {
+	Name     string `conform:"trim" validate:"required"`
+	Location struct {
+		Longitude float64 `json:"lng" conform:"trim"`
+		Latitude  float64 `json:"lat" conform:"trim"`
+	} `validate:"dive,required"`
+	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	ValidityPeriod string   `conform:"trim" validate:"required"`
+}
+
+// JSON response maps
+
 var fieldsGetOffer = map[string]interface{}{
 	"ID":   "ID",
 	"Name": "Name",
@@ -31,19 +45,7 @@ var fieldsGetOffer = map[string]interface{}{
 	},
 }
 
-// Structs.
-
-type CreateOfferPayload struct {
-	Name     string `conform:"trim" validate:"required"`
-	Location struct {
-		Longitude float64 `json:"lng" conform:"trim"`
-		Latitude  float64 `json:"lat" conform:"trim"`
-	} `validate:"dive,required"`
-	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	ValidityPeriod string   `conform:"trim" validate:"required"`
-}
-
-// Offers related functions.
+// Functions
 
 func (app *App) CreateOffer(c *gin.Context) {
 

@@ -12,7 +12,7 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-// Structs.
+// Structs
 
 type CreateMatchingPayload struct {
 	Region  string `conform:"trim" validate:"required,uuid4"`
@@ -20,7 +20,7 @@ type CreateMatchingPayload struct {
 	Offer   string `conform:"trim" validate:"required,uuid4"`
 }
 
-// Matching related functions.
+// Functions
 
 func (app *App) CreateMatching(c *gin.Context) {
 
@@ -135,7 +135,9 @@ func (app *App) CreateMatching(c *gin.Context) {
 	// Save matching to database.
 	app.DB.Create(&Matching)
 
+	// Only expose fields that are necessary.
 	model := CopyNestedModel(Matching, fieldsMatching)
+
 	c.JSON(http.StatusCreated, model)
 }
 
@@ -162,6 +164,9 @@ func (app *App) GetMatching(c *gin.Context) {
 	// Retrieve all requests from database.
 	app.DB.First(&Matching, "id = ?", matchingID)
 
+	// Only expose fields that are necessary.
+	model := CopyNestedModel(Matching, fieldsMatching)
+
 	// Send back results to client.
-	c.JSON(http.StatusOK, Matching)
+	c.JSON(http.StatusOK, model)
 }

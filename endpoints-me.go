@@ -11,6 +11,8 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+// JSON response maps
+
 var fieldsGetUser = map[string]interface{}{
 	"Name":          "Name",
 	"PreferredName": "PreferredName",
@@ -52,6 +54,8 @@ var fieldsListUserRequests = map[string]interface{}{
 	"Matched":        "Matched",
 	"Expired":        "Expired",
 }
+
+// Functions
 
 func (app *App) GetUser(c *gin.Context) {
 
@@ -130,13 +134,15 @@ func (app *App) ListUserOffers(c *gin.Context) {
 	app.DB.Preload("Tags").Find(&Offers, "user_id = ?", User.ID)
 
 	response := make([]interface{}, len(Offers))
-	for _, o := range Offers {
+
+	for i, o := range Offers {
+
 		// 2) Check expired field - extra argument for that?
 		if o.ValidityPeriod.After(time.Now()) {
 
 			// 3) Only return what's needed
 			model := CopyNestedModel(o, fieldsListUserOffers)
-			response = append(response, model)
+			response[i] = model
 		}
 	}
 
@@ -160,12 +166,15 @@ func (app *App) ListUserRequests(c *gin.Context) {
 	app.DB.Preload("Tags").Find(&Requests, "user_id = ?", User.ID)
 
 	response := make([]interface{}, len(Requests))
-	for _, r := range Requests {
+
+	for i, r := range Requests {
+
 		// 2) Check expired field - extra argument for that?
 		if r.ValidityPeriod.After(time.Now()) {
+
 			// 3) Only return what's needed
 			model := CopyNestedModel(r, fieldsListUserRequests)
-			response = append(response, model)
+			response[i] = model
 		}
 	}
 

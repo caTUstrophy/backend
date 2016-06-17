@@ -13,6 +13,21 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+// Structs
+
+type CreateLocation struct {
+	Lng float64 `json:"lng" conform:"trim"`
+	Lat float64 `json:"lat" conform:"trim"`
+}
+
+type CreateRegionPayload struct {
+	Name        string           `conform:"trim" validate:"required"`
+	Description string           `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Region      []CreateLocation `validate:"dive,required"`
+}
+
+// JSON response maps
+
 var fieldsGetOffersForRegion = map[string]interface{}{
 	"ID":   "ID",
 	"Name": "Name",
@@ -58,19 +73,11 @@ var fieldsRegion = map[string]interface{}{
 var fieldsMatching = map[string]interface{}{
 	"ID":        "ID",
 	"RegionId":  "RegionId",
+	"OfferId":   "OfferId",
 	"RequestId": "RequestId",
 }
 
-type createLocation struct {
-	Lng float64 `json:"lng" conform:"trim"`
-	Lat float64 `json:"lat" conform:"trim"`
-}
-
-type CreateRegionPayload struct {
-	Name        string           `conform:"trim" validate:"required"`
-	Description string           `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Region      []createLocation `validate:"dive,required"`
-}
+// Functions
 
 func (app *App) CreateRegion(c *gin.Context) {
 
@@ -141,6 +148,7 @@ func (app *App) CreateRegion(c *gin.Context) {
 	app.DB.Create(&Region)
 
 	model := CopyNestedModel(Region, fieldsRegion)
+
 	c.JSON(http.StatusCreated, model)
 }
 
@@ -301,8 +309,10 @@ func (app *App) GetMatchingsForRegion(c *gin.Context) {
 	app.DB.Model(&region).Related(&matchings)
 
 	model := make([]map[string]interface{}, len(matchings))
+
 	for i, matching := range matchings {
 		model[i] = CopyNestedModel(matching, fieldsMatching)
 	}
+
 	c.JSON(http.StatusOK, model)
 }
