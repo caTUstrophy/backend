@@ -55,7 +55,7 @@ var fieldsRegion = map[string]interface{}{
 	"Description": "Description",
 }
 
-var fieldsGetMatchingsForRegion = map[string]interface{}{
+var fieldsMatching = map[string]interface{}{
 	"ID":        "ID",
 	"RegionId":  "RegionId",
 	"RequestId": "RequestId",
@@ -302,7 +302,7 @@ func (app *App) GetMatchingsForRegion(c *gin.Context) {
 
 	model := make([]map[string]interface{}, len(matchings))
 	for i, matching := range matchings {
-		model[i] = CopyNestedModel(matching, fieldsGetMatchingsForRegion)
+		model[i] = CopyNestedModel(matching, fieldsMatching)
 	}
 	c.JSON(http.StatusOK, model)
 }

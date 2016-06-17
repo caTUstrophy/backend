@@ -135,7 +135,8 @@ func (app *App) CreateMatching(c *gin.Context) {
 	// Save matching to database.
 	app.DB.Create(&Matching)
 
-	c.JSON(http.StatusCreated, Matching)
+	model := CopyNestedModel(Matching, fieldsMatching)
+	c.JSON(http.StatusCreated, model)
 }
 
 func (app *App) GetMatching(c *gin.Context) {
