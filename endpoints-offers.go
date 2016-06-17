@@ -183,6 +183,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 }
 
 func (app *App) GetOffer(c *gin.Context) {
+
 	// Check authorization for this function.
 	ok, user, message := app.Authorize(c.Request)
 	if !ok {
@@ -194,15 +195,17 @@ func (app *App) GetOffer(c *gin.Context) {
 		return
 	}
 
-	// Load offer
+	// Load offerID from request.
 	offerID := app.getUUID(c, "offerID")
-	var offer db.Offer
 
+	// Retrieve corresponding entry from database.
+	var offer db.Offer
 	app.DB.Preload("Regions").Preload("Tags").First(&offer, "id = ?", offerID)
 	app.DB.Model(&offer).Related(&offer.User)
 
-	// Check if user is admin in any region of this offer
+	// Check if user is admin in any region of this offer.
 	if ok := app.CheckScopes(user, offer.Regions, "admin"); !ok {
+
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
 		c.Status(http.StatusUnauthorized)
@@ -210,10 +213,10 @@ func (app *App) GetOffer(c *gin.Context) {
 		return
 	}
 
-	// He or she can have it, if he or she wants it so bad
+	// He or she can have it, if he or she wants it so badly!
 	model := CopyNestedModel(offer, fieldsGetOffer)
+
 	c.JSON(http.StatusOK, model)
-	return
 }
 
 func (app *App) UpdateOffer(c *gin.Context) {

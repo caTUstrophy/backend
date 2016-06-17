@@ -66,9 +66,9 @@ func (app *App) GetUser(c *gin.Context) {
 		return
 	}
 
-	var obj db.User
-	app.DB.Preload("Groups").Preload("Groups.Permissions").First(&obj, "id = ?", User.ID)
-	response := CopyNestedModel(obj, fieldsGetUser)
+	// Marshal only necessary fields.
+	response := CopyNestedModel(User, fieldsGetUser)
+
 	c.JSON(http.StatusOK, response)
 }
 

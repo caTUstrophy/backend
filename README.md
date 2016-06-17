@@ -8,7 +8,7 @@ This project provides the backend for a platform connecting people in a region s
 ## Get it running
 
 **1)** You have to have a working [Go installation](https://golang.org/doc/install) on your system. Preferably via your system's package manager.
-Also, you need to have a working and running PostgreSQL instance.
+Also, you need to have a working and running PostgreSQL + PostGIS instance. Therefore, make sure you have PostgreSQL installed and configured correctly and additionally install the PostGIS extension which enables spatial and geographic objects and functions in PostgreSQL.
 
 **2)** Initially run
 ```bash
@@ -28,13 +28,24 @@ to fetch all dependencies of this project.
 
 **4)** Create an `.env` file suited to your deployment. For this, copy the provided `.env.example` to `.env` and edit it to your needs. **Choose strong secret keys!**
 
-**5)** Add PostGIS to your database. Run in your psql **(as a superuser)**
-```
-CREATE EXTENSION postgis;
-CREATE EXTENSION postgis_topology;
-```
+**5)** Create a Postgres database user, e.g. `catustrophy`, and set a password for that user. Set up a Postgres database, e.g. `catustrophy`, too. Then add these information to your just created environment `.env` file. As above, have a look at the `.env.example` for a description of which values you have to set.
 
-**6)** Set up a Postgres database. Create a Postgres user and set a password for that user. Then add these information to your just created environment `.env` file. As above, have a look at the `.env.example` for a description of which values you have to set.
+**6)** Add PostGIS to your database. For that, become the `postgres` user of your system and execute following commands, assuming you previously created the `catustrophy` database:
+```bash
+user@system $ sudo -i -u postgres
+postgres@system $ psql
+psql (9.5.3)
+Type "help" for help.
+
+postgres=# \c catustrophy 
+You are now connected to database "catustrophy" as user "postgres".
+catustrophy=# CREATE EXTENSION postgis;
+catustrophy=# CREATE EXTENSION postgis_topology;
+catustrophy=# CREATE EXTENSION fuzzystrmatch;
+catustrophy=# CREATE EXTENSION postgis_tiger_geocoder;
+catustrophy=# \q
+postgres@system $ exit
+```
 
 **7)** Build the project via
 ```bash
@@ -76,35 +87,35 @@ Four roles are present in this model:
 
 The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 
-| Functionality                       | Role | HTTP verb | Endpoint                     | API version | Done? |
-| ----------------------------------- | ---- | --------- | ---------------------------- | ----------- | ----- |
-| Login                               | N    | POST      | /auth                        | MVP         | ✔    |
-| Renew auth token                    | L    | GET       | /auth                        | MVP         | ✔    |
-| Logout                              | L    | DELETE    | /auth                        | MVP         | ✔    |
-| Create user                         | U    | POST      | /users                       | MVP         | ✔    |
-| List users                          | A    | GET       | /users                       | 3.0         |       |
-| Get user `userID`                   | A    | GET       | /users/:userID               | 3.0         |       |
-| Update user `userID`                | A    | PUT       | /users/:userID               | 3.0         |       |
-| Create offer                        | L    | POST      | /offers                      | MVP         | ✔    |
-| Get offer `offerID`                 | A    | GET       | /offers/:offerID             | 2.0         | ✔     |
-| Update offer `offerID`              | C    | PUT       | /offers/:offerID             | 3.0         |       |
-| Create request                      | L    | POST      | /requests                    | MVP         | ✔    |
-| Get request `requestID`             | A    | GET       | /requests/:requestID         | 2.0         | ✔      |
-| Update request `requestID`          | C    | PUT       | /requests/:requestID         | 3.0         |       |
-| Create matching                     | A    | POST      | /matchings                   | MVP         | ✔    |
-| Get matching `matchingID`           | C    | GET       | /matchings/:matchingID       | MVP         | ✔    |
-| Update matching `matchingID`        | A    | PUT       | /matchings/:matchingID       | 3.0         |       |
-| Create a region                     | L    | POST      | /regions                     | 2.0         |       |
-| List regions                        | U    | GET       | /regions                     | 2.0         | ✔    |
-| Get region `regionID`               | U    | GET       | /regions/:regionID           | 2.0         |       |
-| Update region `regionID`            | A    | PUT       | /regions/:regionID           | 2.0         |       |
-| List offers in region  `regionID`   | A    | GET       | /regions/:regionID/offers    | 2.0         |       |
-| List requests in region `regionID`  | A    | GET       | /regions/:regionID/requests  | 2.0         |       |
-| List matchings in region `regionID` | A    | GET       | /regions/:regionID/matchings | 2.0         |       |
-| Own profile                         | L    | GET       | /me                          | 2.0         |       |
-| Update own profile                  | L    | PUT       | /me                          | 2.0         |       |
-| List own offers                     | L    | GET       | /me/offers                   | 2.0         |       |
-| List own requests                   | L    | GET       | /me/requests                 | 2.0         |       |
+| Functionality                                                   | Role | HTTP verb | Endpoint                     | API version | Done? |
+| --------------------------------------------------------------- | ---- | --------- | ---------------------------- | ----------- | ----- |
+| [Login](#login)                                                 | N    | POST      | /auth                        | MVP         | ✔    |
+| [Renew auth token](#renew-auth-token)                           | L    | GET       | /auth                        | MVP         | ✔    |
+| [Logout](#logout)                                               | L    | DELETE    | /auth                        | MVP         | ✔    |
+| [Create user](#create-user-registration)                        | U    | POST      | /users                       | MVP         | ✔    |
+| [List users](#list-all-users)                                   | A    | GET       | /users                       | 3.0         |       |
+| [Get user `userID`](#get-user-with-id-userid)                   | A    | GET       | /users/:userID               | 3.0         |       |
+| [Update user `userID`](#update-user-with-id-userid)             | A    | PUT       | /users/:userID               | 3.0         |       |
+| [Create offer](#create-offer)                                   | L    | POST      | /offers                      | MVP         | ✔    |
+| [Get offer `offerID`](#get-offer-with-offerid)                  | A    | GET       | /offers/:offerID             | 2.0         | ✔    |
+| [Update offer `offerID`](#update-offer-with-offerid)            | C    | PUT       | /offers/:offerID             | 3.0         |       |
+| [Create request](#create-request)                               | L    | POST      | /requests                    | MVP         | ✔    |
+| Get request `requestID`                                         | A    | GET       | /requests/:requestID         | 2.0         | ✔    |
+| Update request `requestID`                                      | C    | PUT       | /requests/:requestID         | 3.0         |       |
+| Create matching                                                 | A    | POST      | /matchings                   | MVP         | ✔    |
+| Get matching `matchingID`                                       | C    | GET       | /matchings/:matchingID       | MVP         | ✔    |
+| Update matching `matchingID`                                    | A    | PUT       | /matchings/:matchingID       | 3.0         |       |
+| Create a region                                                 | L    | POST      | /regions                     | 2.0         |       |
+| List regions                                                    | U    | GET       | /regions                     | 2.0         | ✔    |
+| Get region `regionID`                                           | U    | GET       | /regions/:regionID           | 2.0         |       |
+| Update region `regionID`                                        | A    | PUT       | /regions/:regionID           | 2.0         |       |
+| List offers in region  `regionID`                               | A    | GET       | /regions/:regionID/offers    | 2.0         |       |
+| List requests in region `regionID`                              | A    | GET       | /regions/:regionID/requests  | 2.0         |       |
+| List matchings in region `regionID`                             | A    | GET       | /regions/:regionID/matchings | 2.0         |       |
+| [Own profile](#own-profile)                                     | L    | GET       | /me                          | 2.0         |       |
+| [Update own profile](#update-own-profile)                       | L    | PUT       | /me                          | 2.0         |       |
+| [List own offers](#list-own-offers)                             | L    | GET       | /me/offers                   | 2.0         |       |
+| [List own requests](#list-own-requests)                         | L    | GET       | /me/requests                 | 2.0         |       |
 
 
 ### What is inside a JWT?
@@ -129,40 +140,6 @@ Please note that further identification fields may be added in the future.
 
 
 ### Detailed request information
-
-
-#### Create user (registration)
-
-**Request:**
-
-```
-POST /users
-
-{
-    "Name": required, string
-    "PreferredName": optional, string
-    "Mail": required, string/email
-    "Password": required, string
-}
-```
-
-**Response:**
-
-```
-201 Created
-{
-	"ID": UUID v4
-	"Mail": string
-	"Name": string
-	"Groups": [
-				{
-					"ID": UUID v4
-				},
-				...
-			  ]
-}
-
-```
 
 
 #### Login
@@ -200,6 +177,8 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
+Success
+
 ```
 200 OK
 
@@ -208,7 +187,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 }
 ```
 
-Or - if an expired token was presented:
+Failure
 
 ```
 401 Unauthorized
@@ -236,51 +215,45 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 
-#### Own profile
+#### Create user (registration)
 
 **Request:**
 
 ```
-GET /me
-Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+POST /users
+
+{
+    "Name": required, string
+    "PreferredName": optional, string
+    "Mail": required, string/email
+    "Password": required, string
+}
 ```
 
 **Response:**
 
-Success
-
 ```
+201 Created
+
 {
-	"Groups": [
-				{
-					"Permissions": [
-									{
-										"AccessRight": "user"
-									}
-									], ...
--
-				}, ..
-				]
+	"ID": UUID v4
 	"Mail": string
-	"MailVerified": bool
 	"Name": string
-	"PreferredName": string
+	"Groups": [
+		{
+			"ID": UUID v4
+		},
+		...
+	]
 }
-```
-
-Fail
 
 ```
-401 - Unauthorized
-```
 
 
-#### Update own profile
-
-**Request:**
+#### List all users
 
 ```
-PUT /me
+GET /users
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
@@ -295,6 +268,277 @@ Success
 ```
 
 Fail
+
+```
+```
+
+
+#### Get user with ID `userID`
+
+```
+GET /users/:userID
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+}
+```
+
+**Response:**
+
+Success
+
+```
+```
+
+Fail
+
+```
+```
+
+
+#### Update user with ID `userID`
+
+```
+PUT /users/:userID
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+}
+```
+
+**Response:**
+
+Success
+
+```
+```
+
+Fail
+
+```
+```
+
+
+#### Create offer
+
+**Request:**
+
+```
+POST /offers
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+	"Name": required, string,
+	"Tags": optional, string array,
+	"ValidityPeriod": required, RFC3339 date,
+	"Location": {
+		"lng": float64,
+		"lat": float64
+	}
+}
+```
+
+***Example:***
+
+```
+POST /offers
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+	"Name": "hugs",
+	"Tags": ["tag", "another tag"],
+	"ValidityPeriod": "2017-11-01T22:08:41+00:00",
+	"Location": {
+		"lng": 12.3,
+		"lat": 0.0
+	}
+}
+```
+
+**Response:**
+
+Success:
+
+```
+201 Created
+
+{
+	"ID": UUID v4,
+	"Name": string
+	"Location": {
+		"lng": float64,
+		"lat": float64
+	}
+	Tags: [
+		{
+			"Name": string
+		},
+		...
+	]
+	"ValidityPeriod": RF3339 Date,
+}
+```
+
+Fail:
+
+```
+400 Bad Request
+
+{
+	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
+```
+
+***Example:***
+
+```
+400 Bad Request
+
+{
+	"Location": "User can't post for this location. (But don't expect this exact message)"
+}
+```
+
+
+#### Get offer with `offerID`
+
+**Request:**
+
+```
+GET /offers/:offerID
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success:
+
+```
+{
+	"ID": UUID v4,
+	"Location": {
+		"lat": float64,
+		"lng": float64
+	},
+	"Name": string,
+	"Tags": [
+		{
+			"Name": string
+		},
+		...
+	],
+	"User": {
+		"ID": UUID v4,
+		"Mail": string,
+		"Name": string
+	}
+}
+```
+
+Fail:
+
+```
+```
+
+
+### Update offer with `offerID`
+
+**Request:**
+
+```
+PUT /offers/:offerID
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+}
+```
+
+**Response:**
+
+Success:
+
+```
+```
+
+Fail:
+
+```
+```
+
+
+#### Create request
+
+**Request:**
+
+```
+POST /requests
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+	"Name": required, string,
+	"Tags": optional, string array,
+	"ValidityPeriod": required, RFC3339 date,
+	"Location": {
+		"lng": float64,
+		"lat": float64
+	}
+}
+```
+
+**Response:**
+
+Success:
+
+```
+201 Created
+
+{
+	"ID": UUID v4,
+	"Name": string,
+	"Location": {
+		"lng": float64,
+		"lat": float64
+	},
+	Tags: [
+		{
+			"Name": string
+		},
+		...
+	],
+	"ValidityPeriod": RFC3339 Date,
+	"Matched": bool,
+	"Expired": bool
+},
+```
+
+Fail:
+
+```
+400 Bad Request
+
+{
+	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
+```
+
+
+#### Get request with `requestID`
+
+```
+GET /requests/:requestID
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success:
+
+```
+{
+}
+```
+
+Fail:
 
 ```
 ```
@@ -334,7 +578,7 @@ Success
 			"Mail": string,
 			"Name": string
 		},
-		"ValidityPeriod": ARF3339 Date,
+		"ValidityPeriod": RFC3339 Date,
 		"Matched": bool,
 		"Expired": bool
 	}, 
@@ -350,47 +594,6 @@ Fail
 {
 	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
-```
-
-
-#### List own offers
-
-**Request:**
-
-```
-GET /me/offers
-Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
-```
-
-**Response:**
-
-Success
-
-```
-[
-	{
-		"ID": UUID v4,
-		"Name": string
-		"Location": {
-			"lng": float64,
-			"lat": float64
-		}
-		Tags: [
-				{
-					"Name": string
-				}, ...
-		]
-		"ValidityPeriod": ARF3339 Date,
-		"Matched": bool,
-		"Expired": bool
-	}, 
-	...
-]
-```
-
-Fail
-
-```
 ```
 
 
@@ -428,7 +631,7 @@ Success
 			"Mail": string,
 			"Name": string
 		},
-		"ValidityPeriod": ARF3339 Date,
+		"ValidityPeriod": RFC3339 Date,
 		"Matched": bool,
 		"Expired": bool
 	}, 
@@ -440,230 +643,6 @@ Fail
 
 ```
 401 Unauthorized
-```
-
-
-#### List own requests
-
-**Request:**
-
-```
-GET /me/requests
-Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
-```
-
-**Response:**
-
-Success
-
-```
-[
-	{
-		"ID": UUID v4,
-		"Name": string
-		"Location": {
-			"lng": float64,
-			"lat": float64
-		}
-		Tags: [
-				{
-					"Name": string
-				}, ...
-		]
-		"ValidityPeriod": ARF3339 Date,
-		"Matched": bool,
-		"Expired": bool
-	}, 
-	...
-]
-```
-
-Fail
-
-```
-401 Unauthorized
-```
-
-#### Create offer
-
-**Request:**
-
-```
-POST /offers
-Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
-
-{
-	"Name": required, string,
-	"Tags": optional, string array,
-	"ValidityPeriod": required, RFC3339 date,
-	"Location": {
-		"lng": float64,
-		"lat": float64
-	}
-}
-```
-
-***Example:***
-
-```
-POST /offers
-Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
-
-{
-	"Name": "hugs",
-	"Tags": ["tag", "another tag"],
-	"ValidityPeriod": "2017-11-01T22:08:41+00:00",
-	"Location": {
-		"lng": 12.3
-		"lat": 0.0
-	}
-}
-```
-
-**Response:**
-
-
-```
-201 Created
-
-{
-	"ID": UUID v4,
-	"Name": string
-	"Location": {
-		"lng": float64,
-		"lat": float64
-	}
-	Tags: [
-			{
-				"Name": string
-			}, ...
-	]
-	"ValidityPeriod": ARF3339 Date,
-}
-```
-
-Fail:
-
-```
-400 Bad Request
-
-{
-	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
-}
-```
-
-***Example:***
-
-```
-400 Bad Request
-
-{
-	"Location": "User can't post for this location. (But don't expect this exact message)"
-}
-```
-
-
-#### Create request
-
-**Request:**
-
-```
-POST /requests
-Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
-
-{
-	"Name": required, string,
-	"Tags": optional, string array,
-	"ValidityPeriod": required, RFC3339 date,
-	"Location": {
-		"lng": float64,
-		"lat": float64
-	}
-}
-```
-
-**Response:**
-
-
-```
-201 Created
-
-{
-	"ID": UUID v4,
-	"Name": string
-	"Location": {
-		"lng": float64,
-		"lat": float64
-	}
-	Tags: [
-			{
-				"Name": string
-			}, ...
-	]
-	"ValidityPeriod": ARF3339 Date,
-	"Matched": bool,
-	"Expired": bool
-},
-```
-
-Fail:
-
-```
-400 Bad Request
-
-{
-	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
-}
-```
-
-
-#### Update own offer x
-
-**Request:**
-
-```
-PUT /me/offers/x
-Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
-
-{
-}
-```
-
-**Response:**
-
-Success
-
-```
-```
-
-Fail
-
-```
-```
-
-
-#### Update own request x
-
-**Request:**
-
-```
-PUT /me/requests/x
-Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
-
-{
-}
-```
-
-**Response:**
-
-Success
-
-```
-```
-
-Fail
-
-```
 ```
 
 
@@ -740,12 +719,12 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success
+Success:
 
 ```
 ```
 
-Fail
+Fail:
 
 ```
 ```
@@ -796,12 +775,12 @@ Fail:
 ```
 
 
-### Create an area
+### Create region
 
 **Request:**
 
 ```
-POST /areas
+POST /regions
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
@@ -810,43 +789,42 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success
+Success:
 
 ```
 ```
 
-Fail
+Fail:
 
 ```
 ```
 
 
-### List areas
+### List regions
 
 **Request:**
 
 ```
-GET /areas
-Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+GET /regions
 ```
 
 **Response:**
 
-Success
+Success:
 
 ```
 ```
 
-Fail
+Fail:
 
 ```
 ```
 
 
-### Update area x
+### Update region with `regionID`
 
 ```
-PUT /areas/x
+PUT /regions/x
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
@@ -855,12 +833,162 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success
+Success:
 
 ```
 ```
 
-Fail
+Fail:
 
 ```
+```
+
+
+#### Own profile
+
+**Request:**
+
+```
+GET /me
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success:
+
+```
+{
+	"Name": string,
+	"PreferredName": string,
+	"Mail": string,
+	"MailVerified": bool,
+	"Groups": [
+		{
+			"Permissions": [
+				{
+					"AccessRight": "user"
+				}
+			],
+			...
+		},
+		...
+	]
+}
+```
+
+Fail:
+
+```
+401 - Unauthorized
+```
+
+
+#### Update own profile
+
+**Request:**
+
+```
+PUT /me
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+}
+```
+
+**Response:**
+
+Success:
+
+```
+```
+
+Fail:
+
+```
+```
+
+
+#### List own offers
+
+**Request:**
+
+```
+GET /me/offers
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success:
+
+```
+[
+	{
+		"ID": UUID v4,
+		"Name": string,
+		"Location": {
+			"lng": float64,
+			"lat": float64
+		},
+		Tags: [
+			{
+				"Name": string
+			},
+			...
+		],
+		"ValidityPeriod": RFC3339 Date,
+		"Matched": bool,
+		"Expired": bool
+	}, 
+	...
+]
+```
+
+Fail:
+
+```
+```
+
+
+#### List own requests
+
+**Request:**
+
+```
+GET /me/requests
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success:
+
+```
+[
+	{
+		"ID": UUID v4,
+		"Name": string,
+		"Location": {
+			"lng": float64,
+			"lat": float64
+		},
+		Tags: [
+				{
+					"Name": string
+				},
+				...
+		],
+		"ValidityPeriod": RFC3339 Date,
+		"Matched": bool,
+		"Expired": bool
+	},
+	...
+]
+```
+
+Fail:
+
+```
+401 Unauthorized
 ```
