@@ -20,10 +20,14 @@ type CreateLocation struct {
 	Lat float64 `json:"lat" conform:"trim"`
 }
 
+type Boundaries struct {
+	Points []CreateLocation `validate:"dive,required"`
+}
+
 type CreateRegionPayload struct {
-	Name        string           `conform:"trim" validate:"required"`
-	Description string           `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Boundaries  []CreateLocation `validate:"dive,required"`
+	Name        string     `conform:"trim" validate:"required"`
+	Description string     `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Boundaries  Boundaries `conform:"trim" validate:"required"`
 }
 
 // Functions
@@ -84,9 +88,9 @@ func (app *App) CreateRegion(c *gin.Context) {
 	Region.Name = Payload.Name
 	Region.Description = Payload.Description
 
-	Points := make([]gormGIS.GeoPoint, len(Payload.Boundaries))
+	Points := make([]gormGIS.GeoPoint, len(Payload.Boundaries.Points))
 
-	for i, point := range Payload.Boundaries {
+	for i, point := range Payload.Boundaries.Points {
 		Points[i] = gormGIS.GeoPoint{Lng: point.Lng, Lat: point.Lat}
 	}
 

@@ -724,13 +724,15 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 {
 	"Name": "Circle",
 	"Description": "Very roundy",
-	"Boundaries": [
-		{
-			"lat": 52.521652565946304,
-			"lng":13.414478302001953
-		},
-		...
-	]
+	"Boundaries": {
+		"Points": [
+			{
+				"lat": 52.521652565946304,
+				"lng":13.414478302001953
+			},
+			...
+			]
+		}
 }
 ```
 
