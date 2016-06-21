@@ -238,10 +238,15 @@ POST /users
 {
 	"ID": UUID v4
 	"Mail": string
+	"MailVerified": bool
 	"Name": string
+	"PreferredName": string
 	"Groups": [
 		{
-			"ID": UUID v4
+			"ID": UUID v4,
+			Permissions": [
+				{"AccessRight": string}
+			]
 		},
 		...
 	]
@@ -352,6 +357,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 		"lng": 12.3,
 		"lat": 0.0
 	}
+
 }
 ```
 
@@ -364,18 +370,25 @@ Success:
 
 {
 	"ID": UUID v4,
-	"Name": string
+	"Name": string,
 	"Location": {
 		"lng": float64,
 		"lat": float64
-	}
+	},
 	Tags: [
 		{
 			"Name": string
 		},
 		...
-	]
+	],
 	"ValidityPeriod": RF3339 Date,
+	"Expired": bool,
+	"Matched": bool,
+	"User": {
+		"ID": UUID v4,
+		"Mail": string,
+		"Name": string
+	}
 }
 ```
 
@@ -416,17 +429,20 @@ Success:
 ```
 {
 	"ID": UUID v4,
-	"Location": {
-		"lat": float64,
-		"lng": float64
-	},
 	"Name": string,
-	"Tags": [
+	"Location": {
+		"lng": float64,
+		"lat": float64
+	},
+	Tags: [
 		{
 			"Name": string
 		},
 		...
 	],
+	"ValidityPeriod": RF3339 Date,
+	"Expired": bool,
+	"Matched": bool,
 	"User": {
 		"ID": UUID v4,
 		"Mail": string,
@@ -505,10 +521,15 @@ Success:
 		},
 		...
 	],
-	"ValidityPeriod": RFC3339 Date,
+	"ValidityPeriod": RF3339 Date,
+	"Expired": bool,
 	"Matched": bool,
-	"Expired": bool
-},
+	"User": {
+		"ID": UUID v4,
+		"Mail": string,
+		"Name": string
+	}
+}
 ```
 
 Fail:
@@ -537,6 +558,26 @@ Success:
 
 ```
 {
+	"ID": UUID v4,
+	"Name": string,
+	"Location": {
+		"lng": float64,
+		"lat": float64
+	},
+	Tags: [
+		{
+			"Name": string
+		},
+		...
+	],
+	"ValidityPeriod": RF3339 Date,
+	"Expired": bool,
+	"Matched": bool,
+	"User": {
+		"ID": UUID v4,
+		"Mail": string,
+		"Name": string
+	}
 }
 ```
 
@@ -596,7 +637,8 @@ Success:
 {
 	"ID": UUID v4,
 	"OfferId": UUID v4,
-	"RequestId": UUID v4
+	"RequestId": UUID v4,
+	"RegionId" UUID v4
 }
 ```
 
@@ -630,7 +672,8 @@ Success:
 {
 	"ID": UUID v4,
 	"OfferId": UUID v4,
-	"RequestId": UUID v4
+	"RequestId": UUID v4,
+	"RegionId" UUID v4
 }
 ```
 
@@ -681,7 +724,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 {
 	"Name": "Circle",
 	"Description": "Very roundy",
-	"Region": [
+	"Boundaries": [
 		{
 			"lat": 52.521652565946304,
 			"lng":13.414478302001953
@@ -888,11 +931,6 @@ Success:
 				},
 				...
 		],
-		User: {
-			"ID": UUID v4,
-			"Mail": string,
-			"Name": string
-		},
 		"ValidityPeriod": RFC3339 Date,
 		"Matched": bool,
 		"Expired": bool
@@ -925,26 +963,10 @@ Success:
 
 [
 	{
-		"ID": UUID v4,
-		"Name": string,
-		"Location": {
-			"lng": float64,
-			"lat": float64
-		},
-		Tags: [
-				{
-					"Name": string
-				},
-				...
-		],
-		User: {
-			"ID": UUID v4,
-			"Mail": string,
-			"Name": string
-		},
-		"ValidityPeriod": RFC3339 Date,
-		"Matched": bool,
-		"Expired": bool
+		"ID": UUID v4
+		"OfferId": UUID v4
+		"RegionId": UUID v4
+		"RequestId": UUID v4
 	}, 
 	...
 ]
@@ -977,9 +999,10 @@ Success:
 	"MailVerified": bool,
 	"Groups": [
 		{
+			"ID": UUID v4
 			"Permissions": [
 				{
-					"AccessRight": "user"
+					"AccessRight": string
 				}
 			],
 			...
