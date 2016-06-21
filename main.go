@@ -26,7 +26,7 @@ type App struct {
 
 // Main
 
-func main() {
+func InitApp() *App {
 
 	// Parse command line flags and build application config.
 	app := InitAndConfig()
@@ -75,6 +75,13 @@ func main() {
 	app.Router.PUT("/me", app.UpdateUser)
 	app.Router.GET("/me/offers", app.ListUserOffers)
 	app.Router.GET("/me/requests", app.ListUserRequests)
+
+	return app
+}
+
+
+func main() {
+	app := InitApp()
 
 	// Run our application.
 	app.Router.Run(fmt.Sprintf("%s:%s", app.IP, app.Port))
