@@ -26,25 +26,6 @@ type CreateOfferPayload struct {
 	ValidityPeriod string   `conform:"trim" validate:"required"`
 }
 
-// JSON response maps
-
-var fieldsGetOffer = map[string]interface{}{
-	"ID":   "ID",
-	"Name": "Name",
-	"Location": map[string]interface{}{
-		"Lng": "lng",
-		"Lat": "lat",
-	},
-	"Tags": map[string]interface{}{
-		"Name": "Name",
-	},
-	"User": map[string]interface{}{
-		"ID":   "ID",
-		"Name": "Name",
-		"Mail": "Mail",
-	},
-}
-
 // Functions
 
 func (app *App) CreateOffer(c *gin.Context) {
@@ -173,15 +154,10 @@ func (app *App) CreateOffer(c *gin.Context) {
 
 	// Save offer to database.
 	app.DB.Create(&Offer)
+	model := CopyNestedModel(Offer, fieldsOfferU)
 
 	// On success: return ID of newly created offer.
-	c.JSON(http.StatusCreated, gin.H{
-		"ID":             Offer.ID,
-		"Name":           Offer.Name,
-		"Location":       Offer.Location,
-		"Tags":           Offer.Tags,
-		"ValidityPeriod": Offer.ValidityPeriod,
-	})
+	c.JSON(http.StatusCreated, model)
 }
 
 func (app *App) GetOffer(c *gin.Context) {
@@ -216,7 +192,7 @@ func (app *App) GetOffer(c *gin.Context) {
 	}
 
 	// He or she can have it, if he or she wants it so badly!
-	model := CopyNestedModel(offer, fieldsGetOffer)
+	model := CopyNestedModel(offer, fieldsOfferU)
 
 	c.JSON(http.StatusOK, model)
 }

@@ -23,58 +23,7 @@ type CreateLocation struct {
 type CreateRegionPayload struct {
 	Name        string           `conform:"trim" validate:"required"`
 	Description string           `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Region      []CreateLocation `validate:"dive,required"`
-}
-
-// JSON response maps
-
-var fieldsGetOffersForRegion = map[string]interface{}{
-	"ID":   "ID",
-	"Name": "Name",
-	"Location": map[string]interface{}{
-		"Lng": "lng",
-		"Lat": "lat",
-	},
-	"Tags": map[string]interface{}{
-		"Name": "Name",
-	},
-	"ValidityPeriod": "ValidityPeriod",
-	"Matched":        "Matched",
-	"Expired":        "Expired",
-}
-
-var fieldsGetRequestsForRegion = map[string]interface{}{
-	"ID":   "ID",
-	"Name": "Name",
-	"Location": map[string]interface{}{
-		"Lng": "lng",
-		"Lat": "lat",
-	},
-	"Tags": map[string]interface{}{
-		"Name": "Name",
-	},
-	"ValidityPeriod": "ValidityPeriod",
-	"Matched":        "Matched",
-	"Expired":        "Expired",
-}
-
-var fieldsRegion = map[string]interface{}{
-	"ID":   "ID",
-	"Name": "Name",
-	"Boundaries": map[string]interface{}{
-		"Points": map[string]interface{}{
-			"Lng": "lng",
-			"Lat": "lat",
-		},
-	},
-	"Description": "Description",
-}
-
-var fieldsMatching = map[string]interface{}{
-	"ID":        "ID",
-	"RegionId":  "RegionId",
-	"OfferId":   "OfferId",
-	"RequestId": "RequestId",
+	Boundaries  []CreateLocation `validate:"dive,required"`
 }
 
 // Functions
@@ -135,9 +84,9 @@ func (app *App) CreateRegion(c *gin.Context) {
 	Region.Name = Payload.Name
 	Region.Description = Payload.Description
 
-	Points := make([]gormGIS.GeoPoint, len(Payload.Region))
+	Points := make([]gormGIS.GeoPoint, len(Payload.Boundaries))
 
-	for i, point := range Payload.Region {
+	for i, point := range Payload.Boundaries {
 		Points[i] = gormGIS.GeoPoint{Lng: point.Lng, Lat: point.Lat}
 	}
 
@@ -226,7 +175,7 @@ func (app *App) GetOffersForRegion(c *gin.Context) {
 	model := make([]map[string]interface{}, len(Region.Offers))
 
 	for i, offer := range Region.Offers {
-		model[i] = CopyNestedModel(offer, fieldsGetOffersForRegion)
+		model[i] = CopyNestedModel(offer, fieldsOffer)
 	}
 
 	// Send back results to client.
@@ -267,7 +216,7 @@ func (app *App) GetRequestsForRegion(c *gin.Context) {
 	model := make([]map[string]interface{}, len(Region.Requests))
 
 	for i, offer := range Region.Requests {
-		model[i] = CopyNestedModel(offer, fieldsGetRequestsForRegion)
+		model[i] = CopyNestedModel(offer, fieldsRequest)
 	}
 
 	// Send back results to client.

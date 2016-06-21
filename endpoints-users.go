@@ -23,17 +23,6 @@ type CreateUserPayload struct {
 	Password      string `validate:"required,min=16,containsany=0123456789,containsany=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 }
 
-// JSON response maps
-
-var fieldsCreateUser = map[string]interface{}{
-	"ID":   "ID",
-	"Name": "Name",
-	"Mail": "Mail",
-	"Groups": map[string]interface{}{
-		"ID": "ID",
-	},
-}
-
 // Functions
 
 func (app *App) CreateUser(c *gin.Context) {
@@ -121,7 +110,7 @@ func (app *App) CreateUser(c *gin.Context) {
 	// Create user object in database.
 	app.DB.Create(&User)
 
-	model := CopyNestedModel(User, fieldsCreateUser)
+	model := CopyNestedModel(User, fieldsUser)
 
 	c.JSON(http.StatusOK, model)
 }

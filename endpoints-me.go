@@ -11,50 +11,6 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-// JSON response maps
-
-var fieldsGetUser = map[string]interface{}{
-	"Name":          "Name",
-	"PreferredName": "PreferredName",
-	"Mail":          "Mail",
-	"MailVerified":  "MailVerified",
-	"Groups": map[string]interface{}{
-		"Permissions": map[string]interface{}{
-			"AccessRight": "AccessRight",
-		},
-	},
-}
-
-var fieldsListUserOffers = map[string]interface{}{
-	"ID":   "ID",
-	"Name": "Name",
-	"Location": map[string]interface{}{
-		"Lng": "lng",
-		"Lat": "lat",
-	},
-	"Tags": map[string]interface{}{
-		"Name": "Name",
-	},
-	"ValidityPeriod": "ValidityPeriod",
-	"Matched":        "Matched",
-	"Expired":        "Expired",
-}
-
-var fieldsListUserRequests = map[string]interface{}{
-	"ID":   "ID",
-	"Name": "Name",
-	"Location": map[string]interface{}{
-		"Lng": "lng",
-		"Lat": "lat",
-	},
-	"Tags": map[string]interface{}{
-		"Name": "Name",
-	},
-	"ValidityPeriod": "ValidityPeriod",
-	"Matched":        "Matched",
-	"Expired":        "Expired",
-}
-
 // Functions
 
 func (app *App) GetUser(c *gin.Context) {
@@ -71,7 +27,7 @@ func (app *App) GetUser(c *gin.Context) {
 	}
 
 	// Marshal only necessary fields.
-	response := CopyNestedModel(User, fieldsGetUser)
+	response := CopyNestedModel(User, fieldsUser)
 
 	c.JSON(http.StatusOK, response)
 }
@@ -141,7 +97,7 @@ func (app *App) ListUserOffers(c *gin.Context) {
 		if o.ValidityPeriod.After(time.Now()) {
 
 			// 3) Only return what's needed
-			model := CopyNestedModel(o, fieldsListUserOffers)
+			model := CopyNestedModel(o, fieldsOffer)
 			response[i] = model
 		}
 	}
@@ -173,7 +129,7 @@ func (app *App) ListUserRequests(c *gin.Context) {
 		if r.ValidityPeriod.After(time.Now()) {
 
 			// 3) Only return what's needed
-			model := CopyNestedModel(r, fieldsListUserRequests)
+			model := CopyNestedModel(r, fieldsRequest)
 			response[i] = model
 		}
 	}

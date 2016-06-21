@@ -26,28 +26,6 @@ type CreateRequestPayload struct {
 	ValidityPeriod string   `conform:"trim" validate:"required"`
 }
 
-// JSON response maps
-
-var fieldsGetRequest = map[string]interface{}{
-	"ID":   "ID",
-	"Name": "Name",
-	"Location": map[string]interface{}{
-		"Lng": "lng",
-		"Lat": "lat",
-	},
-	"Tags": map[string]interface{}{
-		"Name": "Name",
-	},
-	"ValidityPeriod": "ValidityPeriod",
-	"Matched":        "Matched",
-	"Expired":        "Expired",
-	"User": map[string]interface{}{
-		"ID":   "ID",
-		"Name": "Name",
-		"Mail": "Mail",
-	},
-}
-
 // Functions
 
 func (app *App) CreateRequest(c *gin.Context) {
@@ -178,13 +156,8 @@ func (app *App) CreateRequest(c *gin.Context) {
 	app.DB.Create(&Request)
 
 	// On success: return ID of newly created request.
-	c.JSON(http.StatusCreated, gin.H{
-		"ID":             Request.ID,
-		"Name":           Request.Name,
-		"Location":       Request.Location,
-		"Tags":           Request.Tags,
-		"ValidityPeriod": Request.ValidityPeriod,
-	})
+	model := CopyNestedModel(Request, fieldsRequestU)
+	c.JSON(http.StatusCreated, model)
 }
 
 func (app *App) GetRequest(c *gin.Context) {
@@ -219,7 +192,7 @@ func (app *App) GetRequest(c *gin.Context) {
 	}
 
 	// He or she can have it, if he or she wants it so badly! :)
-	model := CopyNestedModel(request, fieldsGetRequest)
+	model := CopyNestedModel(request, fieldsRequestU)
 
 	c.JSON(http.StatusOK, model)
 }
