@@ -27,7 +27,7 @@ func (app *App) GetUser(c *gin.Context) {
 	}
 
 	// Marshal only necessary fields.
-	response := CopyNestedModel(User, fieldsUser)
+	response := CopyNestedModel(*User, fieldsUser)
 
 	c.JSON(http.StatusOK, response)
 }
