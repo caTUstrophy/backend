@@ -226,7 +226,28 @@ POST /users
     "Name": required, string
     "PreferredName": optional, string
     "Mail": required, string/email
+    "PhoneNumbers": required, array of strings
     "Password": required, string
+}
+```
+
+***Example:***
+
+Note that `PhoneNumbers` can contain no, one or multiple phone numbers in string representation, but cannot be missing.
+
+```
+POST /users
+
+{
+    "Name": "Alexandra Maria Namia",
+    "PreferredName": "alex",
+    "Mail": "alexandra.m.namia@example.com"
+    "PhoneNumbers": [
+    	"012012312373",
+    	"07791184228843",
+    	"+9999230203920"
+    ],
+    "Password": "WhyNotSafe1337Worlds?"
 }
 ```
 
@@ -245,13 +266,14 @@ POST /users
 		{
 			"ID": UUID v4,
 			Permissions": [
-				{"AccessRight": string}
+				{
+					"AccessRight": string
+				}
 			]
 		},
 		...
 	]
 }
-
 ```
 
 

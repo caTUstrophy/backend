@@ -26,7 +26,6 @@ func init() {
 
 	// initialize and configure server
 	app = InitApp()
-
 }
 
 // if TestMain exists no Test functions will be called
@@ -93,7 +92,6 @@ func TestAdminLogin(t *testing.T) {
 
 func TestWhatevs(t *testing.T) {
 	fmt.Println("new test with token:", tokenUserJery)
-
 }
 
 type PromoteAdminPayload struct {

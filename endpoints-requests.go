@@ -155,8 +155,8 @@ func (app *App) CreateRequest(c *gin.Context) {
 	// Save request to database.
 	app.DB.Create(&Request)
 
-	// On success: return ID of newly created request.
 	model := CopyNestedModel(Request, fieldsRequestU)
+
 	c.JSON(http.StatusCreated, model)
 }
 

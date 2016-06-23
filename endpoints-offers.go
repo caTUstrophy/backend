@@ -154,9 +154,9 @@ func (app *App) CreateOffer(c *gin.Context) {
 
 	// Save offer to database.
 	app.DB.Create(&Offer)
+
 	model := CopyNestedModel(Offer, fieldsOfferU)
 
-	// On success: return ID of newly created offer.
 	c.JSON(http.StatusCreated, model)
 }
 
