@@ -95,6 +95,7 @@ var fieldsUser = map[string]interface{}{
 	"PreferredName": "PreferredName",
 	"Mail":          "Mail",
 	"MailVerified":  "MailVerified",
+	"PhoneNumbers":  "PhoneNumbers",
 	"Groups": map[string]interface{}{
 		"ID": "ID",
 		"Permissions": map[string]interface{}{

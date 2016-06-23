@@ -17,10 +17,11 @@ import (
 // Structs
 
 type CreateUserPayload struct {
-	Name          string `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	PreferredName string `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Mail          string `conform:"trim,email" validate:"required,email"`
-	Password      string `validate:"required,min=16,containsany=0123456789,containsany=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Name          string   `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	PreferredName string   `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Mail          string   `conform:"trim,email" validate:"required,email"`
+	PhoneNumbers  []string `conform:"trim" validate:"required"`
+	Password      string   `validate:"required,min=16,containsany=0123456789,containsany=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 }
 
 // Functions
@@ -91,6 +92,20 @@ func (app *App) CreateUser(c *gin.Context) {
 	User.PreferredName = Payload.PreferredName
 	User.Mail = Payload.Mail
 	User.MailVerified = false
+
+	jsonPhoneNumbers := new(db.PhoneNumbers)
+	err = jsonPhoneNumbers.Scan(Payload.PhoneNumbers)
+	if err != nil {
+
+		// Signal client that the supplied phone numbers contained some kind of error.
+		c.JSON(http.StatusBadRequest, gin.H{
+			"PhoneNumbers": "Are not valid",
+		})
+
+		return
+	}
+
+	User.PhoneNumbers = *jsonPhoneNumbers
 
 	// Password hash generation.
 	hash, err := bcrypt.GenerateFromPassword([]byte(Payload.Password), app.HashCost)

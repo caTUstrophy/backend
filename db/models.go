@@ -28,8 +28,9 @@ type User struct {
 	PreferredName string
 	Mail          string `gorm:"index;not null;unique"`
 	MailVerified  bool
-	PasswordHash  string  `gorm:"unique"`
-	Groups        []Group `gorm:"many2many:user_groups"`
+	PhoneNumbers  PhoneNumbers `gorm:"not null" sql:"type:jsonb"`
+	PasswordHash  string       `gorm:"unique"`
+	Groups        []Group      `gorm:"many2many:user_groups"`
 	Enabled       bool
 }
 

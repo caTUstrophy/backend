@@ -241,7 +241,7 @@ POST /users
 {
     "Name": "Alexandra Maria Namia",
     "PreferredName": "alex",
-    "Mail": "alexandra.m.namia@example.com"
+    "Mail": "alexandra.m.namia@example.com",
     "PhoneNumbers": [
     	"012012312373",
     	"07791184228843",
@@ -262,6 +262,7 @@ POST /users
 	"MailVerified": bool
 	"Name": string
 	"PreferredName": string
+	"PhoneNumbers": array of strings
 	"Groups": [
 		{
 			"ID": UUID v4,

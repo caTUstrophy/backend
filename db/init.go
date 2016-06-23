@@ -144,6 +144,13 @@ func AddDefaultData(db *gorm.DB) {
 
 	Tags := []Tag{TagFood, TagWater, TagVehicle, TagTool, TagInformation}
 
+	// Two default phone numbers.
+	PhoneNumbers := new(PhoneNumbers)
+	err := PhoneNumbers.Scan([]string{"012012312367", "+49111222333"})
+	if err != nil {
+		log.Fatalf("[AddDefaultData] JSON marshaling of default phone numbers went wrong: %s\n", err)
+	}
+
 	// Create default admin user ('admin@example.org', 'CaTUstrophyAdmin123$').
 	// TODO: Replace this with an interactive dialog, when starting
 	//       the backend for the first time.
@@ -152,6 +159,7 @@ func AddDefaultData(db *gorm.DB) {
 		Name:          "admin",
 		PreferredName: "The Boss Around Here",
 		Mail:          "admin@example.org",
+		PhoneNumbers:  *PhoneNumbers,
 		PasswordHash:  "$2a$10$SkmaOImXqNS/PSWp65p1ougtA1N.o8r5qyu8M4RPTfGSMEf2k.Q1C",
 		Groups:        []Group{GroupSuperAdmin, GroupAdmin},
 		Enabled:       true,
