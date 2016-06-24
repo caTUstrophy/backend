@@ -4,6 +4,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -19,7 +20,10 @@ func (num *PhoneNumbers) Scan(value interface{}) error {
 	jsonByteString := "[ "
 
 	// Make sure we operate on a string slice.
-	numbers := value.([]string)
+	numbers, ok := value.([]string)
+	if !ok {
+		return errors.New("Type Assertion to string array failed")
+	}
 
 	// Range over supplied numbers and append each to JSON string.
 	for _, n := range numbers {
