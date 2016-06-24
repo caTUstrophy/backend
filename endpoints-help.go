@@ -16,6 +16,10 @@ var ReplacementsJSON = map[string]interface{}{
 	"db.PhoneNumbers": "[string, ...]",
 }
 
+var ReplacementsJSONbyKey = map[string]interface{}{
+	"ID": "UUID v4",
+}
+
 // This function generates for a hard coded list of data we send in responses a documentation like we present in README
 // Sends back the generated stuff via http and also prints it to the terminal with additional Info
 // Last is used to generate text we can copy directly into README that automizes the documentation of our regulary updated API
@@ -152,12 +156,17 @@ func getJSONResponseInfo(i interface{}, fields map[string]interface{}) map[strin
 
 				if !nested {
 					// NOT nested -> save type of this field for the newKey
-					newType := fmt.Sprint(valInterface.Field(i).Type())
-					if ReplacementsJSON[newType] != nil {
-						m[newKey] = ReplacementsJSON[newType]
+					if ReplacementsJSONbyKey[newKey] != nil {
+						m[newKey] = ReplacementsJSONbyKey[newKey]
 					} else {
-						m[newKey] = newType
+						newType := fmt.Sprint(valInterface.Field(i).Type())
+						if ReplacementsJSON[newType] != nil {
+							m[newKey] = ReplacementsJSON[newType]
+						} else {
+							m[newKey] = newType
+						}
 					}
+
 				} else {
 
 					// NESTED copied via recursion

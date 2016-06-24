@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -87,6 +88,7 @@ func TestAdminLogin(t *testing.T) {
 		return
 	}
 	tokenAdmin = dat["AccessToken"].(string)
+	log.Println("Admin Token: ", tokenAdmin)
 }
 
 func TestWhatevs(t *testing.T) {
@@ -115,8 +117,8 @@ func TestPostRegionAdmin(t *testing.T) {
 
 	url := "/regions/" + regionID + "/admins"
 	resp := ResponsePOSTwithJWT(url, PromoteJery, tokenUserJery)
-	if resp.Code != 400 {
-		t.Error("Promoting User Jery as Jery gave no 400, but should: ", resp.Body.String())
+	if resp.Code != 401 {
+		t.Error("Promoting User Jery as Jery gave no 401, but should: ", resp.Body.String())
 		return
 	}
 	PromoteNonExisting := PromoteAdminPayload{"This is no valid email"}
@@ -140,6 +142,7 @@ func TestPostRegionAdmin(t *testing.T) {
 		return
 	}
 	resp = ResponsePOSTwithJWT(url, PromoteJery, tokenAdmin)
+	log.Println(resp)
 	if resp.Code != 201 && resp.Code != 200 {
 		t.Error("Promoting User Jery as Admin did not work, but should: ", resp.Body.String())
 		return
@@ -158,6 +161,7 @@ func NewRequestPOSTwithJWT(url string, body interface{}, jwt string) *http.Reque
 	bodyBytes, _ := json.Marshal(body)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
+	log.Println("Set Authentication: Bearer ", jwt)
 	req.Header.Set("Authentication", ("Bearer " + jwt))
 	return req
 }
