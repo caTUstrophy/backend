@@ -1,5 +1,25 @@
 package main
 
+var fieldsUser = map[string]interface{}{
+	"ID":            "ID",
+	"Name":          "Name",
+	"PreferredName": "PreferredName",
+	"Mail":          "Mail",
+	"MailVerified":  "MailVerified",
+	"PhoneNumbers":  "PhoneNumbers",
+	"Groups": map[string]interface{}{
+		"ID": "ID",
+		"Region": map[string]interface{}{
+			"ID":          "ID",
+			"Description": "Description",
+			"Name":        "Name",
+		},
+		"Permissions": map[string]interface{}{
+			"AccessRight": "AccessRight",
+		},
+	},
+}
+
 var fieldsRequestU = map[string]interface{}{
 	"ID":   "ID",
 	"Name": "Name",
@@ -87,19 +107,4 @@ var fieldsMatching = map[string]interface{}{
 	"RegionId":  "RegionId",
 	"OfferId":   "OfferId",
 	"RequestId": "RequestId",
-}
-
-var fieldsUser = map[string]interface{}{
-	"ID":            "ID",
-	"Name":          "Name",
-	"PreferredName": "PreferredName",
-	"Mail":          "Mail",
-	"MailVerified":  "MailVerified",
-	"PhoneNumbers":  "PhoneNumbers",
-	"Groups": map[string]interface{}{
-		"ID": "ID",
-		"Permissions": map[string]interface{}{
-			"AccessRight": "AccessRight",
-		},
-	},
 }

@@ -83,7 +83,8 @@ Four roles are present in this model:
 * not-logged-in user **(N)**: registered, but not authorized user
 * logged-in user **(L)**: registered and authorized user
 * logged-in and concerned user **(C)**: user is involved in e.g. a matching
-* admin **(A)**: registered, authorized and privileged user
+* admin **(A)**: registered, authorized and privileged user for a specified region
+* System admin **(S)**: registered, authorized and privileged user for the whole system. Like root
 
 The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 
@@ -112,6 +113,8 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | [List offers in region `regionID`](#list-offers-in-region-with-regionid) | A | GET | /regions/:regionID/offers    | 2.0         | ✔    |
 | [List requests in region `regionID`](#list-requests-in-region-with-regionid) | A | GET | /regions/:regionID/requests | 2.0      | ✔    |
 | [List matchings in region `regionID`](#list-matchings-in-region-with-regionid) | A | GET | /regions/:regionID/matchings | 2.0   | ✔    |
+| [Promote User to Admin for region `regionID`](#promote-user-to-admin-in-region-with-regionid) | A | POST | /regions/:regionID/admins | 3.0 |	|
+| [List admins for region `regionID`](#list-admins-in-region-with-regionid) | A | GET | /regions/:regionID/admins 	| 3.0	|	|
 | [Own profile](#own-profile)                                     | L    | GET       | /me                          | 2.0         | ✔    |
 | [Update own profile](#update-own-profile)                       | L    | PUT       | /me                          | 3.0         |       |
 | [List own offers](#list-own-offers)                             | L    | GET       | /me/offers                   | 2.0         | ✔    |
@@ -257,23 +260,29 @@ POST /users
 201 Created
 
 {
-	"ID": UUID v4
-	"Mail": string
-	"MailVerified": bool
-	"Name": string
-	"PreferredName": string
-	"PhoneNumbers": array of strings
-	"Groups": [
-		{
-			"ID": UUID v4,
-			Permissions": [
-				{
-					"AccessRight": string
-				}
-			]
-		},
-		...
-	]
+    "ID": UUID v4,
+    "Mail": string,
+    "MailVerified": bool,
+    "Name": string,
+    "PreferredName": string,
+    "PhoneNumbers": array of strings
+    "Groups": [
+        {
+            "ID": UUID v4,
+            "Description": string,
+            "Region": {
+        		"ID": UUID v4,
+        		"Description": string,
+        		"Name": string
+    		},
+            "Permissions": [
+                {
+                    "AccessRight": string
+                }
+            ]
+        },
+        ...
+    ]
 }
 ```
 
@@ -1001,6 +1010,102 @@ Fail:
 
 ```
 ```
+### Promote user to admin in region with `regionID`
+
+**Request:**
+
+```
+POST /regions/:regionID/admins
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+	"Mail": string
+}
+```
+
+**Response:**
+
+Success:
+
+```
+200 OK
+
+{
+    "ID": UUID v4,
+    "Mail": string,
+    "MailVerified": bool,
+    "Name": string,
+    "PreferredName": string,
+    "PhoneNumbers": array of strings
+    "Groups": [
+        {
+            "ID": UUID v4,
+            "Description": string,
+            "Region": {
+        		"ID": UUID v4,
+        		"Description": string,
+        		"Name": string
+    		},
+            "Permissions": [
+                {
+                    "AccessRight": string
+                }
+            ]
+        },
+        ...
+    ]
+}
+```
+
+Fail:
+
+```
+```
+
+### List admins in region with `regionID`
+
+**Request**
+
+```
+GET /regions/:regionID/admins
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success:
+
+```
+200 OK
+[
+	{
+    	"ID": UUID v4,
+    	"Mail": string,
+    	"MailVerified": bool,
+    	"Name": string,
+    	"PreferredName": string,
+    	"PhoneNumbers": array of strings
+    	"Groups": [
+    	    {
+        	    "ID": UUID v4,
+            	"Description": string,
+            	"Region": {
+        			"ID": UUID v4,
+        			"Description": string,
+        			"Name": string
+    			},
+            	"Permissions": [
+                	{
+                    	"AccessRight": string
+                	}
+            	]
+        	},
+        	...
+    	]
+	},
+	...
+]
+```
 
 
 #### Own profile
@@ -1018,22 +1123,29 @@ Success:
 
 ```
 {
-	"Name": string,
-	"PreferredName": string,
-	"Mail": string,
-	"MailVerified": bool,
-	"Groups": [
-		{
-			"ID": UUID v4
-			"Permissions": [
-				{
-					"AccessRight": string
-				}
-			],
-			...
-		},
-		...
-	]
+    "ID": UUID v4,
+    "Mail": string,
+    "MailVerified": bool,
+    "Name": string,
+    "PreferredName": string,
+    "PhoneNumbers": array of strings
+    "Groups": [
+        {
+            "ID": UUID v4,
+            "Description": string,
+            "Region": {
+        		"ID": UUID v4,
+        		"Description": string,
+        		"Name": string
+    		},
+            "Permissions": [
+                {
+                    "AccessRight": string
+                }
+            ]
+        },
+        ...
+    ]
 }
 ```
 

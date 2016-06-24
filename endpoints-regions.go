@@ -71,7 +71,7 @@ func (app *App) GetAdminsForRegion(c *gin.Context) {
 
 	// The real request
 	var RegionAdmins db.Group
-	app.DB.Preload("Location").Preload("Groups.Permissions").Find(&RegionAdmins, "location.ID = ? AND permissions.acces_right = ?", regionID, "admin")
+	app.DB.Preload("Region").Preload("Groups.Permissions").Find(&RegionAdmins, "region.ID = ? AND permissions.acces_right = ?", regionID, "admin")
 
 	model := CopyNestedModel(RegionAdmins, fieldsUser)
 	c.JSON(http.StatusOK, model)
@@ -151,7 +151,7 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 	// Everything seems fine, promote that user
 	var group db.Group
 	//var adminPermission db.Permission
-	app.DB.Preload("Location").Preload("Groups.Permissions").Find(&group, "location.ID = ? AND permissions.acces_right = ?", regionID, "admin")
+	app.DB.Preload("Region").Preload("Groups.Permissions").Find(&group, "region.ID = ? AND permissions.acces_right = ?", regionID, "admin")
 	User.Groups = append(User.Groups, group)
 	app.DB.Model(&User).Updates(db.User{Groups: User.Groups})
 
