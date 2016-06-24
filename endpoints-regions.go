@@ -157,6 +157,7 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 
 	model := CopyNestedModel(User, fieldsUser)
 	c.JSON(http.StatusOK, model)
+
 }
 
 func (app *App) CreateRegion(c *gin.Context) {
