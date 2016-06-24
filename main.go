@@ -78,6 +78,8 @@ func InitApp() *App {
 	app.Router.GET("/me/offers", app.ListUserOffers)
 	app.Router.GET("/me/requests", app.ListUserRequests)
 
+	app.Router.GET("/help", app.GetJsonResponseInfo)
+
 	return app
 }
 

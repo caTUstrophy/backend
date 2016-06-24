@@ -161,7 +161,7 @@ func (app *App) GetMatching(c *gin.Context) {
 
 	var Matching db.Matching
 
-	// Retrieve all requests from database.
+	// Retrieve the specified matching
 	app.DB.First(&Matching, "id = ?", matchingID)
 
 	// Only expose fields that are necessary.
