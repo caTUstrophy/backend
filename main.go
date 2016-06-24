@@ -70,6 +70,8 @@ func InitApp() *App {
 	app.Router.GET("/regions/:regionID/requests", app.GetRequestsForRegion)
 	app.Router.GET("/regions/:regionID/offers", app.GetOffersForRegion)
 	app.Router.GET("/regions/:regionID/matchings", app.GetMatchingsForRegion)
+	app.Router.GET("/regions/:regionID/admins", app.GetAdminsForRegion)
+	app.Router.POST("/regions/:regionID/admins", app.PromoteToRegionAdmin)
 
 	app.Router.GET("/me", app.GetUser)
 	app.Router.PUT("/me", app.UpdateUser)
@@ -78,7 +80,6 @@ func InitApp() *App {
 
 	return app
 }
-
 
 func main() {
 	app := InitApp()

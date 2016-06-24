@@ -38,10 +38,9 @@ func TestUser(t *testing.T) {
 	// create user jery
 	userJeryMail = "stupidtestthingthatsuckshard!12"
 	plCreateUserJery = CreateUserPayload{
-		"German Jery",
-		"Jery",
-		"jery@jery.com",
-		userJeryMail,
+		Name:          "German Jery",
+		PreferredName: "Jery",
+		Mail:          userJeryMail,
 	}
 	resp := ResponsePOST("/users", plCreateUserJery)
 
