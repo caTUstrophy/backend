@@ -113,24 +113,24 @@ func AddDefaultData(db *gorm.DB) {
 	GroupUser := Group{
 		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: true,
-		Location:     Region{},
-		LocationId:   "",
+		Region:       Region{},
+		RegionId:     "",
 		Permissions:  []Permission{PermUser},
 	}
 
 	GroupAdmin := Group{
 		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: false,
-		Location:     RegionTU,
-		LocationId:   RegionTU.ID,
+		Region:       RegionTU,
+		RegionId:     RegionTU.ID,
 		Permissions:  []Permission{PermAdmin},
 	}
 
 	GroupSuperAdmin := Group{
 		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: false,
-		Location:     Region{},
-		LocationId:   "",
+		Region:       Region{},
+		RegionId:     "",
 		Permissions:  []Permission{PermSuperAdmin},
 	}
 

@@ -17,8 +17,8 @@ type Permission struct {
 type Group struct {
 	ID           string `gorm:"primary_key"`
 	DefaultGroup bool
-	Location     Region `gorm:"ForeignKey:LocationId;AssociationForeignKey:Refer"`
-	LocationId   string
+	Region       Region `gorm:"ForeignKey:RegionId;AssociationForeignKey:Refer"`
+	RegionId     string
 	Permissions  []Permission `gorm:"many2many:group_permissions"`
 }
 

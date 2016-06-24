@@ -87,7 +87,7 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 
 // Checks if the supplied user is allowed to execute
 // operations labelled with permission for a given region.
-func (app *App) CheckScope(user *db.User, location db.Region, permission string) bool {
+func (app *App) CheckScope(user *db.User, region db.Region, permission string) bool {
 
 	// Fast, because the typical user is member of few groups.
 	for _, group := range user.Groups {
@@ -99,14 +99,14 @@ func (app *App) CheckScope(user *db.User, location db.Region, permission string)
 			}
 		}
 
-		// If someone wants to check only for superadmin without location,
-		// an empty location is sufficient. Otherwise, the location has
+		// If someone wants to check only for superadmin without region,
+		// an empty region is sufficient. Otherwise, the region has
 		// to be present.
-		if location.ID == "" {
+		if region.ID == "" {
 			return false
 		}
 
-		if group.Location.ID == location.ID {
+		if group.Region.ID == region.ID {
 
 			// Fast, because there are not so many different permissions.
 			for _, groupPermission := range group.Permissions {
@@ -123,7 +123,7 @@ func (app *App) CheckScope(user *db.User, location db.Region, permission string)
 }
 
 // Check supplied user's access to multiple regions.
-func (app *App) CheckScopes(user *db.User, locations []db.Region, permission string) bool {
+func (app *App) CheckScopes(user *db.User, regions []db.Region, permission string) bool {
 
 	// Check for superadmin privilege.
 	if su := app.CheckScope(user, db.Region{}, "superadmin"); su {
@@ -131,7 +131,7 @@ func (app *App) CheckScopes(user *db.User, locations []db.Region, permission str
 	}
 
 	// Iterate over regions until region with permission is found.
-	for _, Region := range locations {
+	for _, Region := range regions {
 
 		if ok := app.CheckScope(user, Region, "admin"); ok {
 			return true
