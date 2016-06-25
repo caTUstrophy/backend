@@ -20,6 +20,15 @@ var fieldsUser = map[string]interface{}{
 	},
 }
 
+var fieldsGroup = map[string]interface{}{
+	"ID":            "ID",
+	"Name":          "Name",
+	"PreferredName": "PreferredName",
+	"Mail":          "Mail",
+	"MailVerified":  "MailVerified",
+	"PhoneNumbers":  "PhoneNumbers",
+}
+
 var fieldsRequestU = map[string]interface{}{
 	"ID":   "ID",
 	"Name": "Name",

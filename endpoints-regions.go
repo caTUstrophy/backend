@@ -70,10 +70,14 @@ func (app *App) GetAdminsForRegion(c *gin.Context) {
 	}
 
 	// The real request
-	var RegionAdmins db.Group
-	app.DB.Preload("Region").Preload("Groups.Permissions").Find(&RegionAdmins, "region.ID = ? AND permissions.acces_right = ?", regionID, "admin")
 
-	model := CopyNestedModel(RegionAdmins, fieldsUser)
+	var group db.Group
+	app.DB.Preload("Permissions", "access_right = ?", "admin").First(&group, "region_id = ?", regionID)
+
+	var regionAdmins []db.User
+	app.DB.Preload("Groups", "id = ?", group.ID).Preload("Groups.Permissions").Find(&regionAdmins)
+
+	model := CopyNestedModel(regionAdmins, fieldsGroup)
 	c.JSON(http.StatusOK, model)
 }
 
@@ -253,7 +257,7 @@ func (app *App) ListRegions(c *gin.Context) {
 
 	// Iterate over all regions in database return and marshal it.
 	for i, region := range Regions {
-		models[i] = CopyNestedModel(region, fieldsRegion)
+		models[i] = CopyNestedModel(region, fieldsRegion).(map[string]interface{})
 	}
 
 	c.JSON(http.StatusOK, models)
@@ -316,7 +320,7 @@ func (app *App) GetOffersForRegion(c *gin.Context) {
 	model := make([]map[string]interface{}, len(Region.Offers))
 
 	for i, offer := range Region.Offers {
-		model[i] = CopyNestedModel(offer, fieldsOffer)
+		model[i] = CopyNestedModel(offer, fieldsOffer).(map[string]interface{})
 	}
 
 	// Send back results to client.
@@ -357,7 +361,7 @@ func (app *App) GetRequestsForRegion(c *gin.Context) {
 	model := make([]map[string]interface{}, len(Region.Requests))
 
 	for i, offer := range Region.Requests {
-		model[i] = CopyNestedModel(offer, fieldsRequest)
+		model[i] = CopyNestedModel(offer, fieldsRequest).(map[string]interface{})
 	}
 
 	// Send back results to client.
@@ -401,7 +405,7 @@ func (app *App) GetMatchingsForRegion(c *gin.Context) {
 	model := make([]map[string]interface{}, len(matchings))
 
 	for i, matching := range matchings {
-		model[i] = CopyNestedModel(matching, fieldsMatching)
+		model[i] = CopyNestedModel(matching, fieldsMatching).(map[string]interface{})
 	}
 
 	c.JSON(http.StatusOK, model)

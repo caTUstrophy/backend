@@ -123,7 +123,7 @@ func (app *App) mapLocationToRegions(item interface{}) {
 	}
 }
 
-func CopyNestedModel(i interface{}, fields map[string]interface{}) map[string]interface{} {
+func CopyNestedModel(i interface{}, fields map[string]interface{}) interface{} {
 
 	var m map[string]interface{}
 	m = make(map[string]interface{})
@@ -131,6 +131,18 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) map[string]in
 	// get value + type of source interface
 	valInterface := reflect.ValueOf(i)
 	typeOfT := reflect.ValueOf(i).Type()
+
+	var slice = reflect.ValueOf(valInterface.Interface())
+	if valInterface.Kind() == reflect.Slice {
+
+		sliceMapped := make([]interface{}, slice.Len())
+
+		for i := 0; i < slice.Len(); i++ {
+			sliceMapped[i] = CopyNestedModel(slice.Index(i).Interface(), fields)
+		}
+
+		return sliceMapped
+	}
 
 	// iterate over all fields that will be copied
 	for key := range fields {
@@ -158,7 +170,7 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) map[string]in
 					} else {
 
 						// NESTED copied via recursion
-						var slice = reflect.ValueOf(valInterface.Field(i).Interface())
+						slice = reflect.ValueOf(valInterface.Field(i).Interface())
 
 						// if nested ARRAY
 						if valInterface.Field(i).Kind() == reflect.Slice {
