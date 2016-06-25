@@ -123,6 +123,10 @@ func (app *App) mapLocationToRegions(item interface{}) {
 	}
 }
 
+// Takes in any data type as i and a fields map containing
+// the fields in i that are supposed to be passed to output
+// data. Allows for selection and renaming of e.g. fields in
+// structs before returning them as JSON.
 func CopyNestedModel(i interface{}, fields map[string]interface{}) interface{} {
 
 	var m map[string]interface{}

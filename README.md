@@ -113,7 +113,7 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | [List offers in region `regionID`](#list-offers-in-region-with-regionid) | A | GET | /regions/:regionID/offers    | 2.0         | ✔    |
 | [List requests in region `regionID`](#list-requests-in-region-with-regionid) | A | GET | /regions/:regionID/requests | 2.0      | ✔    |
 | [List matchings in region `regionID`](#list-matchings-in-region-with-regionid) | A | GET | /regions/:regionID/matchings | 2.0   | ✔    |
-| [Promote User to Admin for region `regionID`](#promote-user-to-admin-in-region-with-regionid) | A | POST | /regions/:regionID/admins | 3.0 |	|
+| [Promote user to admin for region `regionID`](#promote-user-to-admin-in-region-with-regionid) | A | POST | /regions/:regionID/admins | 3.0 |	|
 | [List admins for region `regionID`](#list-admins-in-region-with-regionid) | A | GET | /regions/:regionID/admins 	| 3.0	|	|
 | [Own profile](#own-profile)                                     | L    | GET       | /me                          | 2.0         | ✔    |
 | [Update own profile](#update-own-profile)                       | L    | PUT       | /me                          | 3.0         |       |
@@ -1264,3 +1264,26 @@ Fail:
 ```
 401 Unauthorized
 ```
+
+
+## Incredible third-party packages
+
+We would like to thank all third-party packages we are using in this project! The golang community is incredible.  
+A probably incomplete list of used packages looks like:
+
+* [Gin](github.com/gin-gonic/gin)
+* [GORM](github.com/jinzhu/gorm)
+* [JWT](github.com/dgrijalva/jwt-go)
+* [Validator](github.com/go-playground/validator)
+* [Conform](github.com/leebenson/conform)
+* [gin-cors](github.com/itsjamie/gin-cors)
+* [gormGIS](github.com/nferruzzi/gormGIS)
+* [UUID](github.com/satori/go.uuid)
+* [GoDotEnv](github.com/joho/godotenv)
+
+And of course we make heavy use of a lot of golang standard packages.
+
+
+## License
+
+This project is licensed under [GPLv3](https://github.com/caTUstrophy/backend/blob/master/LICENSE).

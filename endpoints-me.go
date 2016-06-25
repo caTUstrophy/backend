@@ -13,7 +13,7 @@ import (
 
 // Functions
 
-func (app *App) GetUser(c *gin.Context) {
+func (app *App) GetMe(c *gin.Context) {
 
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
@@ -32,7 +32,7 @@ func (app *App) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func (app *App) UpdateUser(c *gin.Context) {
+func (app *App) UpdateMe(c *gin.Context) {
 
 	// Check authorization for this function.
 	ok, _, message := app.Authorize(c.Request)

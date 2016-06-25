@@ -36,143 +36,6 @@ type PromoteUserPayload struct {
 
 // Functions
 
-func (app *App) GetAdminsForRegion(c *gin.Context) {
-
-	// Check authorization for this function.
-	ok, User, message := app.Authorize(c.Request)
-	if !ok {
-
-		// Signal client an error and expect authorization.
-		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-	// Retrieve region ID from request URL.
-	regionID := app.getUUID(c, "regionID")
-	if regionID == "" {
-		return
-	}
-
-	var Region db.Region
-
-	// Select region based on supplied ID from database.
-	app.DB.First(&Region, "id = ?", regionID)
-
-	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, Region, "admin"); !ok {
-
-		// Signal client that the provided authorization was not sufficient.
-		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
-	// The real request
-
-	var group db.Group
-	app.DB.Preload("Permissions", "access_right = ?", "admin").First(&group, "region_id = ?", regionID)
-
-	var regionAdmins []db.User
-	app.DB.Preload("Groups", "id = ?", group.ID).Preload("Groups.Permissions").Find(&regionAdmins)
-
-	model := CopyNestedModel(regionAdmins, fieldsGroup)
-	c.JSON(http.StatusOK, model)
-}
-
-func (app *App) PromoteToRegionAdmin(c *gin.Context) {
-
-	// Check authorization for this function.
-	ok, User, message := app.Authorize(c.Request)
-	if !ok {
-
-		// Signal client an error and expect authorization.
-		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-	// Retrieve region ID from request URL.
-	regionID := app.getUUID(c, "regionID")
-	if regionID == "" {
-		return
-	}
-
-	var Region db.Region
-
-	// Select region based on supplied ID from database.
-	app.DB.First(&Region, "id = ?", regionID)
-
-	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, Region, "admin"); !ok {
-
-		// Signal client that the provided authorization was not sufficient.
-		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
-		c.Status(http.StatusUnauthorized)
-
-		return
-	}
-
-	// Parse the JSON and check for errors
-	var Payload PromoteUserPayload
-
-	// Expect offer struct fields for creation in JSON request body.
-	err := c.BindJSON(&Payload)
-	if err != nil {
-
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Couldn't marshal JSON",
-		})
-
-		return
-	}
-
-	// Validate sent offer creation data.
-	conform.Strings(&Payload)
-	errs := app.Validator.Struct(&Payload)
-
-	if errs != nil {
-
-		errResp := make(map[string]string)
-
-		// Iterate over all validation errors.
-		for _, err := range errs.(validator.ValidationErrors) {
-
-			if err.Tag == "required" {
-				errResp[err.Field] = "Is required"
-			} else if err.Tag == "excludesall" {
-				errResp[err.Field] = "Contains unallowed characters"
-			}
-		}
-
-		// Send prepared error message to client.
-		c.JSON(http.StatusBadRequest, errResp)
-
-		return
-	}
-
-	// Everything seems fine, promote that user
-	var group db.Group
-	//var adminPermission db.Permission
-	app.DB.Preload("Permissions", "access_right = ?", "admin").First(&group, "region_id = ?", regionID)
-	// Find the user who is to be promoted and add the group to his or her groups
-	var promotedUser db.User
-	app.DB.Preload("Groups").Preload("Groups.Permissions").First(&promotedUser, "mail = ?", Payload.Mail)
-	if promotedUser.Mail != Payload.Mail {
-		c.JSON(http.StatusNotFound, notFound)
-		return
-	}
-
-	promotedUser.Groups = append(promotedUser.Groups, group)
-	// app.DB.Model(&promotedUser).Updates(db.User{Groups: promotedUser.Groups})
-	app.DB.Save(promotedUser)
-
-	model := CopyNestedModel(promotedUser, fieldsUser)
-	c.JSON(http.StatusOK, model)
-
-}
-
 func (app *App) CreateRegion(c *gin.Context) {
 
 	// Check authorization for this function.
@@ -284,9 +147,10 @@ func (app *App) GetRegion(c *gin.Context) {
 
 func (app *App) UpdateRegion(c *gin.Context) {
 
+	// TODO: Implement this function.
 }
 
-func (app *App) GetOffersForRegion(c *gin.Context) {
+func (app *App) ListOffersForRegion(c *gin.Context) {
 
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
@@ -327,7 +191,7 @@ func (app *App) GetOffersForRegion(c *gin.Context) {
 	c.JSON(http.StatusOK, model)
 }
 
-func (app *App) GetRequestsForRegion(c *gin.Context) {
+func (app *App) ListRequestsForRegion(c *gin.Context) {
 
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
@@ -368,7 +232,7 @@ func (app *App) GetRequestsForRegion(c *gin.Context) {
 	c.JSON(http.StatusOK, model)
 }
 
-func (app *App) GetMatchingsForRegion(c *gin.Context) {
+func (app *App) ListMatchingsForRegion(c *gin.Context) {
 
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
@@ -407,6 +271,149 @@ func (app *App) GetMatchingsForRegion(c *gin.Context) {
 	for i, matching := range matchings {
 		model[i] = CopyNestedModel(matching, fieldsMatching).(map[string]interface{})
 	}
+
+	c.JSON(http.StatusOK, model)
+}
+
+func (app *App) ListAdminsForRegion(c *gin.Context) {
+
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Retrieve region ID from request URL.
+	regionID := app.getUUID(c, "regionID")
+	if regionID == "" {
+		return
+	}
+
+	var Region db.Region
+
+	// Select region based on supplied ID from database.
+	app.DB.First(&Region, "id = ?", regionID)
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, Region, "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// The real request
+
+	var group db.Group
+	app.DB.Preload("Permissions", "access_right = ?", "admin").First(&group, "region_id = ?", regionID)
+
+	var regionAdmins []db.User
+	app.DB.Preload("Groups", "id = ?", group.ID).Preload("Groups.Permissions").Find(&regionAdmins)
+
+	model := CopyNestedModel(regionAdmins, fieldsGroup)
+
+	c.JSON(http.StatusOK, model)
+}
+
+func (app *App) PromoteToRegionAdmin(c *gin.Context) {
+
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+	// Retrieve region ID from request URL.
+	regionID := app.getUUID(c, "regionID")
+	if regionID == "" {
+		return
+	}
+
+	var Region db.Region
+
+	// Select region based on supplied ID from database.
+	app.DB.First(&Region, "id = ?", regionID)
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, Region, "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Parse the JSON and check for errors
+	var Payload PromoteUserPayload
+
+	// Expect offer struct fields for creation in JSON request body.
+	err := c.BindJSON(&Payload)
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Couldn't marshal JSON",
+		})
+
+		return
+	}
+
+	// Validate sent offer creation data.
+	conform.Strings(&Payload)
+	errs := app.Validator.Struct(&Payload)
+
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs.(validator.ValidationErrors) {
+
+			if err.Tag == "required" {
+				errResp[err.Field] = "Is required"
+			} else if err.Tag == "excludesall" {
+				errResp[err.Field] = "Contains unallowed characters"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(http.StatusBadRequest, errResp)
+
+		return
+	}
+
+	// Everything seems fine, promote that user.
+	var group db.Group
+	//var adminPermission db.Permission
+	app.DB.Preload("Permissions", "access_right = ?", "admin").First(&group, "region_id = ?", regionID)
+
+	// Find the user who is to be promoted and add the group to his or her groups
+	var promotedUser db.User
+	app.DB.Preload("Groups").Preload("Groups.Permissions").First(&promotedUser, "mail = ?", Payload.Mail)
+
+	if promotedUser.Mail != Payload.Mail {
+
+		c.JSON(http.StatusNotFound, notFound)
+
+		return
+	}
+
+	promotedUser.Groups = append(promotedUser.Groups, group)
+	// app.DB.Model(&promotedUser).Updates(db.User{Groups: promotedUser.Groups})
+	app.DB.Save(promotedUser)
+
+	model := CopyNestedModel(promotedUser, fieldsUser)
 
 	c.JSON(http.StatusOK, model)
 }

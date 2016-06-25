@@ -20,10 +20,14 @@ var ReplacementsJSONbyKey = map[string]interface{}{
 	"ID": "UUID v4",
 }
 
-// This function generates for a hard coded list of data we send in responses a documentation like we present in README
-// Sends back the generated stuff via http and also prints it to the terminal with additional Info
-// Last is used to generate text we can copy directly into README that automizes the documentation of our regulary updated API
+// This function generates documentation like we present in README
+// for a hard coded list of data we send in responses. Sends back
+// the generated stuff via HTTP and also prints it to the terminal
+// with additional info. Last is used to generate text we can copy
+// directly into README that automates the documentation of our
+// frequently updated API.
 func (app *App) GetJsonResponseInfo(c *gin.Context) {
+
 	// Check authorization for this function.
 
 	// TODO: decomment when authorization is pulled and works
@@ -52,9 +56,11 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	var User db.User
 	User.Enabled = false
 	app.DB.Preload("Permissions").First(&User.Groups)
+
 	for _, group := range User.Groups {
 		app.DB.Model(&group).Related(&group.Region)
 	}
+
 	User.ID = "Wer als erstes diese Zeile liest und mich drauf anspricht kriegt eine Mate ausgegeben"
 	User.Mail = "m@i.le"
 	User.MailVerified = false
@@ -129,8 +135,9 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 
 }
 
-// This function works just like CopyNestedModel, but returns no content of i but the type of the content.
-// Will be used to automize writing our Documentation
+// This function works just like CopyNestedModel, but returns
+// no content of i but the type of the content. Will be used
+// to automate writing our documentation.
 func getJSONResponseInfo(i interface{}, fields map[string]interface{}) map[string]interface{} {
 
 	var m map[string]interface{}

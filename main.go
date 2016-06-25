@@ -49,6 +49,9 @@ func InitApp() *App {
 	app.Router.DELETE("/auth", app.Logout)
 
 	app.Router.POST("/users", app.CreateUser)
+	app.Router.GET("/users", app.ListUsers)
+	app.Router.GET("/users/:userID", app.GetUser)
+	app.Router.PUT("/users/:userID", app.UpdateUser)
 
 	app.Router.POST("/offers", app.CreateOffer)
 	app.Router.GET("/offers/:offerID", app.GetOffer)
@@ -65,14 +68,14 @@ func InitApp() *App {
 	app.Router.GET("/regions", app.ListRegions)
 	app.Router.GET("/regions/:regionID", app.GetRegion)
 	app.Router.PUT("/regions/:regionID", app.UpdateRegion)
-	app.Router.GET("/regions/:regionID/requests", app.GetRequestsForRegion)
-	app.Router.GET("/regions/:regionID/offers", app.GetOffersForRegion)
-	app.Router.GET("/regions/:regionID/matchings", app.GetMatchingsForRegion)
-	app.Router.GET("/regions/:regionID/admins", app.GetAdminsForRegion)
+	app.Router.GET("/regions/:regionID/requests", app.ListRequestsForRegion)
+	app.Router.GET("/regions/:regionID/offers", app.ListOffersForRegion)
+	app.Router.GET("/regions/:regionID/matchings", app.ListMatchingsForRegion)
+	app.Router.GET("/regions/:regionID/admins", app.ListAdminsForRegion)
 	app.Router.POST("/regions/:regionID/admins", app.PromoteToRegionAdmin)
 
-	app.Router.GET("/me", app.GetUser)
-	app.Router.PUT("/me", app.UpdateUser)
+	app.Router.GET("/me", app.GetMe)
+	app.Router.PUT("/me", app.UpdateMe)
 	app.Router.GET("/me/offers", app.ListUserOffers)
 	app.Router.GET("/me/requests", app.ListUserRequests)
 

@@ -129,3 +129,15 @@ func (app *App) CreateUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, model)
 }
+
+func (app *App) ListUsers(c *gin.Context) {
+	// TODO: Implement this function.
+}
+
+func (app *App) GetUser(c *gin.Context) {
+	// TODO: Implement this function.
+}
+
+func (app *App) UpdateUser(c *gin.Context) {
+	// TODO: Implement this function.
+}
