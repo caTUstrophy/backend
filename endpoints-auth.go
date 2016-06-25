@@ -66,17 +66,17 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 
 	claims := requestJWT.Claims.(jwt.MapClaims)
 
+	// Check if JWT is expired
+	jwtExp, ok := claims["exp"].(string)
+	if !ok {
+		return false, nil, "JWT contained invalid date"
+	}
+	exp, _ := time.Parse(time.RFC3339, jwtExp)
+	if exp.Before(time.Now()) {
+		return false, nil, "JWT was expired"
+	}
 	// Check if an entry with mail from JWT exists in our session store.
 	email := claims["iss"].(string)
-	sessionJWTInterface, found := app.Sessions.Get(email)
-	if !found {
-		return false, nil, "JWT was invalid"
-	}
-
-	// Check if JWT from request matches JWT from session store.
-	if sessionJWTInterface.(string) != requestJWT.Raw {
-		return false, nil, "JWT was invalid"
-	}
 
 	// Retrieve user from database.
 	var User db.User

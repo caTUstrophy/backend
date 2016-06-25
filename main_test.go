@@ -17,6 +17,7 @@ var (
 	plCreateUserJery CreateUserPayload
 	tokenUserJery    string
 	userJeryMail     string
+	userJeryPW       string
 	tokenAdmin       string
 	regionID         string
 )
@@ -37,11 +38,14 @@ func TestMain(m *testing.M) {
 func TestUser(t *testing.T) {
 
 	// create user jery
-	userJeryMail = "stupidtestthingthatsuckshard!12"
+	userJeryPW = "stupidtestthingthatsuckshard!12"
+	userJeryMail = "jery1@jery.jery"
 	plCreateUserJery = CreateUserPayload{
 		Name:          "German Jery",
 		PreferredName: "Jery",
 		Mail:          userJeryMail,
+		Password:      userJeryPW,
+		PhoneNumbers:  make([]string, 1),
 	}
 	resp := ResponsePOST("/users", plCreateUserJery)
 
@@ -63,6 +67,9 @@ func TestUser(t *testing.T) {
 	}
 
 	dat := parseResponse(resp)
+
+	log.Println(dat)
+
 	if dat["AccessToken"] == nil {
 		t.Error("User Access Token is empty")
 		return
