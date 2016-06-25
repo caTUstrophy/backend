@@ -8,7 +8,6 @@ import (
 	"github.com/go-playground/validator"
 	"github.com/itsjamie/gin-cors"
 	"github.com/jinzhu/gorm"
-	"github.com/patrickmn/go-cache"
 )
 
 // Structs
@@ -20,7 +19,6 @@ type App struct {
 	DB              *gorm.DB
 	HashCost        int
 	SessionValidFor time.Duration
-	Sessions        *cache.Cache
 	Validator       *validator.Validate
 }
 

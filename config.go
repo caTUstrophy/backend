@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/joho/godotenv"
-	"github.com/patrickmn/go-cache"
 )
 
 func InitAndConfig() *App {
@@ -56,9 +55,6 @@ func InitAndConfig() *App {
 		log.Fatal("[InitAndConfig] Could not load JWT_VALID_FOR from .env file. Missing or not an integer?")
 	}
 	app.SessionValidFor = time.Duration(validFor) * time.Minute
-
-	// Instantiate a new go-cache instance to hold the JWTs of user sessions.
-	app.Sessions = cache.New(app.SessionValidFor, 10*time.Second)
 
 	// Initialize the validator instance to validate fields with tag 'validate'
 	validatorConfig := &validator.Config{TagName: "validate"}

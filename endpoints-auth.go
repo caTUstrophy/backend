@@ -14,7 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/leebenson/conform"
-	"github.com/patrickmn/go-cache"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -171,9 +170,6 @@ func (app *App) makeToken(c *gin.Context, user *db.User) string {
 		log.Fatalf("[makeToken] Creating JWT went wrong: %s.\nTerminating.", err)
 	}
 
-	// Add JWT to session in-memory cache.
-	app.Sessions.Set(user.Mail, sessionJWTString, cache.DefaultExpiration)
-
 	return sessionJWTString
 }
 
@@ -281,9 +277,6 @@ func (app *App) Logout(c *gin.Context) {
 
 		return
 	}
-
-	// Remove user's JWT from session store.
-	app.Sessions.Delete(User.Mail)
 
 	// Signal client success and return ID of logged out user.
 	c.JSON(http.StatusOK, gin.H{

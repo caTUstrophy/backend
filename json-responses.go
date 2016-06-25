@@ -108,3 +108,9 @@ var fieldsMatching = map[string]interface{}{
 	"OfferId":   "OfferId",
 	"RequestId": "RequestId",
 }
+
+// Other global response schemes, not thought to be used for CopyNestedModel
+
+var notFound = map[string]interface{}{
+	"Error": "Requested item does not exist in db",
+}

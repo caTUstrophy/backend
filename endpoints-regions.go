@@ -151,11 +151,19 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 	// Everything seems fine, promote that user
 	var group db.Group
 	//var adminPermission db.Permission
-	app.DB.Preload("Region").Preload("Groups.Permissions").Find(&group, "region.ID = ? AND permissions.acces_right = ?", regionID, "admin")
-	User.Groups = append(User.Groups, group)
-	app.DB.Model(&User).Updates(db.User{Groups: User.Groups})
+	app.DB.Preload("Permissions", "access_right = ?", "admin").First(&group, "region_id = ?", regionID)
+	// Find the user who is to be promoted and add the group to his or her groups
+	var promotedUser db.User
+	app.DB.Preload("Groups").Preload("Groups.Permissions").First(&promotedUser, "mail = ?", Payload.Mail)
+	if promotedUser.Mail != Payload.Mail {
+		c.JSON(http.StatusNotFound, notFound)
+		return
+	}
 
-	model := CopyNestedModel(User, fieldsUser)
+	promotedUser.Groups = append(promotedUser.Groups, group)
+	app.DB.Model(&promotedUser).Updates(db.User{Groups: promotedUser.Groups})
+
+	model := CopyNestedModel(promotedUser, fieldsUser)
 	c.JSON(http.StatusOK, model)
 
 }

@@ -137,41 +137,48 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) map[string]in
 
 		var exists = false
 		newKey, _ := fields[key].(string)
+		if valInterface.NumField() == 0 {
+			// This nested data is expected by fields but is empty
+			// We return the data with every field of the not existing nested map set to nil
+			m[newKey] = nil
+			exists = true // We dont throw an error in this case
+		} else {
 
-		// search for field in source type
-		for i := 0; i < valInterface.NumField(); i++ {
+			// search for field in source type
+			for i := 0; i < valInterface.NumField(); i++ {
 
-			if typeOfT.Field(i).Name == key {
+				if typeOfT.Field(i).Name == key {
 
-				// check for nesting through type assertion
-				nestedMap, nested := fields[key].(map[string]interface{})
+					// check for nesting through type assertion
+					nestedMap, nested := fields[key].(map[string]interface{})
 
-				if !nested {
-					// NOT nested -> copy value directly
-					m[newKey] = valInterface.Field(i).Interface()
-				} else {
-
-					// NESTED copied via recursion
-					var slice = reflect.ValueOf(valInterface.Field(i).Interface())
-
-					// if nested ARRAY
-					if valInterface.Field(i).Kind() == reflect.Slice {
-
-						sliceMapped := make([]interface{}, slice.Len())
-
-						for i := 0; i < slice.Len(); i++ {
-							sliceMapped[i] = CopyNestedModel(slice.Index(i).Interface(), nestedMap)
-						}
-
-						m[key] = sliceMapped
+					if !nested {
+						// NOT nested -> copy value directly
+						m[newKey] = valInterface.Field(i).Interface()
 					} else {
-						// if nested OBJECT
-						m[key] = CopyNestedModel(valInterface.Field(i).Interface(), nestedMap)
-					}
-				}
 
-				exists = true
-				break
+						// NESTED copied via recursion
+						var slice = reflect.ValueOf(valInterface.Field(i).Interface())
+
+						// if nested ARRAY
+						if valInterface.Field(i).Kind() == reflect.Slice {
+
+							sliceMapped := make([]interface{}, slice.Len())
+
+							for i := 0; i < slice.Len(); i++ {
+								sliceMapped[i] = CopyNestedModel(slice.Index(i).Interface(), nestedMap)
+							}
+
+							m[key] = sliceMapped
+						} else {
+							// if nested OBJECT
+							m[key] = CopyNestedModel(valInterface.Field(i).Interface(), nestedMap)
+						}
+					}
+
+					exists = true
+					break
+				}
 			}
 		}
 
