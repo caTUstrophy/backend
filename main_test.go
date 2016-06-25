@@ -168,8 +168,8 @@ func NewRequestPOSTwithJWT(url string, body interface{}, jwt string) *http.Reque
 	bodyBytes, _ := json.Marshal(body)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
-	log.Println("Set Authentication: Bearer ", jwt)
-	req.Header.Set("Authentication", ("Bearer " + jwt))
+	log.Println("Set Authorization: Bearer ", jwt)
+	req.Header.Set("Authorization", ("Bearer " + jwt))
 	return req
 }
 
