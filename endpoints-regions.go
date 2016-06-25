@@ -161,7 +161,8 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 	}
 
 	promotedUser.Groups = append(promotedUser.Groups, group)
-	app.DB.Model(&promotedUser).Updates(db.User{Groups: promotedUser.Groups})
+	// app.DB.Model(&promotedUser).Updates(db.User{Groups: promotedUser.Groups})
+	app.DB.Save(promotedUser)
 
 	model := CopyNestedModel(promotedUser, fieldsUser)
 	c.JSON(http.StatusOK, model)
