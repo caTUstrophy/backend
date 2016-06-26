@@ -181,6 +181,11 @@ func (app *App) GetRequest(c *gin.Context) {
 
 	// Parse requestID from HTTP request.
 	requestID := app.getUUID(c, "requestID")
+	if requestID == "" {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"Error":"requestID is no valid UUID", })
+		return
+	}
 
 	// Load request from database.
 	var request db.Request
@@ -220,6 +225,8 @@ func (app *App) UpdateRequest(c *gin.Context) {
 
 	requestID := app.getUUID(c, "requestID")
 	if requestID == "" {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"Error":"requestID is no valid UUID", })
 		return
 	}
 

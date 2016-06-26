@@ -59,6 +59,9 @@ func (app *App) UpdateNotification(c *gin.Context) {
 	// Retrieve notification ID from request URL.
 	notificationID := app.getUUID(c, "notificationID")
 	if notificationID == "" {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"Error":"notificationID is no valid UUID",
+		})
 		return
 	}
 

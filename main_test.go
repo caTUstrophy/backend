@@ -97,10 +97,6 @@ func TestAdminLogin(t *testing.T) {
 	log.Println("Admin Token: ", tokenAdmin)
 }
 
-func TestWhatevs(t *testing.T) {
-	fmt.Println("new test with token:", tokenUserJery)
-}
-
 type PromoteAdminPayload struct {
 	Mail string
 }
@@ -154,4 +150,9 @@ func TestPostRegionAdmin(t *testing.T) {
 		t.Error("Promoting User Jery as Admin did not work, but should: ", resp.Body.String())
 		return
 	}
+}
+
+
+
+func TestGroups(t *testing.T) {
 }

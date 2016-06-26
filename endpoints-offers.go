@@ -181,6 +181,12 @@ func (app *App) GetOffer(c *gin.Context) {
 
 	// Load offerID from request.
 	offerID := app.getUUID(c, "offerID")
+	if offerID == "" {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"Error":"offerID is no valid UUID",
+		})
+		return
+	}
 
 	// Retrieve corresponding entry from database.
 	var offer db.Offer
@@ -220,6 +226,9 @@ func (app *App) UpdateOffer(c *gin.Context) {
 
 	offerID := app.getUUID(c, "offerID")
 	if offerID == "" {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"Error":"offerID is no valid UUID",
+		})
 		return
 	}
 
