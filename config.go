@@ -60,5 +60,18 @@ func InitAndConfig() *App {
 	validatorConfig := &validator.Config{TagName: "validate"}
 	app.Validator = validator.New(validatorConfig)
 
+	// Set offsets for notification reaper to delete old notifications.
+	notifExpOffset, err := strconv.Atoi(os.Getenv("NOTIFICATION_EXPIRY_OFFSET"))
+	if err != nil {
+		log.Fatal("[InitAndConfig] Could not load NOTIFICATION_EXPIRY_OFFSET from .env file. Missing or not an integer?")
+	}
+	app.NotifExpOffset = time.Duration(notifExpOffset) * (time.Hour * 24)
+
+	notifSleepOffset, err := strconv.Atoi(os.Getenv("NOTIFICATION_SLEEP_OFFSET"))
+	if err != nil {
+		log.Fatal("[InitAndConfig] Could not load NOTIFICATION_SLEEP_OFFSET from .env file. Missing or not an integer?")
+	}
+	app.NotifSleepOffset = time.Duration(notifSleepOffset) * time.Minute
+
 	return app
 }

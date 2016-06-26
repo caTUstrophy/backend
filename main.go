@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,13 +14,15 @@ import (
 // Structs
 
 type App struct {
-	IP              string
-	Port            string
-	Router          *gin.Engine
-	DB              *gorm.DB
-	HashCost        int
-	SessionValidFor time.Duration
-	Validator       *validator.Validate
+	IP               string
+	Port             string
+	Router           *gin.Engine
+	DB               *gorm.DB
+	HashCost         int
+	SessionValidFor  time.Duration
+	Validator        *validator.Validate
+	NotifExpOffset   time.Duration
+	NotifSleepOffset time.Duration
 }
 
 // Main
@@ -91,7 +94,12 @@ func InitApp() *App {
 }
 
 func main() {
+
 	app := InitApp()
+
+	// Start goroutine to delete old notifications.
+	go app.NotificationReaper(app.NotifExpOffset, app.NotifSleepOffset)
+	log.Printf("\n[main] Dispatched notification reaper with %s expiry time and %s sleep time.\n\n", app.NotifExpOffset.String(), app.NotifSleepOffset.String())
 
 	// Run our application.
 	app.Router.Run(fmt.Sprintf("%s:%s", app.IP, app.Port))

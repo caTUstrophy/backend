@@ -146,8 +146,6 @@ func (app *App) NotificationReaper(expiryOffset time.Duration, sleepOffset time.
 		var Notifications []db.Notification
 		app.DB.Where("\"read\" = ?", "true").Order("\"created_at\" ASC").Find(&Notifications)
 
-		log.Println("Size of notification list:", len(Notifications))
-
 		// Initialize slice to buffer to-be-deleted notifications.
 		deleteBuffer := make([]string, 0, deleteBufferSize)
 		i := 0
@@ -158,38 +156,24 @@ func (app *App) NotificationReaper(expiryOffset time.Duration, sleepOffset time.
 			// ago, add ID of notification to deletion buffer.
 			if notification.CreatedAt.Add(expiryOffset).Before(time.Now()) {
 
-				log.Println("noti time:", notification.CreatedAt.Add(expiryOffset))
-				log.Println("now  time:", time.Now())
-
 				deleteBuffer = append(deleteBuffer, notification.ID)
-				log.Println("len of deleteBuffer:", len(deleteBuffer))
-				log.Println("Notification with ID", notification.ID, "was added to delete buffer:", deleteBuffer[i], "  (i is", i, ")")
-
 				i++
 			}
 
 			// If delete buffer is full, issue a bulk deletion.
 			if i == deleteBufferSize {
 
-				log.Println("Delete buffer full")
-
 				app.DB.Where("\"id\" IN (?)", deleteBuffer).Delete(&db.Notification{})
 				deleteBuffer = make([]string, 0, deleteBufferSize)
 				i = 0
-
-				log.Println("deleteBuffer:", deleteBuffer)
-				log.Println("i:", i)
 			}
 		}
 
 		if len(deleteBuffer) > 0 {
-
-			log.Println("Loop done, but deleteBuffer contains", len(deleteBuffer), "elements. Deleting.")
-
 			app.DB.Where("\"id\" IN (?)", deleteBuffer).Delete(&db.Notification{})
 		}
 
-		log.Println("Done with deletion. Sleeping for", sleepOffset)
+		log.Println("Notification reaper done. Sleeping for", sleepOffset)
 
 		// Let function execution sleep until next round.
 		time.Sleep(sleepOffset)
