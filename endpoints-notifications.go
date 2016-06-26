@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"time"
 
 	"net/http"
 
@@ -60,7 +58,7 @@ func (app *App) UpdateNotification(c *gin.Context) {
 	notificationID := app.getUUID(c, "notificationID")
 	if notificationID == "" {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error":"notificationID is no valid UUID",
+			"Error": "notificationID is no valid UUID",
 		})
 		return
 	}
@@ -131,54 +129,4 @@ func (app *App) UpdateNotification(c *gin.Context) {
 	response := CopyNestedModel(Notification, fieldsNotificationU)
 
 	c.JSON(http.StatusOK, response)
-}
-
-// This function usually runs in the background of the backend
-// service and deletes all read notifications that were created
-// longer than a supplied offset ago.
-func (app *App) NotificationReaper(expiryOffset time.Duration, sleepOffset time.Duration) {
-
-	log.Println("Notification reaper started.")
-
-	// Buffer up to 10 items before bulk delete.
-	deleteBufferSize := 10
-
-	for {
-
-		// Retrieve all read notifications in ascending order by date.
-		var Notifications []db.Notification
-		app.DB.Where("\"read\" = ?", "true").Order("\"created_at\" ASC").Find(&Notifications)
-
-		// Initialize slice to buffer to-be-deleted notifications.
-		deleteBuffer := make([]string, 0, deleteBufferSize)
-		i := 0
-
-		for _, notification := range Notifications {
-
-			// If notification was created more than expiryOffset duration
-			// ago, add ID of notification to deletion buffer.
-			if notification.CreatedAt.Add(expiryOffset).Before(time.Now()) {
-
-				deleteBuffer = append(deleteBuffer, notification.ID)
-				i++
-			}
-
-			// If delete buffer is full, issue a bulk deletion.
-			if i == deleteBufferSize {
-
-				app.DB.Where("\"id\" IN (?)", deleteBuffer).Delete(&db.Notification{})
-				deleteBuffer = make([]string, 0, deleteBufferSize)
-				i = 0
-			}
-		}
-
-		if len(deleteBuffer) > 0 {
-			app.DB.Where("\"id\" IN (?)", deleteBuffer).Delete(&db.Notification{})
-		}
-
-		log.Println("Notification reaper done. Sleeping for", sleepOffset)
-
-		// Let function execution sleep until next round.
-		time.Sleep(sleepOffset)
-	}
 }
