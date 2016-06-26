@@ -3,8 +3,12 @@ package main
 import (
 	"log"
 
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"reflect"
+	
+	"net/http/httptest"
 
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
@@ -204,4 +208,65 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) interface{} {
 	}
 
 	return m
+}
+
+
+
+
+// USED FOR TESTING ONLY!
+// Creates http.Request, requests url and returns a response
+func Request(method string, url string, body interface{}) *httptest.ResponseRecorder {
+	return RequestWithJWT(method, url, body, "")
+}
+
+// USED FOR TESTING ONLY!
+// Creates http.Request with authentication, requests url and returns a response
+func RequestWithJWT(method string, url string, body interface{}, jwt string) *httptest.ResponseRecorder {
+	resp := httptest.NewRecorder()
+	req := NewRequestWithJWT(method, url, body, jwt)
+	app.Router.ServeHTTP(resp, req)
+
+	return resp
+}
+
+// creates and configures http.Request
+func NewRequest(method string, url string, body interface{}) *http.Request {
+	return NewRequestWithJWT(method, url, body, "")
+}
+
+// creates and configures authorized http.Request
+func NewRequestWithJWT(method string, url string, body interface{}, jwt string) *http.Request {
+	bodyBytes, _ := json.Marshal(body)
+	req, _ := http.NewRequest(method, url, bytes.NewBuffer(bodyBytes))
+	if jwt != "" {
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", ("Bearer " + jwt))
+	}
+
+	return req
+}
+
+
+// USED FOR TESTING ONLY!
+// parseResponse into interface{}, instead of JSON.bind() onto struct
+func parseResponse(resp *httptest.ResponseRecorder) map[string]interface{} {
+
+	var dat map[string]interface{}
+	if err := json.Unmarshal(resp.Body.Bytes(), &dat); err != nil {
+		panic(err)
+	}
+
+	return dat
+}
+
+// USED FOR TESTING ONLY!
+// parseResponse into Array of interface{}, instead of JSON.bind() onto struct
+func parseResponseToArray(resp *httptest.ResponseRecorder) []map[string]interface{} {
+
+	var dat []map[string]interface{}
+	if err := json.Unmarshal(resp.Body.Bytes(), &dat); err != nil {
+		panic(err)
+	}
+
+	return dat
 }
