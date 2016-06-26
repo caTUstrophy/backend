@@ -56,6 +56,12 @@ func (app *App) CreateOffer(c *gin.Context) {
 
 			return
 		}
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Supplied values in JSON body could not be parsed",
+		})
+
+		return
 	}
 
 	// Validate sent offer creation data.

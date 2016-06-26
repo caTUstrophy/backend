@@ -120,8 +120,8 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | [List own offers](#list-own-offers)                             | L    | GET       | /me/offers                   | 2.0         | ✔    |
 | [List own requests](#list-own-requests)                         | L    | GET       | /me/requests                 | 2.0         | ✔    |
 | [List own matchings](#list-own-matchings)                       | L    | GET       | /me/matchings                | 3.0         |       |
-| [List unread notifications](#list-unread-notifications)         | L    | GET       | /notifications               | 3.0         |       |
-| [Update notification `notificationID`](#update-notification-with-notificationid) | C | PUT | /notifications/:notificationID | 3.0 |     |
+| [List unread notifications](#list-unread-notifications)         | L    | GET       | /notifications               | 3.0         | ✔    |
+| [Update notification `notificationID`](#update-notification-with-notificationid) | C | PUT | /notifications/:notificationID | 3.0 | ✔  |
 
 
 ### What is inside a JWT?

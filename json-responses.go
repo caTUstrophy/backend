@@ -118,6 +118,13 @@ var fieldsMatching = map[string]interface{}{
 	"RequestId": "RequestId",
 }
 
+var fieldsNotificationU = map[string]interface{}{
+	"ID":     "ID",
+	"Type":   "Type",
+	"ItemID": "ItemID",
+	"Read":   "Read",
+}
+
 var fieldsNotification = map[string]interface{}{
 	"ID":     "ID",
 	"Type":   "Type",
