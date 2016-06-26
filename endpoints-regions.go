@@ -136,10 +136,12 @@ func (app *App) ListRegions(c *gin.Context) {
 }
 
 func (app *App) GetRegion(c *gin.Context) {
-
 	// Retrieve region ID from request URL.
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"Error":"No valid region UUID",
+		})
 		return
 	}
 
@@ -147,6 +149,10 @@ func (app *App) GetRegion(c *gin.Context) {
 
 	// Select region based on supplied ID from database.
 	app.DB.First(&Region, "id = ?", regionID)
+	if(Region.ID == "") {
+		c.JSON(http.StatusNotFound, notFound)
+		return
+	}
 
 	// Only expose necessary fields in JSON response.
 	model := CopyNestedModel(Region, fieldsRegion)
