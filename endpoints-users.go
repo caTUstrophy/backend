@@ -116,7 +116,7 @@ func (app *App) CreateUser(c *gin.Context) {
 	}
 
 	var DefaultGroup db.Group
-	app.DB.Preload("Permissions").First(&DefaultGroup, "default_group = ?", true)
+	app.DB.First(&DefaultGroup, "default_group = ?", true)
 
 	// Add user to default user group and enable the user.
 	User.Groups = []db.Group{DefaultGroup}
@@ -140,4 +140,37 @@ func (app *App) GetUser(c *gin.Context) {
 
 func (app *App) UpdateUser(c *gin.Context) {
 	// TODO: Implement this function.
+}
+
+func (app *App) ListSystemAdmins(c *gin.Context) {
+
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, db.Region{}, "superadmin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// The real request
+
+	var group db.Group
+	app.DB.Preload("Users").First(&group, "access_right = ?", "superadmin")
+
+	model := CopyNestedModel(group.Users, fieldsGroup)
+
+	c.JSON(http.StatusOK, model)
 }

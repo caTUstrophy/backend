@@ -14,9 +14,8 @@ var fieldsUser = map[string]interface{}{
 			"Description": "Description",
 			"Name":        "Name",
 		},
-		"Permissions": map[string]interface{}{
-			"AccessRight": "AccessRight",
-		},
+		"AccessRight": "AccessRight",
+		"Description": "Description",
 	},
 }
 

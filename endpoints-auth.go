@@ -79,7 +79,7 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 
 	// Retrieve user from database.
 	var User db.User
-	app.DB.Preload("Groups").Preload("Groups.Permissions").First(&User, "mail = ?", email)
+	app.DB.Preload("Groups").First(&User, "mail = ?", email)
 
 	return true, &User, ""
 }
@@ -91,29 +91,26 @@ func (app *App) CheckScope(user *db.User, region db.Region, permission string) b
 	// Fast, because the typical user is member of few groups.
 	for _, group := range user.Groups {
 
-		for _, groupPermission := range group.Permissions {
+		log.Println(group.Description)
 
-			if groupPermission.AccessRight == "superadmin" {
-				return true
-			}
+		if group.AccessRight == "superadmin" {
+			return true
 		}
 
 		// If someone wants to check only for superadmin without region,
 		// an empty region is sufficient. Otherwise, the region has
 		// to be present.
 		if region.ID == "" {
-			return false
+			log.Println("Continue")
+			continue
 		}
 
-		if group.Region.ID == region.ID {
+		if group.RegionId == region.ID {
 
-			// Fast, because there are not so many different permissions.
-			for _, groupPermission := range group.Permissions {
-
-				if groupPermission.AccessRight == permission {
-					return true
-				}
+			if group.AccessRight == permission {
+				return true
 			}
+			log.Println("Is not equal to \n", permission)
 		}
 	}
 

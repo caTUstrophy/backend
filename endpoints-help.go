@@ -31,7 +31,7 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	// Check authorization for this function.
 
 	// TODO: decomment when authorization is pulled and works
-	/*ok, User, message := app.Authorize(c.Request)
+	ok, authUser, message := app.Authorize(c.Request)
 	if !ok {
 
 		// Signal client an error and expect authorization.
@@ -39,10 +39,9 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 		c.Status(http.StatusUnauthorized)
 
 		return
-	}*/
+	}
 	// Check if user permissions are sufficient (user is admin).
-	// if ok = app.CheckScope(User, db.Region{}, "superadmin"); !ok {
-	if false {
+	if ok = app.CheckScope(authUser, db.Region{}, "superadmin"); !ok {
 
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
@@ -50,8 +49,6 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 
 		return
 	}
-
-	// TODO: remove hacky User load
 
 	var User db.User
 	User.Enabled = false

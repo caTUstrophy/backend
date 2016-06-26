@@ -8,18 +8,14 @@ import (
 
 // Models
 
-type Permission struct {
-	ID          string `gorm:"primary_key"`
-	AccessRight string `gorm:"index;not null;unique"`
-	Description string
-}
-
 type Group struct {
 	ID           string `gorm:"primary_key"`
 	DefaultGroup bool
 	Region       Region `gorm:"ForeignKey:RegionId;AssociationForeignKey:Refer"`
 	RegionId     string
-	Permissions  []Permission `gorm:"many2many:group_permissions"`
+	Users        []User `gorm:"many2many:user_groups"`
+	AccessRight  string
+	Description  string
 }
 
 type User struct {

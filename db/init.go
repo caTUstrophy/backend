@@ -56,7 +56,6 @@ func InitDB() *gorm.DB {
 func AddDefaultData(db *gorm.DB) {
 
 	// Drop all existing tables that will be created afterwards.
-	db.DropTableIfExists(&Permission{})
 	db.DropTableIfExists(&Group{})
 	db.DropTableIfExists(&User{})
 	db.DropTableIfExists(&Tag{})
@@ -66,13 +65,11 @@ func AddDefaultData(db *gorm.DB) {
 	db.DropTableIfExists(&Region{})
 	db.DropTableIfExists("region_offers")
 	db.DropTableIfExists("region_requests")
-	db.DropTableIfExists("group_permissions")
 	db.DropTableIfExists("offer_tags")
 	db.DropTableIfExists("request_tags")
 	db.DropTableIfExists("user_groups")
 
 	// Check if our tables are present, otherwise create them.
-	db.CreateTable(&Permission{})
 	db.CreateTable(&Group{})
 	db.CreateTable(&User{})
 	db.CreateTable(&Tag{})
@@ -82,24 +79,6 @@ func AddDefaultData(db *gorm.DB) {
 	db.CreateTable(&Region{})
 
 	// Three default permission entities.
-
-	PermUser := Permission{
-		ID:          fmt.Sprintf("%s", uuid.NewV4()),
-		AccessRight: "user",
-		Description: "This permission represents a standard, registered but not privileged user in our system.",
-	}
-
-	PermAdmin := Permission{
-		ID:          fmt.Sprintf("%s", uuid.NewV4()),
-		AccessRight: "admin",
-		Description: "This permission represents a registered and fully authorized user for a specified region in our system. Users with this permission can view all offers, requests and matches in the region they have this permission for. Also, they can create matches.",
-	}
-
-	PermSuperAdmin := Permission{
-		ID:          fmt.Sprintf("%s", uuid.NewV4()),
-		AccessRight: "superadmin",
-		Description: "This permission represents a registered and fully authorized user in our system. Users with this permission have full API access to our system.",
-	}
 
 	RegionTU := Region{
 		ID:          fmt.Sprintf("%s", uuid.NewV4()),
@@ -115,7 +94,8 @@ func AddDefaultData(db *gorm.DB) {
 		DefaultGroup: true,
 		Region:       Region{},
 		RegionId:     "",
-		Permissions:  []Permission{PermUser},
+		AccessRight:  "user",
+		Description:  "This permission represents a standard, registered but not privileged user in our system.",
 	}
 
 	GroupAdmin := Group{
@@ -123,15 +103,8 @@ func AddDefaultData(db *gorm.DB) {
 		DefaultGroup: false,
 		Region:       RegionTU,
 		RegionId:     RegionTU.ID,
-		Permissions:  []Permission{PermAdmin},
-	}
-
-	GroupSuperAdmin := Group{
-		ID:           fmt.Sprintf("%s", uuid.NewV4()),
-		DefaultGroup: false,
-		Region:       Region{},
-		RegionId:     "",
-		Permissions:  []Permission{PermSuperAdmin},
+		AccessRight:  "superadmin",
+		Description:  "This permission represents a registered and fully authorized user in our system. Users with this permission have full API access to our system.",
 	}
 
 	// Some default tag entities.
@@ -161,17 +134,13 @@ func AddDefaultData(db *gorm.DB) {
 		Mail:          "admin@example.org",
 		PhoneNumbers:  *PhoneNumbers,
 		PasswordHash:  "$2a$10$SkmaOImXqNS/PSWp65p1ougtA1N.o8r5qyu8M4RPTfGSMEf2k.Q1C",
-		Groups:        []Group{GroupSuperAdmin, GroupAdmin},
+		Groups:        []Group{GroupAdmin},
 		Enabled:       true,
 	}
 
 	// Create the database elements for these default values.
-	db.Create(&PermUser)
-	db.Create(&PermAdmin)
-	db.Create(&PermSuperAdmin)
 	db.Create(&GroupUser)
 	db.Create(&GroupAdmin)
-	db.Create(&GroupSuperAdmin)
 	db.Create(&UserAdmin)
 	db.Create(&RegionTU)
 

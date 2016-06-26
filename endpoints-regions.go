@@ -104,6 +104,15 @@ func (app *App) CreateRegion(c *gin.Context) {
 
 	app.DB.Create(&Region)
 
+	// Create admin group for this region
+	var admins db.Group
+	admins.RegionId = Region.ID
+	admins.AccessRight = "admin"
+	admins.Description = ("Group for admins of the region " + Region.Name)
+	admins.DefaultGroup = false
+	admins.ID = fmt.Sprintf("%s", uuid.NewV4())
+	app.DB.Create(&admins)
+
 	model := CopyNestedModel(Region, fieldsRegion)
 
 	c.JSON(http.StatusCreated, model)
@@ -313,12 +322,9 @@ func (app *App) ListAdminsForRegion(c *gin.Context) {
 	// The real request
 
 	var group db.Group
-	app.DB.Preload("Permissions", "access_right = ?", "admin").First(&group, "region_id = ?", regionID)
+	app.DB.Preload("Users").First(&group, "region_id = ? AND access_right = ?", regionID, "admin")
 
-	var regionAdmins []db.User
-	app.DB.Preload("Groups", "id = ?", group.ID).Preload("Groups.Permissions").Find(&regionAdmins)
-
-	model := CopyNestedModel(regionAdmins, fieldsGroup)
+	model := CopyNestedModel(group.Users, fieldsGroup)
 
 	c.JSON(http.StatusOK, model)
 }
@@ -397,11 +403,15 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 	// Everything seems fine, promote that user.
 	var group db.Group
 	//var adminPermission db.Permission
-	app.DB.Preload("Permissions", "access_right = ?", "admin").First(&group, "region_id = ?", regionID)
+	app.DB.First(&group, "region_id = ? AND access_right = ?", regionID, "admin")
+	if group.ID == "" {
+		c.JSON(http.StatusNotFound, notFound)
+		return
+	}
 
 	// Find the user who is to be promoted and add the group to his or her groups
 	var promotedUser db.User
-	app.DB.Preload("Groups").Preload("Groups.Permissions").First(&promotedUser, "mail = ?", Payload.Mail)
+	app.DB.Preload("Groups").First(&promotedUser, "mail = ?", Payload.Mail)
 
 	if promotedUser.Mail != Payload.Mail {
 
