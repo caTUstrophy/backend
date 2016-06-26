@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"time"
 
 	"net/http"
 
@@ -126,4 +128,70 @@ func (app *App) UpdateNotification(c *gin.Context) {
 	response := CopyNestedModel(Notification, fieldsNotificationU)
 
 	c.JSON(http.StatusOK, response)
+}
+
+// This function usually runs in the background of the backend
+// service and deletes all read notifications that were created
+// longer than a supplied offset ago.
+func (app *App) NotificationReaper(expiryOffset time.Duration, sleepOffset time.Duration) {
+
+	log.Println("Notification reaper started.")
+
+	// Buffer up to 10 items before bulk delete.
+	deleteBufferSize := 10
+
+	for {
+
+		// Retrieve all read notifications in ascending order by date.
+		var Notifications []db.Notification
+		app.DB.Where("\"read\" = ?", "true").Order("\"created_at\" ASC").Find(&Notifications)
+
+		log.Println("Size of notification list:", len(Notifications))
+
+		// Initialize slice to buffer to-be-deleted notifications.
+		deleteBuffer := make([]string, 0, deleteBufferSize)
+		i := 0
+
+		for _, notification := range Notifications {
+
+			// If notification was created more than expiryOffset duration
+			// ago, add ID of notification to deletion buffer.
+			if notification.CreatedAt.Add(expiryOffset).Before(time.Now()) {
+
+				log.Println("noti time:", notification.CreatedAt.Add(expiryOffset))
+				log.Println("now  time:", time.Now())
+
+				deleteBuffer = append(deleteBuffer, notification.ID)
+				log.Println("len of deleteBuffer:", len(deleteBuffer))
+				log.Println("Notification with ID", notification.ID, "was added to delete buffer:", deleteBuffer[i], "  (i is", i, ")")
+
+				i++
+			}
+
+			// If delete buffer is full, issue a bulk deletion.
+			if i == deleteBufferSize {
+
+				log.Println("Delete buffer full")
+
+				app.DB.Where("\"id\" IN (?)", deleteBuffer).Delete(&db.Notification{})
+				deleteBuffer = make([]string, 0, deleteBufferSize)
+				i = 0
+
+				log.Println("deleteBuffer:", deleteBuffer)
+				log.Println("i:", i)
+			}
+		}
+
+		if len(deleteBuffer) > 0 {
+
+			log.Println("Loop done, but deleteBuffer contains", len(deleteBuffer), "elements. Deleting.")
+
+			app.DB.Where("\"id\" IN (?)", deleteBuffer).Delete(&db.Notification{})
+		}
+
+		log.Println("Done with deletion. Sleeping for", sleepOffset)
+
+		// Let function execution sleep until next round.
+		time.Sleep(sleepOffset)
+	}
 }
