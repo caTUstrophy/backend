@@ -136,3 +136,30 @@ func (app *App) ListUserRequests(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
+func (app *App) ListUserMatchings(c *gin.Context) {
+
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	var Notifications []db.Notification
+	app.DB.Find(&Notifications, "user_id = ?", User.ID)
+
+	response := make([]interface{}, len(Notifications))
+	for i, notification := range Notifications {
+			var Matching db.Matching
+			app.DB.First(&Matching, "id = ?", notification.ItemID)
+			response[i] = CopyNestedModel(Matching, fieldsMatching)
+	}
+
+
+	c.JSON(http.StatusOK, response)
+}

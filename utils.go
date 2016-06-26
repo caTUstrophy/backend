@@ -17,6 +17,15 @@ import (
 	"github.com/nferruzzi/gormGIS"
 )
 
+// structs
+
+type GeoLocation struct {
+	Longitude float64 `json:"lng" conform:"trim"`
+	Latitude  float64 `json:"lat" conform:"trim"`
+}
+
+
+
 // Checks if a generic URL substring is present in the
 // current request and, if so, attempts to validate it
 // as an UUID version 4.

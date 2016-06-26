@@ -84,6 +84,7 @@ func InitApp() *App {
 	app.Router.PUT("/me", app.UpdateMe)
 	app.Router.GET("/me/offers", app.ListUserOffers)
 	app.Router.GET("/me/requests", app.ListUserRequests)
+	app.Router.GET("/me/matchings", app.ListUserMatchings)
 
 	app.Router.GET("/notifications", app.ListNotifications)
 	app.Router.PUT("/notifications/:notificationID", app.UpdateNotification)
