@@ -45,7 +45,7 @@ func TestUser(t *testing.T) {
 		Password:      userJeryPW,
 		PhoneNumbers:  make([]string, 1),
 	}
-	resp := Request("POST", "/users", plCreateUserJery)
+	resp := app.Request("POST", "/users", plCreateUserJery)
 
 	// check if everything went well
 	if resp.Code != 200 && resp.Code != 400 {
@@ -57,7 +57,7 @@ func TestUser(t *testing.T) {
 		plCreateUserJery.Mail,
 		plCreateUserJery.Password,
 	}
-	resp = Request("POST", "/auth", loginB)
+	resp = app.Request("POST", "/auth", loginB)
 
 	if resp.Code != 200 {
 		t.Error("User login failed", resp.Body.String())
@@ -82,7 +82,7 @@ func TestAdminLogin(t *testing.T) {
 		"admin@example.org",
 		"CaTUstrophyAdmin123$",
 	}
-	resp := Request("POST", "/auth", loginB)
+	resp := app.Request("POST", "/auth", loginB)
 
 	if resp.Code != 200 {
 		t.Error("User login failed", resp.Body.String())
@@ -128,14 +128,14 @@ func TestPostRegionAdmin(t *testing.T) {
 	PromoteJery := PromoteAdminPayload{userJeryMail}
 
 	url := "/regions/" + regionID + "/admins"
-	resp := RequestWithJWT("POST", url, PromoteJery, tokenUserJery)
+	resp := app.RequestWithJWT("POST", url, PromoteJery, tokenUserJery)
 	if resp.Code != 401 {
 		t.Error("Promoting user Jery as Jery gave no 401, but should: ", resp.Body.String())
 		return
 	}
 
 	PromoteNonExisting := PromoteAdminPayload{"This is no valid email"}
-	resp = RequestWithJWT("POST",url, PromoteNonExisting, tokenAdmin)
+	resp = app.RequestWithJWT("POST",url, PromoteNonExisting, tokenAdmin)
 	if resp.Code == 500 {
 		t.Error("Promoting non-existant user gave 500: ", resp.Body.String())
 		return
@@ -146,7 +146,7 @@ func TestPostRegionAdmin(t *testing.T) {
 	}
 
 	PromoteNonExisting = PromoteAdminPayload{"emailthatsnotinthesystem@example.org"}
-	resp = RequestWithJWT("POST",url, PromoteNonExisting, tokenAdmin)
+	resp = app.RequestWithJWT("POST",url, PromoteNonExisting, tokenAdmin)
 	if resp.Code == 500 {
 		t.Error("Promoting non-existant user gave 500: ", resp.Body.String())
 		return
@@ -156,7 +156,7 @@ func TestPostRegionAdmin(t *testing.T) {
 		return
 	}
 
-	resp = RequestWithJWT("POST",url, PromoteJery, tokenAdmin)
+	resp = app.RequestWithJWT("POST",url, PromoteJery, tokenAdmin)
 	log.Println(resp)
 	if resp.Code != 201 && resp.Code != 200 {
 		t.Error("Promoting User Jery as Admin did not work, but should: ", resp.Body.String())

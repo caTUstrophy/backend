@@ -215,13 +215,13 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) interface{} {
 
 // USED FOR TESTING ONLY!
 // Creates http.Request, requests url and returns a response
-func Request(method string, url string, body interface{}) *httptest.ResponseRecorder {
-	return RequestWithJWT(method, url, body, "")
+func (app *App) Request(method string, url string, body interface{}) *httptest.ResponseRecorder {
+	return app.RequestWithJWT(method, url, body, "")
 }
 
 // USED FOR TESTING ONLY!
 // Creates http.Request with authentication, requests url and returns a response
-func RequestWithJWT(method string, url string, body interface{}, jwt string) *httptest.ResponseRecorder {
+func (app *App) RequestWithJWT(method string, url string, body interface{}, jwt string) *httptest.ResponseRecorder {
 	resp := httptest.NewRecorder()
 	req := NewRequestWithJWT(method, url, body, jwt)
 	app.Router.ServeHTTP(resp, req)
