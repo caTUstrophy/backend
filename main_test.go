@@ -153,6 +153,59 @@ func TestPostRegionAdmin(t *testing.T) {
 }
 
 
+func TestCreateMatching(t *testing.T) {
+	// create offer
+	plCreateOffer := CreateOfferPayload {
+		"new name",
+		GeoLocation{123.2, 113.1},
+		[]string{},
+		"2017-11-01T22:08:41+00:00",
+	}
 
-func TestGroups(t *testing.T) {
+	resp := app.RequestWithJWT("POST", "/offers", plCreateOffer, tokenUserJery)
+	dataCreateOffer := parseResponse(resp)
+
+	if resp.Code != 201 {
+		t.Error("Could not create offer")
+		return
+	}
+
+	// create request
+	plCreateRequest := CreateRequestPayload {
+		"new name",
+		GeoLocation{123.2, 113.1},
+		[]string{},
+		"2017-11-01T22:08:41+00:00",
+	}
+
+	resp = app.RequestWithJWT("POST", "/requests", plCreateRequest, tokenUserJery)
+	dataCreateRequest := parseResponse(resp)
+
+	if resp.Code != 201 {
+		t.Error("Could not create request")
+		return
+	}
+
+
+	// create matching
+	plCreateMatching := CreateMatchingPayload{
+		"830c13c6-30b4-407d-966c-50d46d9f8d31",
+		dataCreateRequest["ID"].(string),
+		dataCreateOffer["ID"].(string),
+	}
+	resp = app.RequestWithJWT("POST", "/matchings", plCreateMatching, tokenAdmin)
+
+	if resp.Code != 201 {
+		t.Error("Could not create matching")
+		return
+	}
+}
+
+
+func TestMeMatchings(t *testing.T) {
+	resp := app.RequestWithJWT("GET", "/me/matchings", nil, tokenUserJery)
+	if resp.Code != 200 {
+		t.Error("could not load matchings")
+		return
+	}
 }
