@@ -60,6 +60,13 @@ func InitAndConfig() *App {
 	validatorConfig := &validator.Config{TagName: "validate"}
 	app.Validator = validator.New(validatorConfig)
 
+	// Set sleep offset for offers and requests reaper.
+	offReqSleepOffset, err := strconv.Atoi(os.Getenv("OFFERS_REQUESTS_SLEEP_OFFSET"))
+	if err != nil {
+		log.Fatal("[InitAndConfig] Could not load OFFERS_REQUESTS_SLEEP_OFFSET from .env file. Missing or not an integer?")
+	}
+	app.OffReqSleepOffset = time.Duration(offReqSleepOffset) * time.Minute
+
 	// Set offsets for notification reaper to delete old notifications.
 	notifExpOffset, err := strconv.Atoi(os.Getenv("NOTIFICATION_EXPIRY_OFFSET"))
 	if err != nil {

@@ -158,10 +158,3 @@ func AddDefaultData(db *gorm.DB) {
 		db.Create(&Tag)
 	}
 }
-
-// Set Expired flag for all requests and offers that are not valid anymore.
-func CheckForExpired(db *gorm.DB) {
-	// TODO: Write this expired element reaper function.
-	//       Cycle through request and offer tables and set Expired fields to true
-	//       where a ValidityPeriod is smaller than current time.
-}

@@ -31,41 +31,26 @@ func OfferRequestReaper(db *gorm.DB, table string, sleepOffset time.Duration) {
 			var Items []Offer
 			db.Where("\"expired\" = ?", "false").Order("\"validity_period\" ASC").Find(&Items)
 
-			log.Println("Size of offers list:", len(Items))
-
 			for _, item := range Items {
 
 				// If the validity period of an item is less than the
 				// current time, add the item's ID to expireBuffer.
 				if item.ValidityPeriod.Before(time.Now()) {
 
-					log.Println("offer time:", item.ValidityPeriod)
-					log.Println("now   time:", time.Now())
-
 					expireBuffer = append(expireBuffer, item.ID)
-
-					log.Println("len of expireBuffer:", len(expireBuffer))
-					log.Println("Offer with ID", item.ID, "was added to expire buffer:", expireBuffer[i], " (i is", i, ")")
-
 					i++
 				}
 
 				// If expire buffer is full, issue a bulk update.
 				if i == expireBufferSize {
 
-					log.Println("Expire buffer full")
-
 					db.Model(&Offer{}).Where("\"id\" IN (?)", expireBuffer).Update("expired", true)
 					expireBuffer = make([]string, 0, expireBufferSize)
 					i = 0
-
-					log.Println("expireBuffer:", expireBuffer)
-					log.Println("i:", i)
 				}
 			}
 
 			if len(expireBuffer) > 0 {
-				log.Println("Loop done, but expireBuffer contains", len(expireBuffer), "elements. Expiring.")
 				db.Model(&Offer{}).Where("\"id\" IN (?)", expireBuffer).Update("expired", true)
 			}
 
@@ -74,41 +59,26 @@ func OfferRequestReaper(db *gorm.DB, table string, sleepOffset time.Duration) {
 			var Items []Request
 			db.Where("\"expired\" = ?", "false").Order("\"validity_period\" ASC").Find(&Items)
 
-			log.Println("Size of requests list:", len(Items))
-
 			for _, item := range Items {
 
 				// If the validity period of an item is less than the
 				// current time, add the item's ID to expireBuffer.
 				if item.ValidityPeriod.Before(time.Now()) {
 
-					log.Println("request time:", item.ValidityPeriod)
-					log.Println("now     time:", time.Now())
-
 					expireBuffer = append(expireBuffer, item.ID)
-
-					log.Println("len of expireBuffer:", len(expireBuffer))
-					log.Println("Request with ID", item.ID, "was added to expire buffer:", expireBuffer[i], " (i is", i, ")")
-
 					i++
 				}
 
 				// If expire buffer is full, issue a bulk update.
 				if i == expireBufferSize {
 
-					log.Println("Expire buffer full")
-
 					db.Model(&Request{}).Where("\"id\" IN (?)", expireBuffer).Update("expired", true)
 					expireBuffer = make([]string, 0, expireBufferSize)
 					i = 0
-
-					log.Println("expireBuffer:", expireBuffer)
-					log.Println("i:", i)
 				}
 			}
 
 			if len(expireBuffer) > 0 {
-				log.Println("Loop done, but expireBuffer contains", len(expireBuffer), "elements. Expiring.")
 				db.Model(&Request{}).Where("\"id\" IN (?)", expireBuffer).Update("expired", true)
 			}
 

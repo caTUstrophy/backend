@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/itsjamie/gin-cors"
@@ -14,15 +15,16 @@ import (
 // Structs
 
 type App struct {
-	IP               string
-	Port             string
-	Router           *gin.Engine
-	DB               *gorm.DB
-	HashCost         int
-	SessionValidFor  time.Duration
-	Validator        *validator.Validate
-	NotifExpOffset   time.Duration
-	NotifSleepOffset time.Duration
+	IP                string
+	Port              string
+	Router            *gin.Engine
+	DB                *gorm.DB
+	HashCost          int
+	SessionValidFor   time.Duration
+	Validator         *validator.Validate
+	OffReqSleepOffset time.Duration
+	NotifExpOffset    time.Duration
+	NotifSleepOffset  time.Duration
 }
 
 // Main
@@ -99,8 +101,16 @@ func main() {
 
 	app := InitApp()
 
+	// Start goroutine that sets expired field of offers.
+	go db.OfferRequestReaper(app.DB, "Offers", app.OffReqSleepOffset)
+	log.Printf("\n[main] Dispatched offers reaper with %s sleep time.", app.OffReqSleepOffset.String())
+
+	// Start goroutine that sets expired field of requests.
+	go db.OfferRequestReaper(app.DB, "Requests", app.OffReqSleepOffset)
+	log.Printf("\n[main] Dispatched requests reaper with %s sleep time.", app.OffReqSleepOffset.String())
+
 	// Start goroutine to delete old notifications.
-	go app.NotificationReaper(app.NotifExpOffset, app.NotifSleepOffset)
+	go db.NotificationReaper(app.DB, app.NotifExpOffset, app.NotifSleepOffset)
 	log.Printf("\n[main] Dispatched notification reaper with %s expiry time and %s sleep time.\n\n", app.NotifExpOffset.String(), app.NotifSleepOffset.String())
 
 	// Run our application.
