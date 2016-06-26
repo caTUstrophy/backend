@@ -82,7 +82,9 @@ func (app *App) PromoteToSystemAdmin(c *gin.Context) {
 
 	if promotedUser.Mail != Payload.Mail {
 
-		c.JSON(http.StatusNotFound, notFound)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Email unkown to system",
+		})
 
 		return
 	}

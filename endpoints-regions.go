@@ -352,6 +352,13 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 	// Select region based on supplied ID from database.
 	app.DB.First(&Region, "id = ?", regionID)
 
+	if Region.ID == "" {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": "The region you requested does not exist.",
+		})
+		return
+	}
+
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
 
@@ -405,7 +412,9 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 	//var adminPermission db.Permission
 	app.DB.First(&group, "region_id = ? AND access_right = ?", regionID, "admin")
 	if group.ID == "" {
-		c.JSON(http.StatusNotFound, notFound)
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": "For the requested region, no admin group exists. Please tell the developers, this should not occur.",
+		})
 		return
 	}
 
@@ -415,7 +424,9 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 
 	if promotedUser.Mail != Payload.Mail {
 
-		c.JSON(http.StatusNotFound, notFound)
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": "Email unkown to system.",
+		})
 
 		return
 	}
