@@ -9,10 +9,10 @@ import (
 // Constants
 
 const (
-	NotificationMatching NotificationType = "notification"
+	NotificationMatching string = "matching"
 	// Place for more, future notification types.
 	// Add them like e.g.:
-	// NotificationPromotion = "promotion"
+	// NotificationPromotion string = "promotion"
 )
 
 // Models
@@ -94,12 +94,11 @@ type Region struct {
 	Requests    []Request `gorm:"many2many:region_requests"`
 }
 
-type NotificationType string
-
 type Notification struct {
-	ID        string           `gorm:"primary_key"`
-	Type      NotificationType `gorm:"index;not null"`
-	ItemID    string           `gorm:"not null"`
-	Read      bool             `gorm:"not null"`
-	CreatedAt time.Time        `gorm:"not null"`
+	ID        string    `gorm:"primary_key"`
+	Type      string    `gorm:"index;not null"`
+	UserID    string    `gorm:"not null"`
+	ItemID    string    `gorm:"not null"`
+	Read      bool      `gorm:"not null"`
+	CreatedAt time.Time `gorm:"not null"`
 }

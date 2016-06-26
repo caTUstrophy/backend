@@ -34,8 +34,8 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 
 	// Extract JWT from request headers.
 	requestJWT, err := request.ParseFromRequest(req, request.AuthorizationHeaderExtractor, func(token *jwt.Token) (interface{}, error) {
-		// Verfiy that JWT was signed with correct algorithm.
 
+		// Verify that JWT was signed with correct algorithm.
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("[Authorize] Unexpected signing method: %v.", token.Header["alg"])
 		}
@@ -65,16 +65,18 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 
 	claims := requestJWT.Claims.(jwt.MapClaims)
 
-	// Check if JWT is expired
+	// Check if JWT is expired.
 	jwtExp, ok := claims["exp"].(string)
 	if !ok {
 		return false, nil, "JWT contained invalid date"
 	}
+
 	exp, _ := time.Parse(time.RFC3339, jwtExp)
 	if exp.Before(time.Now()) {
 		return false, nil, "JWT was expired"
 	}
-	// Check if an entry with mail from JWT exists in our session store.
+
+	// Extract mail of JWT claimed user.
 	email := claims["iss"].(string)
 
 	// Retrieve user from database.
