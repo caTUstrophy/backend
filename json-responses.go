@@ -118,6 +118,12 @@ var fieldsMatching = map[string]interface{}{
 	"RequestId": "RequestId",
 }
 
+var fieldsNotification = map[string]interface{}{
+	"ID":     "ID",
+	"Type":   "Type",
+	"ItemID": "ItemID",
+}
+
 // Other global response schemes, not thought to be used for CopyNestedModel
 
 var notFound = map[string]interface{}{

@@ -64,6 +64,7 @@ func AddDefaultData(db *gorm.DB) {
 	db.DropTableIfExists(&Request{})
 	db.DropTableIfExists(&Matching{})
 	db.DropTableIfExists(&Region{})
+	db.DropTableIfExists(&Notification{})
 	db.DropTableIfExists("region_offers")
 	db.DropTableIfExists("region_requests")
 	db.DropTableIfExists("group_permissions")
@@ -80,6 +81,7 @@ func AddDefaultData(db *gorm.DB) {
 	db.CreateTable(&Request{})
 	db.CreateTable(&Matching{})
 	db.CreateTable(&Region{})
+	db.CreateTable(&Notification{})
 
 	// Three default permission entities.
 

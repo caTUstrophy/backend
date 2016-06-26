@@ -1,13 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"bytes"
 	"encoding/json"
 	"net/http"
 	"reflect"
-	
+
 	"net/http/httptest"
 
 	"github.com/caTUstrophy/backend/db"
@@ -157,9 +158,10 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) interface{} {
 
 		var exists = false
 		newKey, _ := fields[key].(string)
+
 		if valInterface.NumField() == 0 {
-			// This nested data is expected by fields but is empty
-			// We return the data with every field of the not existing nested map set to nil
+			// This nested data is expected by fields but is empty.
+			// We return the data with every field of the not existing nested map set to nil.
 			m[newKey] = nil
 			exists = true // We dont throw an error in this case
 		} else {
@@ -210,23 +212,97 @@ func CopyNestedModel(i interface{}, fields map[string]interface{}) interface{} {
 	return m
 }
 
+// This function works just like CopyNestedModel, but returns
+// no content of i but the type of the content. Will be used
+// to automate writing our documentation.
+func getJSONResponseInfo(i interface{}, fields map[string]interface{}) map[string]interface{} {
 
+	var m map[string]interface{}
+	m = make(map[string]interface{})
 
+	// get value + type of source interface
+	valInterface := reflect.ValueOf(i)
+	typeOfT := reflect.ValueOf(i).Type()
 
-// USED FOR TESTING ONLY!
-// Creates http.Request, requests url and returns a response
-func (app *App) Request(method string, url string, body interface{}) *httptest.ResponseRecorder {
-	return app.RequestWithJWT(method, url, body, "")
+	// iterate over all fields that occur in response
+	for key := range fields {
+
+		var exists = false
+		newKey, _ := fields[key].(string)
+
+		// search for field in source type
+		for i := 0; i < valInterface.NumField(); i++ {
+
+			if typeOfT.Field(i).Name == key { // original field has been found
+
+				// check for nesting through type assertion
+				nestedMap, nested := fields[key].(map[string]interface{})
+
+				if !nested {
+
+					// NOT nested -> save type of this field for the newKey
+					if ReplacementsJSONbyKey[newKey] != nil {
+						m[newKey] = ReplacementsJSONbyKey[newKey]
+					} else {
+
+						newType := fmt.Sprint(valInterface.Field(i).Type())
+
+						if ReplacementsJSON[newType] != nil {
+							m[newKey] = ReplacementsJSON[newType]
+						} else {
+							m[newKey] = newType
+						}
+					}
+
+				} else {
+
+					// NESTED copied via recursion
+					var slice = reflect.ValueOf(valInterface.Field(i).Interface())
+
+					// if nested ARRAY
+					if valInterface.Field(i).Kind() == reflect.Slice {
+
+						sliceMapped := make([]interface{}, 1)
+
+						for i := 0; i < slice.Len() && i < 1; i++ {
+							sliceMapped[i] = getJSONResponseInfo(slice.Index(i).Interface(), nestedMap)
+						}
+
+						m[key] = sliceMapped
+					} else {
+						// if nested OBJECT
+						m[key] = getJSONResponseInfo(valInterface.Field(i).Interface(), nestedMap)
+					}
+				}
+
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			log.Fatalf("ERROR: Struct<%s> has no field: %s", typeOfT.Name(), key)
+		}
+	}
+
+	return m
 }
 
 // USED FOR TESTING ONLY!
 // Creates http.Request with authentication, requests url and returns a response
 func (app *App) RequestWithJWT(method string, url string, body interface{}, jwt string) *httptest.ResponseRecorder {
+
 	resp := httptest.NewRecorder()
 	req := NewRequestWithJWT(method, url, body, jwt)
 	app.Router.ServeHTTP(resp, req)
 
 	return resp
+}
+
+// USED FOR TESTING ONLY!
+// Creates http.Request, requests url and returns a response
+func (app *App) Request(method string, url string, body interface{}) *httptest.ResponseRecorder {
+	return app.RequestWithJWT(method, url, body, "")
 }
 
 // creates and configures http.Request
@@ -236,8 +312,10 @@ func NewRequest(method string, url string, body interface{}) *http.Request {
 
 // creates and configures authorized http.Request
 func NewRequestWithJWT(method string, url string, body interface{}, jwt string) *http.Request {
+
 	bodyBytes, _ := json.Marshal(body)
 	req, _ := http.NewRequest(method, url, bytes.NewBuffer(bodyBytes))
+
 	if jwt != "" {
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", ("Bearer " + jwt))
@@ -246,9 +324,8 @@ func NewRequestWithJWT(method string, url string, body interface{}, jwt string) 
 	return req
 }
 
-
 // USED FOR TESTING ONLY!
-// parseResponse into interface{}, instead of JSON.bind() onto struct
+// Parse response into interface{}, instead of JSON.bind() onto struct.
 func parseResponse(resp *httptest.ResponseRecorder) map[string]interface{} {
 
 	var dat map[string]interface{}
@@ -260,7 +337,7 @@ func parseResponse(resp *httptest.ResponseRecorder) map[string]interface{} {
 }
 
 // USED FOR TESTING ONLY!
-// parseResponse into Array of interface{}, instead of JSON.bind() onto struct
+// Parse response into array of interface{}, instead of JSON.bind() onto struct.
 func parseResponseToArray(resp *httptest.ResponseRecorder) []map[string]interface{} {
 
 	var dat []map[string]interface{}
