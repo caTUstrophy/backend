@@ -207,6 +207,9 @@ func (app *App) GetMatching(c *gin.Context) {
 
 	matchingID := app.getUUID(c, "matchingID")
 	if matchingID == "" {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"Error":"macthingID is not a valid UUID",
+		})
 		return
 	}
 

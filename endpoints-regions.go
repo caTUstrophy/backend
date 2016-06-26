@@ -179,6 +179,8 @@ func (app *App) ListOffersForRegion(c *gin.Context) {
 
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"Error":"regionID is no valid UUID", })
 		return
 	}
 
@@ -221,6 +223,8 @@ func (app *App) ListRequestsForRegion(c *gin.Context) {
 
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"Error":"regionID is no valid UUID", })
 		return
 	}
 
@@ -263,6 +267,8 @@ func (app *App) ListMatchingsForRegion(c *gin.Context) {
 
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"Error":"regionID is no valid UUID", })
 		return
 	}
 
@@ -307,6 +313,8 @@ func (app *App) ListAdminsForRegion(c *gin.Context) {
 	// Retrieve region ID from request URL.
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"Error":"regionID is no valid UUID", })
 		return
 	}
 
@@ -350,6 +358,8 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 	// Retrieve region ID from request URL.
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"Error":"regionID is no valid UUID", })
 		return
 	}
 
