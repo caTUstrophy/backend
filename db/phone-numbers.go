@@ -40,7 +40,7 @@ func (num *PhoneNumbers) Scan(value interface{}) error {
 	} else if reflect.TypeOf(value).String() == "[]uint8" {
 		err = json.Unmarshal(value.([]byte), &num)
 	} else {
-		return errors.New("Could not scan phone number - type assertion failed.")
+		return errors.New("Could not scan phone numbers - type assertion failed.")
 	}
 
 	// Attempt to unmarshal into type.

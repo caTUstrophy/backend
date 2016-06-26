@@ -74,17 +74,40 @@ func (app *App) CreateMatching(c *gin.Context) {
 		return
 	}
 
-	// Check that offer and request do exist.
-	var CountOffer int
-	app.DB.Model(&db.Offer{}).Where("id = ?", Payload.Offer).Count(&CountOffer)
-	var CountRequest int
-	app.DB.Model(&db.Request{}).Where("id = ?", Payload.Request).Count(&CountRequest)
+	// Fetch involved request and offer.
+	var Offer db.Offer
+	app.DB.First(&Offer, "id = ?", Payload.Offer)
+	var Request db.Request
+	app.DB.First(&Request, "id = ?", Payload.Request)
 
-	if (CountOffer == 0) || (CountRequest == 0) {
+	// Check that offer and request do exist.
+	if (Offer.UserID == "") || (Request.UserID == "") {
 
 		// Signal request failure to client.
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Matching": "Offer or request does not exist",
+		})
+
+		return
+	}
+
+	// Check that offer or request are not already expired.
+	if (Offer.Expired) || (Request.Expired) {
+
+		// Signal request failure to client.
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Matching": "Offer or request already expired",
+		})
+
+		return
+	}
+
+	// Check that offer or request are not already matched.
+	if (Offer.Matched) || (Request.Matched) {
+
+		// Signal request failure to client.
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Matching": "Offer or request already matched",
 		})
 
 		return
@@ -103,12 +126,6 @@ func (app *App) CreateMatching(c *gin.Context) {
 
 		return
 	}
-
-	// Get request and offer to resolve foreign key dependencies.
-	var Offer db.Offer
-	app.DB.First(&Offer, "id = ?", Payload.Offer)
-	var Request db.Request
-	app.DB.First(&Request, "id = ?", Payload.Request)
 
 	// Check if user has actually admin rights for specified region.
 	var ContainingRegion db.Region
@@ -134,6 +151,13 @@ func (app *App) CreateMatching(c *gin.Context) {
 
 	// Save matching to database.
 	app.DB.Create(&Matching)
+
+	// Set 'Matched' field of involved request and offer to true.
+	Offer.Matched = true
+	Request.Matched = true
+
+	app.DB.Save(&Offer)
+	app.DB.Save(&Request)
 
 	// Only expose fields that are necessary.
 	model := CopyNestedModel(Matching, fieldsMatching)

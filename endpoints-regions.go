@@ -15,13 +15,13 @@ import (
 
 // Structs
 
-type CreateLocation struct {
+type Location struct {
 	Lng float64 `json:"lng" conform:"trim"`
 	Lat float64 `json:"lat" conform:"trim"`
 }
 
 type Boundaries struct {
-	Points []CreateLocation `validate:"dive,required"`
+	Points []Location `validate:"dive,required"`
 }
 
 type CreateRegionPayload struct {
@@ -146,7 +146,6 @@ func (app *App) GetRegion(c *gin.Context) {
 }
 
 func (app *App) UpdateRegion(c *gin.Context) {
-
 	// TODO: Implement this function.
 }
 
@@ -168,8 +167,9 @@ func (app *App) ListOffersForRegion(c *gin.Context) {
 		return
 	}
 
+	// Load all offers for specified region that were not yet matched.
 	var Region db.Region
-	app.DB.Preload("Offers").First(&Region, "id = ?", regionID)
+	app.DB.Preload("Offers", "\"matched\" = ?", "false").First(&Region, "id = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
@@ -209,8 +209,9 @@ func (app *App) ListRequestsForRegion(c *gin.Context) {
 		return
 	}
 
+	// Load all requests for specified region that were not yet matched.
 	var Region db.Region
-	app.DB.Preload("Requests").First(&Region, "id = ?", regionID)
+	app.DB.Preload("Requests", "\"matched\" = ?", "false").First(&Region, "id = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
