@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"time"
 
 	"net/http"
 
@@ -158,6 +160,31 @@ func (app *App) CreateMatching(c *gin.Context) {
 
 	app.DB.Save(&Offer)
 	app.DB.Save(&Request)
+
+	// Trigger a notification for involved users.
+	NotifyOfferUser := db.Notification{
+		ID:        fmt.Sprintf("%s", uuid.NewV4()),
+		Type:      db.NotificationMatching,
+		UserID:    Offer.UserID,
+		ItemID:    Matching.ID,
+		Read:      false,
+		CreatedAt: time.Now(),
+	}
+
+	NotifyRequestUser := db.Notification{
+		ID:        fmt.Sprintf("%s", uuid.NewV4()),
+		Type:      db.NotificationMatching,
+		UserID:    Request.UserID,
+		ItemID:    Matching.ID,
+		Read:      false,
+		CreatedAt: time.Now(),
+	}
+
+	log.Println("time.Now():", time.Now())
+	log.Println("time.Now().Format(RFC):", time.Now().Format(time.RFC3339))
+
+	app.DB.Create(&NotifyOfferUser)
+	app.DB.Create(&NotifyRequestUser)
 
 	// Only expose fields that are necessary.
 	model := CopyNestedModel(Matching, fieldsMatching)

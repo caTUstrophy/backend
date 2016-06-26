@@ -63,6 +63,7 @@ func AddDefaultData(db *gorm.DB) {
 	db.DropTableIfExists(&Request{})
 	db.DropTableIfExists(&Matching{})
 	db.DropTableIfExists(&Region{})
+	db.DropTableIfExists(&Notification{})
 	db.DropTableIfExists("region_offers")
 	db.DropTableIfExists("region_requests")
 	db.DropTableIfExists("offer_tags")
@@ -77,6 +78,7 @@ func AddDefaultData(db *gorm.DB) {
 	db.CreateTable(&Request{})
 	db.CreateTable(&Matching{})
 	db.CreateTable(&Region{})
+	db.CreateTable(&Notification{})
 
 	// Three default permission entities.
 
@@ -101,9 +103,16 @@ func AddDefaultData(db *gorm.DB) {
 	GroupAdmin := Group{
 		ID:           fmt.Sprintf("%s", uuid.NewV4()),
 		DefaultGroup: false,
+		AccessRight:  "superadmin",
+		Description:  "This permission represents a registered and fully authorized user in our system. Users with this permission have full API access to our system.",
+	}
+
+	GroupRegionAdmin := Group{
+		ID:           fmt.Sprintf("%s", uuid.NewV4()),
+		DefaultGroup: false,
 		Region:       RegionTU,
 		RegionId:     RegionTU.ID,
-		AccessRight:  "superadmin",
+		AccessRight:  "admin",
 		Description:  "This permission represents a registered and fully authorized user in our system. Users with this permission have full API access to our system.",
 	}
 
@@ -140,6 +149,7 @@ func AddDefaultData(db *gorm.DB) {
 
 	// Create the database elements for these default values.
 	db.Create(&GroupUser)
+	db.Create(&GroupRegionAdmin)
 	db.Create(&GroupAdmin)
 	db.Create(&UserAdmin)
 	db.Create(&RegionTU)

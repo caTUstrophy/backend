@@ -113,12 +113,15 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | [List offers in region `regionID`](#list-offers-in-region-with-regionid) | A | GET | /regions/:regionID/offers    | 2.0         | ✔    |
 | [List requests in region `regionID`](#list-requests-in-region-with-regionid) | A | GET | /regions/:regionID/requests | 2.0      | ✔    |
 | [List matchings in region `regionID`](#list-matchings-in-region-with-regionid) | A | GET | /regions/:regionID/matchings | 2.0   | ✔    |
-| [Promote user to admin for region `regionID`](#promote-user-to-admin-in-region-with-regionid) | A | POST | /regions/:regionID/admins | 3.0 |	|
-| [List admins for region `regionID`](#list-admins-in-region-with-regionid) | A | GET | /regions/:regionID/admins 	| 3.0	|	|
+| [Promote user to admin for region `regionID`](#promote-user-to-admin-in-region-with-regionid) | A | POST | /regions/:regionID/admins | 3.0 |  |
+| [List admins for region `regionID`](#list-admins-in-region-with-regionid) | A | GET | /regions/:regionID/admins   | 3.0   |   |
 | [Own profile](#own-profile)                                     | L    | GET       | /me                          | 2.0         | ✔    |
 | [Update own profile](#update-own-profile)                       | L    | PUT       | /me                          | 3.0         |       |
 | [List own offers](#list-own-offers)                             | L    | GET       | /me/offers                   | 2.0         | ✔    |
 | [List own requests](#list-own-requests)                         | L    | GET       | /me/requests                 | 2.0         | ✔    |
+| [List own matchings](#list-own-matchings)                       | L    | GET       | /me/matchings                | 3.0         |       |
+| [List unread notifications](#list-unread-notifications)         | L    | GET       | /notifications               | 3.0         | ✔    |
+| [Update notification `notificationID`](#update-notification-with-notificationid) | C | PUT | /notifications/:notificationID | 3.0 | ✔  |
 
 
 ### What is inside a JWT?
@@ -127,10 +130,10 @@ Inside a JWT issued by this backend, the following fields are present:
 
 ```
 {
-	"iss": "ralollol@bernd.orgorg",
-	"iat": "2016-06-09T21:39:12+02:00",
-	"nbf": "2016-06-09T21:38:12+02:00",
-	"exp": "2016-06-09T22:09:12+02:00"
+    "iss": "ralollol@bernd.orgorg",
+    "iat": "2016-06-09T21:39:12+02:00",
+    "nbf": "2016-06-09T21:38:12+02:00",
+    "exp": "2016-06-09T22:09:12+02:00"
 }
 ```
 
@@ -160,11 +163,23 @@ POST /auth
 
 **Response:**
 
+Success:
+
 ```
 200 OK
 
 {
     "AccessToken": string/jwt
+}
+```
+
+Fail:
+
+```
+400 Bad Request
+
+{
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
 ```
 
@@ -180,7 +195,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success
+Success:
 
 ```
 200 OK
@@ -190,7 +205,7 @@ Success
 }
 ```
 
-Failure
+Fail:
 
 ```
 401 Unauthorized
@@ -209,12 +224,21 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
+Success:
+
 ```
 200 OK
 
 {
-	"ID": UUID v4
+    "ID": UUID v4
 }
+```
+
+Fail:
+
+```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
 
 
@@ -246,15 +270,17 @@ POST /users
     "PreferredName": "alex",
     "Mail": "alexandra.m.namia@example.com",
     "PhoneNumbers": [
-    	"012012312373",
-    	"07791184228843",
-    	"+9999230203920"
+        "012012312373",
+        "07791184228843",
+        "+9999230203920"
     ],
     "Password": "WhyNotSafe1337Worlds?"
 }
 ```
 
 **Response:**
+
+Success:
 
 ```
 201 Created
@@ -271,10 +297,10 @@ POST /users
             "ID": UUID v4,
             "Description": string,
             "Region": {
-        		"ID": UUID v4,
-        		"Description": string,
-        		"Name": string
-    		},
+                "ID": UUID v4,
+                "Description": string,
+                "Name": string
+            },
             "Permissions": [
                 {
                     "AccessRight": string
@@ -283,6 +309,23 @@ POST /users
         },
         ...
     ]
+}
+```
+
+Fail:
+
+```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+or
+
+```
+400 Bad Request
+
+{
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
 ```
 
@@ -307,6 +350,8 @@ Success
 Fail
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
 
 
@@ -330,6 +375,8 @@ Success
 Fail
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
 
 
@@ -353,6 +400,18 @@ Success
 Fail
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+or
+
+```
+400 Bad Request
+
+{
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
 ```
 
 
@@ -365,13 +424,13 @@ POST /offers
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
-	"Name": required, string,
-	"Tags": optional, string array,
-	"ValidityPeriod": required, RFC3339 date,
-	"Location": {
-		"lng": float64,
-		"lat": float64
-	}
+    "Name": required, string,
+    "Tags": optional, string array,
+    "ValidityPeriod": required, RFC3339 date,
+    "Location": {
+        "lng": float64,
+        "lat": float64
+    }
 }
 ```
 
@@ -382,13 +441,13 @@ POST /offers
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
-	"Name": "hugs",
-	"Tags": ["tag", "another tag"],
-	"ValidityPeriod": "2017-11-01T22:08:41+00:00",
-	"Location": {
-		"lng": 12.3,
-		"lat": 0.0
-	}
+    "Name": "hugs",
+    "Tags": ["tag", "another tag"],
+    "ValidityPeriod": "2017-11-01T22:08:41+00:00",
+    "Location": {
+        "lng": 12.3,
+        "lat": 0.0
+    }
 
 }
 ```
@@ -401,36 +460,43 @@ Success:
 201 Created
 
 {
-	"ID": UUID v4,
-	"Name": string,
-	"Location": {
-		"lng": float64,
-		"lat": float64
-	},
-	Tags: [
-		{
-			"Name": string
-		},
-		...
-	],
-	"ValidityPeriod": RF3339 Date,
-	"Expired": bool,
-	"Matched": bool,
-	"User": {
-		"ID": UUID v4,
-		"Mail": string,
-		"Name": string
-	}
+    "ID": UUID v4,
+    "Name": string,
+    "Location": {
+        "lng": float64,
+        "lat": float64
+    },
+    Tags: [
+        {
+            "Name": string
+        },
+        ...
+    ],
+    "ValidityPeriod": RF3339 Date,
+    "Expired": bool,
+    "Matched": bool,
+    "User": {
+        "ID": UUID v4,
+        "Mail": string,
+        "Name": string
+    }
 }
 ```
 
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+or
+
+```
 400 Bad Request
 
 {
-	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
 ```
 
@@ -440,7 +506,7 @@ Fail:
 400 Bad Request
 
 {
-	"Location": "User can't post for this location. (But don't expect this exact message)"
+    "Location": "User can't post for this location. (But don't expect this exact message)"
 }
 ```
 
@@ -460,32 +526,34 @@ Success:
 
 ```
 {
-	"ID": UUID v4,
-	"Name": string,
-	"Location": {
-		"lng": float64,
-		"lat": float64
-	},
-	Tags: [
-		{
-			"Name": string
-		},
-		...
-	],
-	"ValidityPeriod": RF3339 Date,
-	"Expired": bool,
-	"Matched": bool,
-	"User": {
-		"ID": UUID v4,
-		"Mail": string,
-		"Name": string
-	}
+    "ID": UUID v4,
+    "Name": string,
+    "Location": {
+        "lng": float64,
+        "lat": float64
+    },
+    Tags: [
+        {
+            "Name": string
+        },
+        ...
+    ],
+    "ValidityPeriod": RF3339 Date,
+    "Expired": bool,
+    "Matched": bool,
+    "User": {
+        "ID": UUID v4,
+        "Mail": string,
+        "Name": string
+    }
 }
 ```
 
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
 
 
@@ -511,6 +579,18 @@ Success:
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+or
+
+```
+400 Bad Request
+
+{
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
 ```
 
 
@@ -523,13 +603,13 @@ POST /requests
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
-	"Name": required, string,
-	"Tags": optional, string array,
-	"ValidityPeriod": required, RFC3339 date,
-	"Location": {
-		"lng": float64,
-		"lat": float64
-	}
+    "Name": required, string,
+    "Tags": optional, string array,
+    "ValidityPeriod": required, RFC3339 date,
+    "Location": {
+        "lng": float64,
+        "lat": float64
+    }
 }
 ```
 
@@ -541,36 +621,43 @@ Success:
 201 Created
 
 {
-	"ID": UUID v4,
-	"Name": string,
-	"Location": {
-		"lng": float64,
-		"lat": float64
-	},
-	Tags: [
-		{
-			"Name": string
-		},
-		...
-	],
-	"ValidityPeriod": RF3339 Date,
-	"Expired": bool,
-	"Matched": bool,
-	"User": {
-		"ID": UUID v4,
-		"Mail": string,
-		"Name": string
-	}
+    "ID": UUID v4,
+    "Name": string,
+    "Location": {
+        "lng": float64,
+        "lat": float64
+    },
+    Tags: [
+        {
+            "Name": string
+        },
+        ...
+    ],
+    "ValidityPeriod": RF3339 Date,
+    "Expired": bool,
+    "Matched": bool,
+    "User": {
+        "ID": UUID v4,
+        "Mail": string,
+        "Name": string
+    }
 }
 ```
 
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+or
+
+```
 400 Bad Request
 
 {
-	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
 ```
 
@@ -590,32 +677,34 @@ Success:
 
 ```
 {
-	"ID": UUID v4,
-	"Name": string,
-	"Location": {
-		"lng": float64,
-		"lat": float64
-	},
-	Tags: [
-		{
-			"Name": string
-		},
-		...
-	],
-	"ValidityPeriod": RF3339 Date,
-	"Expired": bool,
-	"Matched": bool,
-	"User": {
-		"ID": UUID v4,
-		"Mail": string,
-		"Name": string
-	}
+    "ID": UUID v4,
+    "Name": string,
+    "Location": {
+        "lng": float64,
+        "lat": float64
+    },
+    Tags: [
+        {
+            "Name": string
+        },
+        ...
+    ],
+    "ValidityPeriod": RF3339 Date,
+    "Expired": bool,
+    "Matched": bool,
+    "User": {
+        "ID": UUID v4,
+        "Mail": string,
+        "Name": string
+    }
 }
 ```
 
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
 
 
@@ -641,6 +730,18 @@ Success:
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+or 
+
+```
+400 Bad Request
+
+{
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
 ```
 
 
@@ -653,9 +754,9 @@ POST /matchings
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
-	"Region": required, UUID v4,
-	"Request": required, UUID v4,
-	"Offer": required, UUID v4
+    "Region": required, UUID v4,
+    "Request": required, UUID v4,
+    "Offer": required, UUID v4
 }
 ```
 
@@ -667,20 +768,27 @@ Success:
 201 Created
 
 {
-	"ID": UUID v4,
-	"OfferId": UUID v4,
-	"RequestId": UUID v4,
-	"RegionId" UUID v4
+    "ID": UUID v4,
+    "OfferId": UUID v4,
+    "RequestId": UUID v4,
+    "RegionId" UUID v4
 }
 ```
 
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+or
+
+```
 400 Bad Request
 
 {
-	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
 ```
 
@@ -702,20 +810,27 @@ Success:
 200 OK
 
 {
-	"ID": UUID v4,
-	"OfferId": UUID v4,
-	"RequestId": UUID v4,
-	"RegionId" UUID v4
+    "ID": UUID v4,
+    "OfferId": UUID v4,
+    "RequestId": UUID v4,
+    "RegionId" UUID v4
 }
 ```
 
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+or
+
+```
 400 Bad Request
 
 {
-	"<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
 }
 ```
 
@@ -742,6 +857,18 @@ Success:
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+or
+
+```
+400 Bad Request
+
+{
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
 ```
 
 
@@ -754,17 +881,17 @@ POST /regions
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
-	"Name": "Circle",
-	"Description": "Very roundy",
-	"Boundaries": {
-		"Points": [
-			{
-				"lat": 52.521652565946304,
-				"lng":13.414478302001953
-			},
-			...
-			]
-		}
+    "Name": "Circle",
+    "Description": "Very roundy",
+    "Boundaries": {
+        "Points": [
+            {
+                "lat": 52.521652565946304,
+                "lng":13.414478302001953
+            },
+            ...
+            ]
+        }
 }
 ```
 
@@ -774,24 +901,36 @@ Success:
 
 ```
 {
-	"ID": UUID v4,
-	"Description": string,
-	"Name": string,
-	"Boundaries": {
-		"Points": [
-			{
-				"lat": float64,
-				"lng": float64
-			},
-			...
-		]
-	}
+    "ID": UUID v4,
+    "Description": string,
+    "Name": string,
+    "Boundaries": {
+        "Points": [
+            {
+                "lat": float64,
+                "lng": float64
+            },
+            ...
+        ]
+    }
 }
 ```
 
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+or
+
+```
+400 Bad Request
+
+{
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
 ```
 
 
@@ -809,27 +948,29 @@ Success:
 
 ```
 [
-	{
-		"ID": UUID v4,
-		"Description": string,
-		"Name": string,
-		"Boundaries": {
-			"Points": [
-				{
-					"lat": float64,
-					"lng": float64
-				},
-				...
-			]
-		}
-	},
-	...
+    {
+        "ID": UUID v4,
+        "Description": string,
+        "Name": string,
+        "Boundaries": {
+            "Points": [
+                {
+                    "lat": float64,
+                    "lng": float64
+                },
+                ...
+            ]
+        }
+    },
+    ...
 ]
 ```
 
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
 
 
@@ -847,24 +988,26 @@ Success:
 
 ```
 {
-	"ID": UUID v4,
-	"Description": string,
-	"Name": string,
-	"Boundaries": {
-		"Points": [
-			{
-				"lat": float64,
-				"lng": float64
-			},
-			...
-		]
-	}
+    "ID": UUID v4,
+    "Description": string,
+    "Name": string,
+    "Boundaries": {
+        "Points": [
+            {
+                "lat": float64,
+                "lng": float64
+            },
+            ...
+        ]
+    }
 }
 ```
 
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
 
 
@@ -888,6 +1031,18 @@ Success:
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+or
+
+```
+400 Bad Request
+
+{
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
 ```
 
 
@@ -908,30 +1063,32 @@ Success:
 200 OK
 
 [
-	{
-		"ID": UUID v4,
-		"Name": string,
-		"Location": {
-			"lat": float64,
-			"lng": float64
-		},
-		Tags: [
-				{
-					"Name": string
-				},
-				...
-		],
-		"ValidityPeriod": RFC3339 Date
-		"Matched": bool,
-		"Expired": bool
-	},
-	...
+    {
+        "ID": UUID v4,
+        "Name": string,
+        "Location": {
+            "lat": float64,
+            "lng": float64
+        },
+        Tags: [
+                {
+                    "Name": string
+                },
+                ...
+        ],
+        "ValidityPeriod": RFC3339 Date
+        "Matched": bool,
+        "Expired": bool
+    },
+    ...
 ]
 ```
 
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
 
 
@@ -952,30 +1109,32 @@ Success:
 200 OK
 
 [
-	{
-		"ID": UUID v4,
-		"Name": string,
-		"Location": {
-			"lng": float64,
-			"lat": float64
-		},
-		Tags: [
-				{
-					"Name": string
-				},
-				...
-		],
-		"ValidityPeriod": RFC3339 Date,
-		"Matched": bool,
-		"Expired": bool
-	}, 
-	...
+    {
+        "ID": UUID v4,
+        "Name": string,
+        "Location": {
+            "lng": float64,
+            "lat": float64
+        },
+        Tags: [
+                {
+                    "Name": string
+                },
+                ...
+        ],
+        "ValidityPeriod": RFC3339 Date,
+        "Matched": bool,
+        "Expired": bool
+    }, 
+    ...
 ]
 ```
 
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
 
 
@@ -996,21 +1155,25 @@ Success:
 200 OK
 
 [
-	{
-		"ID": UUID v4
-		"OfferId": UUID v4
-		"RegionId": UUID v4
-		"RequestId": UUID v4
-	}, 
-	...
+    {
+        "ID": UUID v4
+        "OfferId": UUID v4
+        "RegionId": UUID v4
+        "RequestId": UUID v4
+    }, 
+    ...
 ]
 ```
 
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
-### Promote user to admin in region with `regionID`
+
+
+#### Promote user to admin in region with `regionID`
 
 **Request:**
 
@@ -1019,7 +1182,7 @@ POST /regions/:regionID/admins
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
-	"Mail": string
+    "Mail": string
 }
 ```
 
@@ -1042,10 +1205,10 @@ Success:
             "ID": UUID v4,
             "Description": string,
             "Region": {
-        		"ID": UUID v4,
-        		"Description": string,
-        		"Name": string
-    		},
+                "ID": UUID v4,
+                "Description": string,
+                "Name": string
+            },
             "Permissions": [
                 {
                     "AccessRight": string
@@ -1060,9 +1223,22 @@ Success:
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
 
-### List admins in region with `regionID`
+or
+
+```
+400 Bad Request
+
+{
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
+```
+
+
+#### List admins in region with `regionID`
 
 **Request**
 
@@ -1078,33 +1254,40 @@ Success:
 ```
 200 OK
 [
-	{
-    	"ID": UUID v4,
-    	"Mail": string,
-    	"MailVerified": bool,
-    	"Name": string,
-    	"PreferredName": string,
-    	"PhoneNumbers": array of strings
-    	"Groups": [
-    	    {
-        	    "ID": UUID v4,
-            	"Description": string,
-            	"Region": {
-        			"ID": UUID v4,
-        			"Description": string,
-        			"Name": string
-    			},
-            	"Permissions": [
-                	{
-                    	"AccessRight": string
-                	}
-            	]
-        	},
-        	...
-    	]
-	},
-	...
+    {
+        "ID": UUID v4,
+        "Mail": string,
+        "MailVerified": bool,
+        "Name": string,
+        "PreferredName": string,
+        "PhoneNumbers": array of strings
+        "Groups": [
+            {
+                "ID": UUID v4,
+                "Description": string,
+                "Region": {
+                    "ID": UUID v4,
+                    "Description": string,
+                    "Name": string
+                },
+                "Permissions": [
+                    {
+                        "AccessRight": string
+                    }
+                ]
+            },
+            ...
+        ]
+    },
+    ...
 ]
+```
+
+Fail:
+
+```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
 
 
@@ -1134,10 +1317,10 @@ Success:
             "ID": UUID v4,
             "Description": string,
             "Region": {
-        		"ID": UUID v4,
-        		"Description": string,
-        		"Name": string
-    		},
+                "ID": UUID v4,
+                "Description": string,
+                "Name": string
+            },
             "Permissions": [
                 {
                     "AccessRight": string
@@ -1178,6 +1361,18 @@ Success:
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+or
+
+```
+400 Bad Request
+
+{
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
 ```
 
 
@@ -1196,30 +1391,32 @@ Success:
 
 ```
 [
-	{
-		"ID": UUID v4,
-		"Name": string,
-		"Location": {
-			"lng": float64,
-			"lat": float64
-		},
-		Tags: [
-			{
-				"Name": string
-			},
-			...
-		],
-		"ValidityPeriod": RFC3339 Date,
-		"Matched": bool,
-		"Expired": bool
-	}, 
-	...
+    {
+        "ID": UUID v4,
+        "Name": string,
+        "Location": {
+            "lng": float64,
+            "lat": float64
+        },
+        Tags: [
+            {
+                "Name": string
+            },
+            ...
+        ],
+        "ValidityPeriod": RFC3339 Date,
+        "Matched": bool,
+        "Expired": bool
+    }, 
+    ...
 ]
 ```
 
 Fail:
 
 ```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
 ```
 
 
@@ -1238,24 +1435,24 @@ Success:
 
 ```
 [
-	{
-		"ID": UUID v4,
-		"Name": string,
-		"Location": {
-			"lng": float64,
-			"lat": float64
-		},
-		Tags: [
-				{
-					"Name": string
-				},
-				...
-		],
-		"ValidityPeriod": RFC3339 Date,
-		"Matched": bool,
-		"Expired": bool
-	},
-	...
+    {
+        "ID": UUID v4,
+        "Name": string,
+        "Location": {
+            "lng": float64,
+            "lat": float64
+        },
+        Tags: [
+                {
+                    "Name": string
+                },
+                ...
+        ],
+        "ValidityPeriod": RFC3339 Date,
+        "Matched": bool,
+        "Expired": bool
+    },
+    ...
 ]
 ```
 
@@ -1263,6 +1460,116 @@ Fail:
 
 ```
 401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+
+#### List own matchings
+
+**Request:**
+
+```
+GET /me/matchings
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success:
+
+```
+[
+    {
+        "ID": UUID v4,
+        "OfferId": string,
+        "RegionId": string,
+        "RequestId": string
+    },
+    ...
+]
+```
+
+Fail:
+
+```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+
+#### List unread notifications
+
+**Request:**
+
+```
+GET /notifications
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+Success:
+
+```
+[
+    {
+        "ID": UUID v4,
+        "ItemID": string,
+        "Type": string
+    },
+    ...
+]
+```
+
+Fail:
+
+```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+
+#### Update notification with `notificationID`
+
+**Request:**
+
+```
+PUT /notifications/:notificationID
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+    "Read": true
+}
+```
+
+**Response:**
+
+Success:
+
+```
+{
+    "ID": UUID v4,
+    "ItemID": string,
+    "Type": string,
+    "Read": true
+}
+```
+
+Fail:
+
+```
+401 Unauthorized
+WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_description="<ERROR DESCRIPTION>"
+```
+
+or
+
+```
+400 Bad Request
+
+{
+    "<FIELD NAME>": "<ERROR MESSAGE FOR THIS FIELD>"
+}
 ```
 
 

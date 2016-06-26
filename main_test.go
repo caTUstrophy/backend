@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -47,7 +45,7 @@ func TestUser(t *testing.T) {
 		Password:      userJeryPW,
 		PhoneNumbers:  make([]string, 1),
 	}
-	resp := ResponsePOST("/users", plCreateUserJery)
+	resp := app.Request("POST", "/users", plCreateUserJery)
 
 	// check if everything went well
 	if resp.Code != 200 && resp.Code != 400 {
@@ -59,7 +57,7 @@ func TestUser(t *testing.T) {
 		plCreateUserJery.Mail,
 		plCreateUserJery.Password,
 	}
-	resp = ResponsePOST("/auth", loginB)
+	resp = app.Request("POST", "/auth", loginB)
 
 	if resp.Code != 200 {
 		t.Error("User login failed", resp.Body.String())
@@ -84,7 +82,7 @@ func TestAdminLogin(t *testing.T) {
 		"admin@example.org",
 		"CaTUstrophyAdmin123$",
 	}
-	resp := ResponsePOST("/auth", loginB)
+	resp := app.Request("POST", "/auth", loginB)
 
 	if resp.Code != 200 {
 		t.Error("User login failed", resp.Body.String())
@@ -130,14 +128,14 @@ func TestPostRegionAdmin(t *testing.T) {
 	PromoteJery := PromoteAdminPayload{userJeryMail}
 
 	url := "/regions/" + regionID + "/admins"
-	resp := ResponsePOSTwithJWT(url, PromoteJery, tokenUserJery)
+	resp := app.RequestWithJWT("POST", url, PromoteJery, tokenUserJery)
 	if resp.Code != 401 {
 		t.Error("Promoting user Jery as Jery gave no 401, but should: ", resp.Body.String())
 		return
 	}
 
 	PromoteNonExisting := PromoteAdminPayload{"This is no valid email"}
-	resp = ResponsePOSTwithJWT(url, PromoteNonExisting, tokenAdmin)
+	resp = app.RequestWithJWT("POST",url, PromoteNonExisting, tokenAdmin)
 	if resp.Code == 500 {
 		t.Error("Promoting non-existant user gave 500: ", resp.Body.String())
 		return
@@ -148,7 +146,7 @@ func TestPostRegionAdmin(t *testing.T) {
 	}
 
 	PromoteNonExisting = PromoteAdminPayload{"emailthatsnotinthesystem@example.org"}
-	resp = ResponsePOSTwithJWT(url, PromoteNonExisting, tokenAdmin)
+	resp = app.RequestWithJWT("POST",url, PromoteNonExisting, tokenAdmin)
 	if resp.Code == 500 {
 		t.Error("Promoting non-existant user gave 500: ", resp.Body.String())
 		return
@@ -158,68 +156,10 @@ func TestPostRegionAdmin(t *testing.T) {
 		return
 	}
 
-	resp = ResponsePOSTwithJWT(url, PromoteJery, tokenAdmin)
+	resp = app.RequestWithJWT("POST",url, PromoteJery, tokenAdmin)
 	log.Println(resp)
 	if resp.Code != 201 && resp.Code != 200 {
 		t.Error("Promoting User Jery as Admin did not work, but should: ", resp.Body.String())
 		return
 	}
-}
-
-func NewRequestPOST(url string, body interface{}) *http.Request {
-
-	bodyBytes, _ := json.Marshal(body)
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(bodyBytes))
-	req.Header.Set("Content-Type", "application/json")
-
-	return req
-}
-
-func NewRequestPOSTwithJWT(url string, body interface{}, jwt string) *http.Request {
-
-	bodyBytes, _ := json.Marshal(body)
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(bodyBytes))
-	req.Header.Set("Content-Type", "application/json")
-	log.Println("Set Authorization: Bearer ", jwt)
-	req.Header.Set("Authorization", ("Bearer " + jwt))
-
-	return req
-}
-
-func ResponsePOST(url string, body interface{}) *httptest.ResponseRecorder {
-
-	resp := httptest.NewRecorder()
-	req := NewRequestPOST(url, body)
-	app.Router.ServeHTTP(resp, req)
-
-	return resp
-}
-
-func ResponsePOSTwithJWT(url string, body interface{}, jwt string) *httptest.ResponseRecorder {
-
-	resp := httptest.NewRecorder()
-	req := NewRequestPOSTwithJWT(url, body, jwt)
-	app.Router.ServeHTTP(resp, req)
-
-	return resp
-}
-
-func parseResponse(resp *httptest.ResponseRecorder) map[string]interface{} {
-
-	var dat map[string]interface{}
-	if err := json.Unmarshal(resp.Body.Bytes(), &dat); err != nil {
-		panic(err)
-	}
-
-	return dat
-}
-
-func parseResponseToArray(resp *httptest.ResponseRecorder) []map[string]interface{} {
-
-	var dat []map[string]interface{}
-	if err := json.Unmarshal(resp.Body.Bytes(), &dat); err != nil {
-		panic(err)
-	}
-
-	return dat
 }

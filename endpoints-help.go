@@ -2,9 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"reflect"
-
 	"net/http"
 
 	"github.com/caTUstrophy/backend/db"
@@ -12,8 +9,9 @@ import (
 )
 
 var ReplacementsJSON = map[string]interface{}{
-	"time.Time":       "RFC3339 date",
-	"db.PhoneNumbers": "[string, ...]",
+	"time.Time":           "RFC3339 date",
+	"db.PhoneNumbers":     "[string, ...]",
+	"db.NotificationType": "string",
 }
 
 var ReplacementsJSONbyKey = map[string]interface{}{
@@ -65,7 +63,7 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	User.PreferredName = "Gott"
 	User.Name = "Mensch"
 
-	// Generate Response Maps
+	// Generate response maps
 	var currResponseMap map[string]interface{}
 	allResponses := make(map[string]interface{})
 
@@ -73,7 +71,7 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	currResponseMap = getJSONResponseInfo(User, fieldsUser)
 	allResponses["User"] = currResponseMap
 
-	// USER LIST
+	// USERS LIST
 	var users [1]map[string]interface{}
 	users[0] = allResponses["User"].(map[string]interface{})
 	allResponses["User List"] = users
@@ -84,7 +82,7 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	currResponseMap = getJSONResponseInfo(region, fieldsRegion)
 	allResponses["Region"] = currResponseMap
 
-	// REGION LIST
+	// REGIONS LIST
 	var regions [1]map[string]interface{}
 	regions[0] = allResponses["Region"].(map[string]interface{})
 	allResponses["Region List"] = regions
@@ -96,7 +94,7 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	currResponseMap = getJSONResponseInfo(offer, fieldsOffer)
 	allResponses["Offer"] = currResponseMap
 
-	// OFFER LIST
+	// OFFERS LIST
 	var offers [1]map[string]interface{}
 	offers[0] = allResponses["Offer"].(map[string]interface{})
 	allResponses["Offer List"] = offers
@@ -108,7 +106,7 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	currResponseMap = getJSONResponseInfo(request, fieldsRequest)
 	allResponses["Request"] = currResponseMap
 
-	// REQUEST LIST
+	// REQUESTS LIST
 	var requests [1]map[string]interface{}
 	requests[0] = allResponses["Request"].(map[string]interface{})
 	allResponses["Requests"] = requests
@@ -124,83 +122,20 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	matchings[0] = allResponses["Matching"].(map[string]interface{})
 	allResponses["Matchings"] = matchings
 
+	// NOTIFICATION
+	var notification db.Notification
+	app.DB.First(&notification)
+	currResponseMap = getJSONResponseInfo(notification, fieldsNotification)
+	allResponses["Notification"] = currResponseMap
+
+	// NOTIFICATIONS LIST
+	var notifications [1]map[string]interface{}
+	notifications[0] = allResponses["Notification"].(map[string]interface{})
+	allResponses["Notifications"] = notifications
+
 	// generate text from that map that can be copied to README
 	// TODO because no internet in this bus to look up stuff
 
 	// Send as http response
 	c.JSON(http.StatusOK, allResponses)
-
-}
-
-// This function works just like CopyNestedModel, but returns
-// no content of i but the type of the content. Will be used
-// to automate writing our documentation.
-func getJSONResponseInfo(i interface{}, fields map[string]interface{}) map[string]interface{} {
-
-	var m map[string]interface{}
-	m = make(map[string]interface{})
-
-	// get value + type of source interface
-	valInterface := reflect.ValueOf(i)
-	typeOfT := reflect.ValueOf(i).Type()
-
-	// iterate over all fields that occur in response
-	for key := range fields {
-
-		var exists = false
-		newKey, _ := fields[key].(string)
-
-		// search for field in source type
-		for i := 0; i < valInterface.NumField(); i++ {
-
-			if typeOfT.Field(i).Name == key { // original field has been found
-
-				// check for nesting through type assertion
-				nestedMap, nested := fields[key].(map[string]interface{})
-
-				if !nested {
-					// NOT nested -> save type of this field for the newKey
-					if ReplacementsJSONbyKey[newKey] != nil {
-						m[newKey] = ReplacementsJSONbyKey[newKey]
-					} else {
-						newType := fmt.Sprint(valInterface.Field(i).Type())
-						if ReplacementsJSON[newType] != nil {
-							m[newKey] = ReplacementsJSON[newType]
-						} else {
-							m[newKey] = newType
-						}
-					}
-
-				} else {
-
-					// NESTED copied via recursion
-					var slice = reflect.ValueOf(valInterface.Field(i).Interface())
-
-					// if nested ARRAY
-					if valInterface.Field(i).Kind() == reflect.Slice {
-
-						sliceMapped := make([]interface{}, 1)
-
-						for i := 0; i < slice.Len() && i < 1; i++ {
-							sliceMapped[i] = getJSONResponseInfo(slice.Index(i).Interface(), nestedMap)
-						}
-
-						m[key] = sliceMapped
-					} else {
-						// if nested OBJECT
-						m[key] = getJSONResponseInfo(valInterface.Field(i).Interface(), nestedMap)
-					}
-				}
-
-				exists = true
-				break
-			}
-		}
-
-		if !exists {
-			log.Fatalf("ERROR: Struct<%s> has no field: %s", typeOfT.Name(), key)
-		}
-	}
-
-	return m
 }

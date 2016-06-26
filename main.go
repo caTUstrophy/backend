@@ -82,6 +82,9 @@ func InitApp() *App {
 	app.Router.GET("/me/offers", app.ListUserOffers)
 	app.Router.GET("/me/requests", app.ListUserRequests)
 
+	app.Router.GET("/notifications", app.ListNotifications)
+	app.Router.PUT("/notifications/:notificationID", app.UpdateNotification)
+
 	app.Router.GET("/help", app.GetJsonResponseInfo)
 
 	return app
