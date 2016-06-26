@@ -93,8 +93,6 @@ func (app *App) CheckScope(user *db.User, region db.Region, permission string) b
 	// Fast, because the typical user is member of few groups.
 	for _, group := range user.Groups {
 
-		log.Println(group.Description)
-
 		if group.AccessRight == "superadmin" {
 			return true
 		}
@@ -103,7 +101,6 @@ func (app *App) CheckScope(user *db.User, region db.Region, permission string) b
 		// an empty region is sufficient. Otherwise, the region has
 		// to be present.
 		if region.ID == "" {
-			log.Println("Continue")
 			continue
 		}
 
@@ -112,7 +109,6 @@ func (app *App) CheckScope(user *db.User, region db.Region, permission string) b
 			if group.AccessRight == permission {
 				return true
 			}
-			log.Println("Is not equal to \n", permission)
 		}
 	}
 

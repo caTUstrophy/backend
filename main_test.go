@@ -66,8 +66,6 @@ func TestUser(t *testing.T) {
 
 	dat := parseResponse(resp)
 
-	log.Println(dat)
-
 	if dat["AccessToken"] == nil {
 		t.Error("User Access Token is empty")
 		return
@@ -128,14 +126,9 @@ func TestPostRegionAdmin(t *testing.T) {
 	PromoteJery := PromoteAdminPayload{userJeryMail}
 
 	url := "/regions/" + regionID + "/admins"
-	resp := app.RequestWithJWT("POST", url, PromoteJery, tokenUserJery)
-	if resp.Code != 401 {
-		t.Error("Promoting user Jery as Jery gave no 401, but should: ", resp.Body.String())
-		return
-	}
 
 	PromoteNonExisting := PromoteAdminPayload{"This is no valid email"}
-	resp = app.RequestWithJWT("POST",url, PromoteNonExisting, tokenAdmin)
+	resp := app.RequestWithJWT("POST", url, PromoteNonExisting, tokenAdmin)
 	if resp.Code == 500 {
 		t.Error("Promoting non-existant user gave 500: ", resp.Body.String())
 		return
@@ -146,7 +139,7 @@ func TestPostRegionAdmin(t *testing.T) {
 	}
 
 	PromoteNonExisting = PromoteAdminPayload{"emailthatsnotinthesystem@example.org"}
-	resp = app.RequestWithJWT("POST",url, PromoteNonExisting, tokenAdmin)
+	resp = app.RequestWithJWT("POST", url, PromoteNonExisting, tokenAdmin)
 	if resp.Code == 500 {
 		t.Error("Promoting non-existant user gave 500: ", resp.Body.String())
 		return
@@ -156,8 +149,7 @@ func TestPostRegionAdmin(t *testing.T) {
 		return
 	}
 
-	resp = app.RequestWithJWT("POST",url, PromoteJery, tokenAdmin)
-	log.Println(resp)
+	resp = app.RequestWithJWT("POST", url, PromoteJery, tokenAdmin)
 	if resp.Code != 201 && resp.Code != 200 {
 		t.Error("Promoting User Jery as Admin did not work, but should: ", resp.Body.String())
 		return
