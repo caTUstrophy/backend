@@ -140,7 +140,7 @@ func (app *App) GetRegion(c *gin.Context) {
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error":"No valid region UUID",
+			"Error": "No valid region UUID",
 		})
 		return
 	}
@@ -149,7 +149,7 @@ func (app *App) GetRegion(c *gin.Context) {
 
 	// Select region based on supplied ID from database.
 	app.DB.First(&Region, "id = ?", regionID)
-	if(Region.ID == "") {
+	if Region.ID == "" {
 		c.JSON(http.StatusNotFound, notFound)
 		return
 	}
@@ -180,7 +180,7 @@ func (app *App) ListOffersForRegion(c *gin.Context) {
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error":"regionID is no valid UUID", })
+			"Error": "regionID is no valid UUID"})
 		return
 	}
 
@@ -224,7 +224,7 @@ func (app *App) ListRequestsForRegion(c *gin.Context) {
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error":"regionID is no valid UUID", })
+			"Error": "regionID is no valid UUID"})
 		return
 	}
 
@@ -268,7 +268,7 @@ func (app *App) ListMatchingsForRegion(c *gin.Context) {
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error":"regionID is no valid UUID", })
+			"Error": "regionID is no valid UUID"})
 		return
 	}
 
@@ -314,7 +314,7 @@ func (app *App) ListAdminsForRegion(c *gin.Context) {
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error":"regionID is no valid UUID", })
+			"Error": "regionID is no valid UUID"})
 		return
 	}
 
@@ -337,8 +337,9 @@ func (app *App) ListAdminsForRegion(c *gin.Context) {
 
 	var group db.Group
 	app.DB.Preload("Users").First(&group, "region_id = ? AND access_right = ?", regionID, "admin")
+	app.DB.Model(&group).Related(&group.Region)
 
-	model := CopyNestedModel(group.Users, fieldsGroup)
+	model := CopyNestedModel(group.Users, fieldsUserNoGroups)
 
 	c.JSON(http.StatusOK, model)
 }
@@ -359,7 +360,7 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error":"regionID is no valid UUID", })
+			"Error": "regionID is no valid UUID"})
 		return
 	}
 

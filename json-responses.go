@@ -19,6 +19,14 @@ var fieldsUser = map[string]interface{}{
 	},
 }
 
+var fieldsUserNoGroups = map[string]interface{}{
+	"ID":           "ID",
+	"Name":         "Name",
+	"Mail":         "Mail",
+	"MailVerified": "MailVerified",
+	"PhoneNumbers": "PhoneNumbers",
+}
+
 var fieldsSystemAdmin = map[string]interface{}{
 	"ID":            "ID",
 	"Name":          "Name",
@@ -29,12 +37,12 @@ var fieldsSystemAdmin = map[string]interface{}{
 }
 
 var fieldsGroup = map[string]interface{}{
-	"ID":			"ID",
-	"RegionId":		"RegionId",
-	"Region":		"Region",
-	"Users":		fieldsUser,
-	"AccessRight":	"AccessRight",
-	"Description":	"Description",
+	"ID":          "ID",
+	"RegionId":    "RegionId",
+	"Region":      "Region",
+	"Users":       fieldsUserNoGroups,
+	"AccessRight": "AccessRight",
+	"Description": "Description",
 }
 
 var fieldsRequestU = map[string]interface{}{
