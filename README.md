@@ -790,11 +790,12 @@ Success:
 [Single notification](#notification-object)
 
 
+
 ### Responses
-This can be generated as admin via GET /help. Don't write this by hand.
 
 #### Single user complete
-{
+
+```{
 	"Groups": [
 		null
 	],
@@ -805,8 +806,10 @@ This can be generated as admin via GET /help. Don't write this by hand.
 	"PhoneNumbers": "[string, ...]",
 	"PreferredName": "string"
 }
+```
 #### List users complete
-[
+
+```[
 	{
 		"Groups": [
 			null
@@ -819,16 +822,20 @@ This can be generated as admin via GET /help. Don't write this by hand.
 		"PreferredName": "string"
 	}
 ]
+```
 #### User without group
-{
+
+```{
 	"ID": "UUID v4",
 	"Mail": "string",
 	"MailVerified": "bool",
 	"Name": "string",
 	"PhoneNumbers": "[string, ...]"
 }
+```
 #### List of users without group
-[
+
+```[
 	{
 		"ID": "UUID v4",
 		"Mail": "string",
@@ -837,8 +844,10 @@ This can be generated as admin via GET /help. Don't write this by hand.
 		"PhoneNumbers": "[string, ...]"
 	}
 ]
+```
 #### Offer object
-{
+
+```{
 	"Expired": "bool",
 	"ID": "UUID v4",
 	"Location": {
@@ -852,8 +861,10 @@ This can be generated as admin via GET /help. Don't write this by hand.
 	],
 	"ValidityPeriod": "RFC3339 date"
 }
+```
 #### Offer list
-[
+
+```[
 	{
 		"Expired": "bool",
 		"ID": "UUID v4",
@@ -869,8 +880,10 @@ This can be generated as admin via GET /help. Don't write this by hand.
 		"ValidityPeriod": "RFC3339 date"
 	}
 ]
+```
 #### Request object
-{
+
+```{
 	"Expired": "bool",
 	"ID": "UUID v4",
 	"Location": {
@@ -884,8 +897,10 @@ This can be generated as admin via GET /help. Don't write this by hand.
 	],
 	"ValidityPeriod": "RFC3339 date"
 }
+```
 #### Request list
-[
+
+```[
 	{
 		"Expired": "bool",
 		"ID": "UUID v4",
@@ -901,15 +916,19 @@ This can be generated as admin via GET /help. Don't write this by hand.
 		"ValidityPeriod": "RFC3339 date"
 	}
 ]
+```
 #### Matching object
-{
+
+```{
 	"ID": "UUID v4",
 	"OfferId": "string",
 	"RegionId": "string",
 	"RequestId": "string"
 }
+```
 #### Matching list
-[
+
+```[
 	{
 		"ID": "UUID v4",
 		"OfferId": "string",
@@ -917,8 +936,10 @@ This can be generated as admin via GET /help. Don't write this by hand.
 		"RequestId": "string"
 	}
 ]
+```
 #### Region object
-{
+
+```{
 	"Boundaries": {
 		"Points": [
 			{
@@ -931,8 +952,10 @@ This can be generated as admin via GET /help. Don't write this by hand.
 	"ID": "UUID v4",
 	"Name": "string"
 }
+```
 #### Region list
-[
+
+```[
 	{
 		"Boundaries": {
 			"Points": [
@@ -947,20 +970,25 @@ This can be generated as admin via GET /help. Don't write this by hand.
 		"Name": "string"
 	}
 ]
+```
 #### Notification object
-{
+
+```{
 	"ID": "UUID v4",
 	"ItemID": "string",
 	"Type": "string"
 }
+```
 #### Notification list
-[
+
+```[
 	{
 		"ID": "UUID v4",
 		"ItemID": "string",
 		"Type": "string"
 	}
 ]
+```
 
 ## Incredible third-party packages
 
