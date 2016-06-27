@@ -1,7 +1,12 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+
 	"net/http"
 
 	"github.com/caTUstrophy/backend/db"
@@ -50,7 +55,7 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 
 	var User db.User
 	User.Enabled = false
-	app.DB.Preload("Permissions").First(&User.Groups)
+	app.DB.First(&User.Groups, "region_id <> null")
 
 	for _, group := range User.Groups {
 		app.DB.Model(&group).Related(&group.Region)
@@ -74,7 +79,16 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	// USERS LIST
 	var users [1]map[string]interface{}
 	users[0] = allResponses["User"].(map[string]interface{})
-	allResponses["User List"] = users
+	allResponses["Users"] = users
+
+	// USER WITHOUT GROUP DETAILS
+	currResponseMap = getJSONResponseInfo(User, fieldsUserNoGroups)
+	allResponses["User without groups"] = currResponseMap
+
+	// LIST OF USERs WITHOUT GROUP DETAILS
+	var usersNoGroup [1]map[string]interface{}
+	usersNoGroup[0] = allResponses["User without groups"].(map[string]interface{})
+	allResponses["List of users without group"] = usersNoGroup
 
 	// REGION
 	var region db.Region
@@ -85,7 +99,7 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	// REGIONS LIST
 	var regions [1]map[string]interface{}
 	regions[0] = allResponses["Region"].(map[string]interface{})
-	allResponses["Region List"] = regions
+	allResponses["Regions"] = regions
 
 	// OFFER
 	var offer db.Offer
@@ -97,7 +111,7 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	// OFFERS LIST
 	var offers [1]map[string]interface{}
 	offers[0] = allResponses["Offer"].(map[string]interface{})
-	allResponses["Offer List"] = offers
+	allResponses["Offers"] = offers
 
 	// REQUEST
 	var request db.Request
@@ -134,8 +148,54 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	allResponses["Notifications"] = notifications
 
 	// generate text from that map that can be copied to README
-	// TODO because no internet in this bus to look up stuff
+	// Open file for writing footer
+	f, err := os.Create("README_footer.md")
+	if err != nil {
+		log.Println("Unable to open file to write. Please check if backend has the permission to write on your server.")
+		// Send as http response
+		c.JSON(http.StatusOK, allResponses)
+	}
+
+	// Write footer
+	f.WriteString("\n### Responses\n")
+
+	writeFooterSection(f, "\n#### Single user complete\n", allResponses["User"])
+
+	writeFooterSection(f, "\n#### List users complete\n", allResponses["Users"])
+
+	writeFooterSection(f, "\n#### User without group\n", allResponses["User without groups"])
+
+	writeFooterSection(f, "\n#### List of users without group\n", allResponses["List of users without group"])
+
+	writeFooterSection(f, "\n#### Offer object\n", allResponses["Offer"])
+
+	writeFooterSection(f, "\n#### Offer list\n", allResponses["Offers"])
+
+	writeFooterSection(f, "\n#### Request object\n", allResponses["Request"])
+
+	writeFooterSection(f, "\n#### Request list\n", allResponses["Requests"])
+
+	writeFooterSection(f, "\n#### Matching object\n", allResponses["Matching"])
+
+	writeFooterSection(f, "\n#### Matching list\n", allResponses["Matchings"])
+
+	writeFooterSection(f, "\n#### Region object\n", allResponses["Region"])
+
+	writeFooterSection(f, "\n#### Region list\n", allResponses["Regions"])
+
+	writeFooterSection(f, "\n#### Notification object\n", allResponses["Notification"])
+
+	writeFooterSection(f, "\n#### Notification list\n", allResponses["Notifications"])
 
 	// Send as http response
 	c.JSON(http.StatusOK, allResponses)
+}
+
+func writeFooterSection(f *os.File, title string, content interface{}) {
+	f.WriteString(title)
+
+	var out bytes.Buffer
+	jsonText, _ := json.Marshal(content)
+	json.Indent(&out, jsonText, "", "\t")
+	out.WriteTo(f)
 }
