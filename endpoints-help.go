@@ -193,9 +193,10 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 
 func writeFooterSection(f *os.File, title string, content interface{}) {
 	f.WriteString(title)
-
+	f.WriteString("\n```\n")
 	var out bytes.Buffer
 	jsonText, _ := json.Marshal(content)
 	json.Indent(&out, jsonText, "", "\t")
 	out.WriteTo(f)
+	f.WriteString("\n```\n")
 }

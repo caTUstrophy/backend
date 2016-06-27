@@ -791,11 +791,13 @@ Success:
 
 
 
+
 ### Responses
 
 #### Single user complete
 
-```{
+```
+{
 	"Groups": [
 		null
 	],
@@ -807,9 +809,11 @@ Success:
 	"PreferredName": "string"
 }
 ```
+
 #### List users complete
 
-```[
+```
+[
 	{
 		"Groups": [
 			null
@@ -823,9 +827,11 @@ Success:
 	}
 ]
 ```
+
 #### User without group
 
-```{
+```
+{
 	"ID": "UUID v4",
 	"Mail": "string",
 	"MailVerified": "bool",
@@ -833,9 +839,11 @@ Success:
 	"PhoneNumbers": "[string, ...]"
 }
 ```
+
 #### List of users without group
 
-```[
+```
+[
 	{
 		"ID": "UUID v4",
 		"Mail": "string",
@@ -845,9 +853,11 @@ Success:
 	}
 ]
 ```
+
 #### Offer object
 
-```{
+```
+{
 	"Expired": "bool",
 	"ID": "UUID v4",
 	"Location": {
@@ -862,9 +872,11 @@ Success:
 	"ValidityPeriod": "RFC3339 date"
 }
 ```
+
 #### Offer list
 
-```[
+```
+[
 	{
 		"Expired": "bool",
 		"ID": "UUID v4",
@@ -881,9 +893,11 @@ Success:
 	}
 ]
 ```
+
 #### Request object
 
-```{
+```
+{
 	"Expired": "bool",
 	"ID": "UUID v4",
 	"Location": {
@@ -898,9 +912,11 @@ Success:
 	"ValidityPeriod": "RFC3339 date"
 }
 ```
+
 #### Request list
 
-```[
+```
+[
 	{
 		"Expired": "bool",
 		"ID": "UUID v4",
@@ -917,18 +933,22 @@ Success:
 	}
 ]
 ```
+
 #### Matching object
 
-```{
+```
+{
 	"ID": "UUID v4",
 	"OfferId": "string",
 	"RegionId": "string",
 	"RequestId": "string"
 }
 ```
+
 #### Matching list
 
-```[
+```
+[
 	{
 		"ID": "UUID v4",
 		"OfferId": "string",
@@ -937,9 +957,11 @@ Success:
 	}
 ]
 ```
+
 #### Region object
 
-```{
+```
+{
 	"Boundaries": {
 		"Points": [
 			{
@@ -953,9 +975,11 @@ Success:
 	"Name": "string"
 }
 ```
+
 #### Region list
 
-```[
+```
+[
 	{
 		"Boundaries": {
 			"Points": [
@@ -971,17 +995,21 @@ Success:
 	}
 ]
 ```
+
 #### Notification object
 
-```{
+```
+{
 	"ID": "UUID v4",
 	"ItemID": "string",
 	"Type": "string"
 }
 ```
+
 #### Notification list
 
-```[
+```
+[
 	{
 		"ID": "UUID v4",
 		"ItemID": "string",
@@ -989,6 +1017,7 @@ Success:
 	}
 ]
 ```
+
 
 ## Incredible third-party packages
 
