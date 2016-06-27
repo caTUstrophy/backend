@@ -82,6 +82,9 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 	// Retrieve user from database.
 	var User db.User
 	app.DB.Preload("Groups").First(&User, "mail = ?", email)
+	for i, _ := range User.Groups {
+		app.DB.Model(&User.Groups[i]).Related(&User.Groups[i].Region)
+	}
 
 	return true, &User, ""
 }

@@ -131,11 +131,80 @@ func (app *App) CreateUser(c *gin.Context) {
 }
 
 func (app *App) ListUsers(c *gin.Context) {
-	// TODO: Implement this function.
-}
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
 
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, db.Region{}, "superadmin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// The real request
+
+	var Users []db.User
+	app.DB.Preload("Groups").Find(&Users)
+	for userLoop, _ := range Users {
+		for groupLoop, _ := range Users[userLoop].Groups { //groupLoop rhymes
+			app.DB.Model(&Users[userLoop].Groups[groupLoop]).Related(&Users[userLoop].Groups[groupLoop].Region)
+		}
+	}
+
+	model := CopyNestedModel(Users, fieldsUser)
+
+	c.JSON(http.StatusOK, model)
+}
 func (app *App) GetUser(c *gin.Context) {
 	// TODO: Implement this function.
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, db.Region{}, "superadmin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// The real request
+	userID := app.getUUID(c, "userID")
+	if userID == "" { // Bad request header set by getUUID
+		return
+	}
+
+	var requestUser db.User
+	app.DB.Preload("Groups").First(&requestUser, "id = ?", userID)
+
+	for groupLoop, _ := range requestUser.Groups { //groupLoop rhymes
+		app.DB.Model(&requestUser.Groups[groupLoop]).Related(&requestUser.Groups[groupLoop].Region)
+	}
+
+	model := CopyNestedModel(requestUser, fieldsUser)
+
+	c.JSON(http.StatusOK, model)
 }
 
 func (app *App) UpdateUser(c *gin.Context) {

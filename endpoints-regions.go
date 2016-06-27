@@ -92,6 +92,14 @@ func (app *App) CreateRegion(c *gin.Context) {
 	Region.Name = Payload.Name
 	Region.Description = Payload.Description
 
+	if len(Payload.Boundaries.Points) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Boundaries": "Has to contain {\"Points:\" [{\"lng\": float64, \"lat\": float64}, ...]}",
+		})
+
+		return
+	}
+
 	Points := make([]gormGIS.GeoPoint, len(Payload.Boundaries.Points))
 
 	for i, point := range Payload.Boundaries.Points {

@@ -24,8 +24,6 @@ type GeoLocation struct {
 	Latitude  float64 `json:"lat" conform:"trim"`
 }
 
-
-
 // Checks if a generic URL substring is present in the
 // current request and, if so, attempts to validate it
 // as an UUID version 4.
@@ -42,9 +40,9 @@ func (app *App) getUUID(c *gin.Context, par string) string {
 		for _, err := range errs.(validator.ValidationErrors) {
 
 			if err.Tag == "required" {
-				errResp[err.Field] = "Is required"
+				errResp[par] = "Is required"
 			} else if err.Tag == "uuid4" {
-				errResp[err.Field] = "Needs to be an UUID version 4"
+				errResp[par] = "Needs to be an UUID version 4"
 			}
 		}
 
