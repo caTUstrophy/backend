@@ -16,6 +16,26 @@ import (
 
 // Structs
 
+type UpdateUserPayload struct {
+	Name          string   `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	PreferredName string   `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Mail          string   `conform:"trim"`
+	PhoneNumbers  []string `conform:"trim"`
+	Password      string
+	Groups        []GroupPayload
+}
+
+type GroupPayload struct {
+	ID string `conform:"trim" validate:"required,uuid4"`
+}
+
+type PasswordPayload struct {
+	Password string `validate:"min=16,containsany=0123456789,containsany=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+}
+type EmailPayload struct {
+	Mail string `conform:"trim,email" validate:"email"`
+}
+
 type CreateUserPayload struct {
 	Name          string   `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 	PreferredName string   `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
@@ -130,6 +150,114 @@ func (app *App) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, model)
 }
 
+// This function is not thought be used as handler, it updates a given user object with no permission checking
+// Used by UpdateMe and UpdateUser
+func (app *App) UpdateUserObject(User *db.User, c *gin.Context, updateGroups bool) {
+
+	var Payload UpdateUserPayload
+
+	// Expect user struct fields in JSON request body.
+	err := c.BindJSON(&Payload)
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Supplied values in JSON body could not be parsed",
+		})
+
+		return
+	}
+
+	// Object containing fields to be updated
+	var updatedUser db.User
+
+	// Validate sent user registration data.
+	conform.Strings(&Payload)
+	errs, isErr := app.Validator.Struct(&Payload).(validator.ValidationErrors)
+	if isErr {
+		CheckErrors(errs, c)
+		return
+	}
+	if Payload.Mail != "" {
+		emailPayload := EmailPayload{Payload.Mail}
+		errs, isErr = app.Validator.Struct(&emailPayload).(validator.ValidationErrors)
+		if isErr {
+			CheckErrors(errs, c)
+			return
+		}
+	}
+	if Payload.Password != "" {
+		passwordPayload := PasswordPayload{Payload.Password}
+		errs, isErr = app.Validator.Struct(&passwordPayload).(validator.ValidationErrors)
+		if isErr {
+			CheckErrors(errs, c)
+			return
+		}
+		hash, hashErr := bcrypt.GenerateFromPassword([]byte(Payload.Password), app.HashCost)
+		updatedUser.PasswordHash = string(hash)
+		if hashErr != nil {
+			// If there was an error during hash creation - terminate immediately.
+			log.Fatal("[UpdateUserObject] Error while generating hash in user creation. Terminating.")
+		}
+	}
+
+	updatedUser.Name = Payload.Name
+	updatedUser.PreferredName = Payload.PreferredName
+	updatedUser.Mail = Payload.Mail
+	updatedUser.MailVerified = false
+
+	if len(Payload.PhoneNumbers) > 0 {
+		jsonPhoneNumbers := new(db.PhoneNumbers)
+		err = jsonPhoneNumbers.Scan(Payload.PhoneNumbers)
+		if err != nil {
+
+			// Signal client that the supplied phone numbers contained some kind of error.
+			c.JSON(http.StatusBadRequest, gin.H{
+				"PhoneNumbers": "Are not valid",
+			})
+
+			return
+		}
+
+		updatedUser.PhoneNumbers = *jsonPhoneNumbers
+	}
+
+	// Update user
+	app.DB.Model(&User).Updates(updatedUser)
+
+	if len(Payload.Groups) > 0 && updateGroups {
+		// Load full user to save groups
+		app.DB.First(&updatedUser, "id = ?", User.ID)
+		// Groups
+		updatedUser.Groups = make([]db.Group, len(Payload.Groups))
+		for i, gid := range Payload.Groups {
+			group := app.GetGroupObject(gid.ID)
+			if group.ID == "" {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"Groups": (gid.ID + " does not exist"),
+				})
+				return
+			}
+			updatedUser.Groups[i] = group
+		}
+		// Delete all prior groups
+		app.DB.Exec("DELETE FROM user_groups WHERE user_id = ?", updatedUser.ID)
+		//app.DB.Delete(&User.Groups)
+		// Save all current groups
+		//app.DB.Save(&updatedUser.Groups)
+		app.DB.Model(&User).Updates(updatedUser)
+	}
+
+	// Return updated user
+	var checkUser db.User
+	app.DB.First(&checkUser, "id = ?", User.ID)
+	app.DB.Preload("Groups").First(&checkUser, "id = ?", User.ID)
+	for i, _ := range checkUser.Groups {
+		app.DB.Model(&checkUser.Groups[i]).Related(&checkUser.Groups[i].Region)
+	}
+	model := CopyNestedModel(checkUser, fieldsUser)
+	c.JSON(http.StatusOK, model)
+}
+
 func (app *App) ListUsers(c *gin.Context) {
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
@@ -208,5 +336,53 @@ func (app *App) GetUser(c *gin.Context) {
 }
 
 func (app *App) UpdateUser(c *gin.Context) {
-	// TODO: Implement this function.
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, db.Region{}, "superadmin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// The real request
+
+	userID := app.getUUID(c, "userID")
+	if userID == "" {
+		return
+	}
+
+	var updateUser db.User
+	app.DB.Preload("Groups").First(&updateUser, "id = ?", userID)
+
+	if updateUser.ID == "" {
+		c.JSON(http.StatusNotFound, gin.H{
+			"User": "The user you tried to update does not exist.",
+		})
+		return
+	}
+
+	for groupLoop, _ := range updateUser.Groups { //groupLoop rhymes
+		app.DB.Model(&updateUser.Groups[groupLoop]).Related(&updateUser.Groups[groupLoop].Region)
+	}
+
+	if app.CheckScope(&updateUser, db.Region{}, "superadmin") && updateUser.ID != User.ID {
+		c.JSON(http.StatusForbidden, gin.H{
+			"Error": "You tried to update a system admin. But as you are equal bosses, you have to respect that your power is limited where the power of the other boss starts.",
+		})
+		return
+	}
+	app.UpdateUserObject(&updateUser, c, true)
 }

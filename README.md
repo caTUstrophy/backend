@@ -313,6 +313,12 @@ PUT /users/:userID
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
+	"Name": optional, string
+    "PreferredName": optional, string
+    "Mail": optional, string/email
+    "PhoneNumbers": optional, array of strings
+    "Password": optional, string
+    "Groups": optinal, [{"ID": required, UUID v4}]
 }
 ```
 
@@ -700,6 +706,11 @@ PUT /me
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
+	"Name": optional, string
+    "PreferredName": optional, string
+    "Mail": optional, string/email
+    "PhoneNumbers": optional, array of strings
+    "Password": optional, string
 }
 ```
 

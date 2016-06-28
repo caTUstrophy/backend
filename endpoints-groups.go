@@ -5,12 +5,17 @@ import (
 
 	"net/http"
 
-
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 )
 
+func (app *App) GetGroupObject(groupID string) db.Group {
 
+	var Group db.Group
+	app.DB.Preload("Users").First(&Group, "id = ?", groupID)
+	app.DB.Model(&Group).Related(&Group.Region)
+	return Group
+}
 
 func (app *App) GetGroups(c *gin.Context) {
 
@@ -34,7 +39,6 @@ func (app *App) GetGroups(c *gin.Context) {
 		return
 	}
 
-
 	var Groups []db.Group
 	app.DB.Preload("Users").Find(&Groups)
 
@@ -53,7 +57,6 @@ func (app *App) GetGroups(c *gin.Context) {
 
 	c.JSON(http.StatusOK, models)
 }
-
 
 func (app *App) ListSystemAdmins(c *gin.Context) {
 
