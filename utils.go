@@ -295,6 +295,35 @@ func getJSONResponseInfo(i interface{}, fields map[string]interface{}) map[strin
 	return m
 }
 
+// http Responses for validation errors
+func CheckErrors(errs validator.ValidationErrors, c *gin.Context) {
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs {
+
+			if err.Tag == "required" {
+				errResp[err.Field] = "Is required"
+			} else if err.Tag == "excludesall" {
+				errResp[err.Field] = "Contains unallowed characters"
+			} else if err.Tag == "min" {
+				errResp[err.Field] = "Is too short"
+			} else if err.Tag == "containsany" {
+				errResp[err.Field] = "Does not contain numbers and special characters"
+			} else if err.Tag == "email" {
+				errResp[err.Field] = "Is not a valid mail address"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(http.StatusBadRequest, errResp)
+
+		return
+	}
+}
+
 // USED FOR TESTING ONLY!
 // Creates http.Request with authentication, requests url and returns a response
 func (app *App) RequestWithJWT(method string, url string, body interface{}, jwt string) *httptest.ResponseRecorder {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
-	"github.com/satori/go.uuid"
 )
 
 // Functions
@@ -35,7 +34,7 @@ func (app *App) GetMe(c *gin.Context) {
 func (app *App) UpdateMe(c *gin.Context) {
 
 	// Check authorization for this function.
-	ok, _, message := app.Authorize(c.Request)
+	ok, User, message := app.Authorize(c.Request)
 	if !ok {
 
 		// Signal client an error and expect authorization.
@@ -45,32 +44,8 @@ func (app *App) UpdateMe(c *gin.Context) {
 		return
 	}
 
-	// TODO: Change stub to real function.
-	c.JSON(http.StatusOK, gin.H{
-		"ID":            fmt.Sprintf("%s", uuid.NewV4()),
-		"Name":          "Updated Bernd",
-		"PreferredName": "Da Börnd",
-		"Mail":          "esistdermomentgekommen@mail.com",
-		"Groups": struct {
-			Location    interface{}
-			Permissions interface{}
-		}{
-			struct {
-				Longitude float64
-				Latitude  float64
-			}{
-				13.5,
-				50.2,
-			},
-			struct {
-				AccessRight string
-				Description string
-			}{
-				"user",
-				"This permission represents a standard, registered but not privileged user in our system.",
-			},
-		},
-	})
+	app.UpdateUserObject(User, c, false)
+	return
 }
 
 func (app *App) ListUserOffers(c *gin.Context) {
