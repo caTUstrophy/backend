@@ -169,7 +169,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 func (app *App) GetOffer(c *gin.Context) {
 
 	// Check authorization for this function.
-	ok, user, message := app.Authorize(c.Request)
+	ok, User, message := app.Authorize(c.Request)
 	if !ok {
 
 		// Signal client an error and expect authorization.
@@ -182,9 +182,11 @@ func (app *App) GetOffer(c *gin.Context) {
 	// Load offerID from request.
 	offerID := app.getUUID(c, "offerID")
 	if offerID == "" {
+
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error":"offerID is no valid UUID",
+			"Error": "offerID is no valid UUID",
 		})
+
 		return
 	}
 
@@ -193,8 +195,10 @@ func (app *App) GetOffer(c *gin.Context) {
 	app.DB.Preload("Regions").Preload("Tags").First(&offer, "id = ?", offerID)
 	app.DB.Model(&offer).Related(&offer.User)
 
-	// Check if user is admin in any region of this offer.
-	if ok := app.CheckScopes(user, offer.Regions, "admin"); !ok {
+	// Validity check:
+	// User accessing this offer has to be either an admin in any region
+	// of this offer or has to be the owning user of this offer.
+	if ok := ((offer.UserID == User.ID) || app.CheckScopes(User, offer.Regions, "admin")); !ok {
 
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
@@ -227,7 +231,7 @@ func (app *App) UpdateOffer(c *gin.Context) {
 	offerID := app.getUUID(c, "offerID")
 	if offerID == "" {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error":"offerID is no valid UUID",
+			"Error": "offerID is no valid UUID",
 		})
 		return
 	}

@@ -169,7 +169,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 func (app *App) GetRequest(c *gin.Context) {
 
 	// Check authorization for this function.
-	ok, user, message := app.Authorize(c.Request)
+	ok, User, message := app.Authorize(c.Request)
 	if !ok {
 
 		// Signal client an error and expect authorization.
@@ -182,8 +182,11 @@ func (app *App) GetRequest(c *gin.Context) {
 	// Parse requestID from HTTP request.
 	requestID := app.getUUID(c, "requestID")
 	if requestID == "" {
+
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error": "requestID is no valid UUID"})
+			"Error": "requestID is no valid UUID",
+		})
+
 		return
 	}
 
@@ -192,8 +195,10 @@ func (app *App) GetRequest(c *gin.Context) {
 	app.DB.Preload("Regions").Preload("Tags").First(&request, "id = ?", requestID)
 	app.DB.Model(&request).Related(&request.User)
 
-	// Check if user is admin in any region of this request.
-	if ok := app.CheckScopes(user, request.Regions, "admin"); !ok {
+	// Validity check:
+	// User accessing this request has to be either an admin in any region
+	// of this request or has to be the owning user of this request.
+	if ok := ((request.UserID == User.ID) || app.CheckScopes(User, request.Regions, "admin")); !ok {
 
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")

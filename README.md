@@ -94,18 +94,18 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | [Renew auth token](#renew-auth-token)                           | L    | GET       | /auth                        | MVP         | ✔    |
 | [Logout](#logout)                                               | L    | DELETE    | /auth                        | MVP         | ✔    |
 | [Create user](#create-user-registration)                        | U    | POST      | /users                       | MVP         | ✔    |
-| [List users](#list-all-users)                                   | A    | GET       | /users                       | 3.0         |       |
-| [Get user `userID`](#get-user-with-id-userid)                   | A    | GET       | /users/:userID               | 3.0         |       |
-| [Update user `userID`](#update-user-with-id-userid)             | A    | PUT       | /users/:userID               | 3.0         |       |
+| [List users](#list-all-users)                                   | A    | GET       | /users                       | 3.0         | ✔    |
+| [Get user `userID`](#get-user-with-id-userid)                   | A    | GET       | /users/:userID               | 3.0         | ✔    |
+| [Update user `userID`](#update-user-with-id-userid)             | A    | PUT       | /users/:userID               | 3.0         | ✔    |
 | [Create offer](#create-offer)                                   | L    | POST      | /offers                      | MVP         | ✔    |
-| [Get offer `offerID`](#get-offer-with-offerid)                  | A    | GET       | /offers/:offerID             | 2.0         | ✔    |
+| [Get offer `offerID`](#get-offer-with-offerid)                  | C    | GET       | /offers/:offerID             | 2.0         | ✔    |
 | [Update offer `offerID`](#update-offer-with-offerid)            | C    | PUT       | /offers/:offerID             | 3.0         |       |
 | [Create request](#create-request)                               | L    | POST      | /requests                    | MVP         | ✔    |
-| [Get request `requestID`](#get-request-with-requestid)          | A    | GET       | /requests/:requestID         | 2.0         | ✔    |
+| [Get request `requestID`](#get-request-with-requestid)          | C    | GET       | /requests/:requestID         | 2.0         | ✔    |
 | [Update request `requestID`](#update-request-with-requestid)    | C    | PUT       | /requests/:requestID         | 3.0         |       |
 | [Create matching](#create-matching)                             | A    | POST      | /matchings                   | MVP         | ✔    |
 | [Get matching `matchingID`](#get-matching-with-matchingid)      | C    | GET       | /matchings/:matchingID       | MVP         | ✔    |
-| [Update matching `matchingID`](#update-matching-with-matchingid)| A    | PUT       | /matchings/:matchingID       | 3.0         |       |
+| [Update matching `matchingID`](#update-matching-with-matchingid)| C    | PUT       | /matchings/:matchingID       | 3.0         |       |
 | [Create a region](#create-region)                               | L    | POST      | /regions                     | 2.0         | ✔    |
 | [List regions](#list-regions)                                   | U    | GET       | /regions                     | 2.0         | ✔    |
 | [Get region `regionID`](#get-region-regionid)                   | U    | GET       | /regions/:regionID           | 2.0         | ✔    |
@@ -113,8 +113,8 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | [List offers in region `regionID`](#list-offers-in-region-with-regionid) | A | GET | /regions/:regionID/offers    | 2.0         | ✔    |
 | [List requests in region `regionID`](#list-requests-in-region-with-regionid) | A | GET | /regions/:regionID/requests | 2.0      | ✔    |
 | [List matchings in region `regionID`](#list-matchings-in-region-with-regionid) | A | GET | /regions/:regionID/matchings | 2.0   | ✔    |
-| [Promote user to admin for region `regionID`](#promote-user-to-admin-in-region-with-regionid) | A | POST | /regions/:regionID/admins | 3.0 |  |
-| [List admins for region `regionID`](#list-admins-in-region-with-regionid) | A | GET | /regions/:regionID/admins   | 3.0   |   |
+| [Promote user to admin for region `regionID`](#promote-user-to-admin-in-region-with-regionid) | A | POST | /regions/:regionID/admins | 3.0 | ✔ |
+| [List admins for region `regionID`](#list-admins-in-region-with-regionid) | A | GET | /regions/:regionID/admins   | 3.0         | ✔    |
 | [Own profile](#own-profile)                                     | L    | GET       | /me                          | 2.0         | ✔    |
 | [Update own profile](#update-own-profile)                       | L    | PUT       | /me                          | 3.0         | ✔    |
 | [List own offers](#list-own-offers)                             | L    | GET       | /me/offers                   | 2.0         | ✔    |

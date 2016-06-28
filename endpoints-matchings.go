@@ -213,9 +213,8 @@ func (app *App) GetMatching(c *gin.Context) {
 		return
 	}
 
-	var Matching db.Matching
-
 	// Retrieve the specified matching
+	var Matching db.Matching
 	app.DB.First(&Matching, "id = ?", matchingID)
 	app.DB.Model(&Matching).Related(&Matching.Offer)
 	app.DB.Model(&Matching.Offer).Related(&Matching.Offer.User)
