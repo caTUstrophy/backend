@@ -20,7 +20,11 @@ var ReplacementsJSON = map[string]interface{}{
 }
 
 var ReplacementsJSONbyKey = map[string]interface{}{
-	"ID": "UUID v4",
+	"ID":        "UUID v4",
+	"OfferId":   "UUID v4",
+	"RequestId": "UUID v4",
+	"RegionId":  "UUID v4",
+	"UserId":    "UUID v4",
 }
 
 // This function generates documentation like we present in README
@@ -55,7 +59,7 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 
 	var User db.User
 	User.Enabled = false
-	app.DB.First(&User.Groups, "region_id <> null")
+	app.DB.First(&User.Groups, "region_id <> ''")
 
 	for _, group := range User.Groups {
 		app.DB.Model(&group).Related(&group.Region)

@@ -792,6 +792,7 @@ Success:
 
 
 
+
 ### Responses
 
 #### Single user complete
@@ -799,7 +800,16 @@ Success:
 ```
 {
 	"Groups": [
-		null
+		{
+			"AccessRight": "string",
+			"Description": "string",
+			"ID": "UUID v4",
+			"Region": {
+				"Description": "string",
+				"ID": "UUID v4",
+				"Name": "string"
+			}
+		}
 	],
 	"ID": "UUID v4",
 	"Mail": "string",
@@ -816,7 +826,16 @@ Success:
 [
 	{
 		"Groups": [
-			null
+			{
+				"AccessRight": "string",
+				"Description": "string",
+				"ID": "UUID v4",
+				"Region": {
+					"Description": "string",
+					"ID": "UUID v4",
+					"Name": "string"
+				}
+			}
 		],
 		"ID": "UUID v4",
 		"Mail": "string",
@@ -939,9 +958,9 @@ Success:
 ```
 {
 	"ID": "UUID v4",
-	"OfferId": "string",
-	"RegionId": "string",
-	"RequestId": "string"
+	"OfferId": "UUID v4",
+	"RegionId": "UUID v4",
+	"RequestId": "UUID v4"
 }
 ```
 
@@ -951,9 +970,9 @@ Success:
 [
 	{
 		"ID": "UUID v4",
-		"OfferId": "string",
-		"RegionId": "string",
-		"RequestId": "string"
+		"OfferId": "UUID v4",
+		"RegionId": "UUID v4",
+		"RequestId": "UUID v4"
 	}
 ]
 ```
