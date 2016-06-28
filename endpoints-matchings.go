@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"net/http"
@@ -180,9 +179,6 @@ func (app *App) CreateMatching(c *gin.Context) {
 		CreatedAt: time.Now(),
 	}
 
-	log.Println("time.Now():", time.Now())
-	log.Println("time.Now().Format(RFC):", time.Now().Format(time.RFC3339))
-
 	app.DB.Create(&NotifyOfferUser)
 	app.DB.Create(&NotifyRequestUser)
 
@@ -208,7 +204,7 @@ func (app *App) GetMatching(c *gin.Context) {
 	matchingID := app.getUUID(c, "matchingID")
 	if matchingID == "" {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error":"macthingID is not a valid UUID",
+			"Error": "macthingID is not a valid UUID",
 		})
 		return
 	}

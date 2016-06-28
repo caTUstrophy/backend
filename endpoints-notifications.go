@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"net/http"
 
@@ -35,8 +36,44 @@ func (app *App) ListNotifications(c *gin.Context) {
 	var Notifications []db.Notification
 	app.DB.Find(&Notifications, "\"user_id\" = ? AND \"read\" = ?", User.ID, "false")
 
-	// Marshal only necessary fields.
-	response := CopyNestedModel(Notifications, fieldsNotification)
+	// Instantiate final response slice.
+	response := make([]interface{}, len(Notifications))
+
+	// Range over all notifications and enrich with
+	// additional objects if necessary.
+	for i, notification := range Notifications {
+
+		jsonNotificationTmp := CopyNestedModel(notification, fieldsNotification)
+		jsonNotification, ok := jsonNotificationTmp.(map[string]interface{})
+		if !ok {
+			log.Println("[ListNotifications] Type assertion of jsonNotificationTmp went wrong.")
+			return
+		}
+
+		if notification.Type == db.NotificationMatching {
+
+			// Find matching element and connected elements.
+			var Matching db.Matching
+			app.DB.First(&Matching, "\"id\" = ?", notification.ItemID)
+			app.DB.Model(&Matching).Related(&Matching.Offer)
+			app.DB.Model(&Matching.Offer).Related(&Matching.Offer.User)
+			app.DB.Model(&Matching).Related(&Matching.Request)
+			app.DB.Model(&Matching.Request).Related(&Matching.Request.User)
+
+			// Marshal compiled matching model.
+			jsonMatchingTmp := CopyNestedModel(Matching, fieldsMatching)
+			jsonMatching, ok := jsonMatchingTmp.(map[string]interface{})
+			if !ok {
+				log.Println("[ListNotifications] Type assertion of jsonMatchingTmp went wrong.")
+				return
+			}
+
+			// Append marshalled matching to response JSON.
+			jsonNotification["Matching"] = jsonMatching
+		}
+
+		response[i] = jsonNotification
+	}
 
 	c.JSON(http.StatusOK, response)
 }
@@ -126,7 +163,7 @@ func (app *App) UpdateNotification(c *gin.Context) {
 	Notification.Read = true
 	app.DB.Save(&Notification)
 
-	response := CopyNestedModel(Notification, fieldsNotificationU)
+	response := CopyNestedModel(Notification, fieldsNotificationR)
 
 	c.JSON(http.StatusOK, response)
 }

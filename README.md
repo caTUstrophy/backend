@@ -116,10 +116,10 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | [Promote user to admin for region `regionID`](#promote-user-to-admin-in-region-with-regionid) | A | POST | /regions/:regionID/admins | 3.0 |  |
 | [List admins for region `regionID`](#list-admins-in-region-with-regionid) | A | GET | /regions/:regionID/admins   | 3.0   |   |
 | [Own profile](#own-profile)                                     | L    | GET       | /me                          | 2.0         | ✔    |
-| [Update own profile](#update-own-profile)                       | L    | PUT       | /me                          | 3.0         |       |
+| [Update own profile](#update-own-profile)                       | L    | PUT       | /me                          | 3.0         | ✔    |
 | [List own offers](#list-own-offers)                             | L    | GET       | /me/offers                   | 2.0         | ✔    |
 | [List own requests](#list-own-requests)                         | L    | GET       | /me/requests                 | 2.0         | ✔    |
-| [List own matchings](#list-own-matchings)                       | L    | GET       | /me/matchings                | 3.0         |       |
+| [List own matchings](#list-own-matchings)                       | L    | GET       | /me/matchings                | 3.0         | ✔    |
 | [List unread notifications](#list-unread-notifications)         | L    | GET       | /notifications               | 3.0         | ✔    |
 | [Update notification `notificationID`](#update-notification-with-notificationid) | C | PUT | /notifications/:notificationID | 3.0 | ✔  |
 
@@ -144,10 +144,12 @@ Inside a JWT issued by this backend, the following fields are present:
 
 Please note that further identification fields may be added in the future.
 
+
 ### General request information
 
 #### Fail responses
-If a request is not okay, we will always send one of the following responses:
+
+If a request was not okay, we will always send one of the following responses:
 
 ```
 400 Bad Request
@@ -165,9 +167,10 @@ WWW-Authenticate: Bearer realm="CaTUstrophy", error="invalid_token", error_descr
 ```
 404 Not Found
 {
-	"<FIELDNAME or error>": <MORE INFORMATION ON WHAT WAS NOT FOUND>
+	"<FIELDNAME OR ERROR>": "<MORE INFORMATION ON WHAT WAS NOT FOUND>"
 }
 ```
+
 
 ### Detailed request information
 
@@ -185,8 +188,6 @@ POST /auth
 ```
 
 **Response:**
-
-Success:
 
 ```
 200 OK
@@ -208,8 +209,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
-
 ```
 200 OK
 
@@ -228,8 +227,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 **Response:**
-
-Success:
 
 ```
 200 OK
@@ -277,9 +274,8 @@ POST /users
 
 **Response:**
 
-Success:
-
 [Single complete user object](#single-user-complete)
+
 
 #### List all users
 
@@ -291,9 +287,8 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success
-
 [List of complete user objects](#list-users-complete)
+
 
 #### Get user with ID `userID`
 
@@ -306,6 +301,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 [Single complete user object](#single-user-complete)
 
+
 #### Update user with ID `userID`
 
 ```
@@ -317,8 +313,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 **Response:**
-
-Success
 
 [Single complete user object](#single-user-complete)
 
@@ -362,8 +356,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
-
 [Offer object](#offer-object)
 
 
@@ -377,8 +369,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 **Response:**
-
-Success:
 
 [Offer object](#offer-object)
 
@@ -396,8 +386,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 **Response:**
-
-Success:
 
 [Offer object](#offer-object)
 
@@ -423,7 +411,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
 [Request object](#request-object)
 
 
@@ -438,7 +425,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
 [Request object](#request-object)
 
 
@@ -456,7 +442,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
 [Request object](#request-object)
 
 
@@ -477,8 +462,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
-
 [Matching object](#matching-object)
 
 
@@ -492,8 +475,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 **Response:**
-
-Success:
 
 [Matching object](#matching-object)
 
@@ -511,8 +492,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 **Response:**
-
-Success:
 
 [Matching object](#matching-object)
 
@@ -542,8 +521,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
-
 [Region object](#region-object)
 
 
@@ -557,9 +534,8 @@ GET /regions
 
 **Response:**
 
-Success:
-
 [Region list](#region-list)
+
 
 #### Get region `regionID`
 
@@ -570,8 +546,6 @@ GET /regions/:regionID
 ```
 
 **Response:**
-
-Success:
 
 [Region object](#region-object)
 
@@ -588,8 +562,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
-
 [Region object](#region-object)
 
 
@@ -603,8 +575,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 **Response:**
-
-Success:
 
 [Offer list](#offer-list)
 
@@ -620,8 +590,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
-
 [Request list](#request-list)
 
 
@@ -635,8 +603,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 **Response:**
-
-Success:
 
 [Matching list](#matching-list)
 
@@ -656,8 +622,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
-
 [User without groups](#user-without-groups)
 
 
@@ -671,8 +635,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 ```
 
 **Response:**
-
-Success:
 
 [List of users without their groups](#list-of-users-without-groups)
 
@@ -705,8 +667,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
-
 [User object complete](#single-user-complete)
 
 
@@ -721,7 +681,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
 [List of offers](#offer-list)
 
 
@@ -736,7 +695,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
 [List of requests](#request-list)
 
 
@@ -751,7 +709,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
 [List of matchings](#matching-list)
 
 
@@ -766,8 +723,11 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
 [List of notifications](#notification-list)
+
+or in case that notifications for matchings are included:
+
+[List of matching notifications](#notification-list-for-matching-notifications)
 
 
 #### Update notification with `notificationID`
@@ -786,11 +746,11 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 **Response:**
 
-Success:
 [Single notification](#notification-object)
 
+or in case that this specific notification is meant for a matching:
 
-
+[Single matching notification](#notification-object-for-matching-notification)
 
 
 ### Responses
@@ -799,24 +759,24 @@ Success:
 
 ```
 {
-	"Groups": [
-		{
-			"AccessRight": "string",
-			"Description": "string",
-			"ID": "UUID v4",
-			"Region": {
-				"Description": "string",
-				"ID": "UUID v4",
-				"Name": "string"
-			}
-		}
-	],
-	"ID": "UUID v4",
-	"Mail": "string",
-	"MailVerified": "bool",
-	"Name": "string",
-	"PhoneNumbers": "[string, ...]",
-	"PreferredName": "string"
+    "Groups": [
+        {
+            "AccessRight": "string",
+            "Description": "string",
+            "ID": "UUID v4",
+            "Region": {
+                "Description": "string",
+                "ID": "UUID v4",
+                "Name": "string"
+            }
+        }
+    ],
+    "ID": "UUID v4",
+    "Mail": "string",
+    "MailVerified": "bool",
+    "Name": "string",
+    "PhoneNumbers": "[string, ...]",
+    "PreferredName": "string"
 }
 ```
 
@@ -824,26 +784,26 @@ Success:
 
 ```
 [
-	{
-		"Groups": [
-			{
-				"AccessRight": "string",
-				"Description": "string",
-				"ID": "UUID v4",
-				"Region": {
-					"Description": "string",
-					"ID": "UUID v4",
-					"Name": "string"
-				}
-			}
-		],
-		"ID": "UUID v4",
-		"Mail": "string",
-		"MailVerified": "bool",
-		"Name": "string",
-		"PhoneNumbers": "[string, ...]",
-		"PreferredName": "string"
-	}
+    {
+        "Groups": [
+            {
+                "AccessRight": "string",
+                "Description": "string",
+                "ID": "UUID v4",
+                "Region": {
+                    "Description": "string",
+                    "ID": "UUID v4",
+                    "Name": "string"
+                }
+            }
+        ],
+        "ID": "UUID v4",
+        "Mail": "string",
+        "MailVerified": "bool",
+        "Name": "string",
+        "PhoneNumbers": "[string, ...]",
+        "PreferredName": "string"
+    }
 ]
 ```
 
@@ -851,11 +811,11 @@ Success:
 
 ```
 {
-	"ID": "UUID v4",
-	"Mail": "string",
-	"MailVerified": "bool",
-	"Name": "string",
-	"PhoneNumbers": "[string, ...]"
+    "ID": "UUID v4",
+    "Mail": "string",
+    "MailVerified": "bool",
+    "Name": "string",
+    "PhoneNumbers": "[string, ...]"
 }
 ```
 
@@ -863,13 +823,13 @@ Success:
 
 ```
 [
-	{
-		"ID": "UUID v4",
-		"Mail": "string",
-		"MailVerified": "bool",
-		"Name": "string",
-		"PhoneNumbers": "[string, ...]"
-	}
+    {
+        "ID": "UUID v4",
+        "Mail": "string",
+        "MailVerified": "bool",
+        "Name": "string",
+        "PhoneNumbers": "[string, ...]"
+    }
 ]
 ```
 
@@ -877,18 +837,20 @@ Success:
 
 ```
 {
-	"Expired": "bool",
-	"ID": "UUID v4",
-	"Location": {
-		"lat": "float64",
-		"lng": "float64"
-	},
-	"Matched": "bool",
-	"Name": "string",
-	"Tags": [
-		null
-	],
-	"ValidityPeriod": "RFC3339 date"
+    "Expired": "bool",
+    "ID": "UUID v4",
+    "Location": {
+        "lat": "float64",
+        "lng": "float64"
+    },
+    "Matched": "bool",
+    "Name": "string",
+    "Tags": [
+        {
+            "Name": "string"
+        }
+    ],
+    "ValidityPeriod": "RFC3339 date"
 }
 ```
 
@@ -896,20 +858,22 @@ Success:
 
 ```
 [
-	{
-		"Expired": "bool",
-		"ID": "UUID v4",
-		"Location": {
-			"lat": "float64",
-			"lng": "float64"
-		},
-		"Matched": "bool",
-		"Name": "string",
-		"Tags": [
-			null
-		],
-		"ValidityPeriod": "RFC3339 date"
-	}
+    {
+        "Expired": "bool",
+        "ID": "UUID v4",
+        "Location": {
+            "lat": "float64",
+            "lng": "float64"
+        },
+        "Matched": "bool",
+        "Name": "string",
+        "Tags": [
+            {
+                "Name": "string"
+            }
+        ],
+        "ValidityPeriod": "RFC3339 date"
+    }
 ]
 ```
 
@@ -917,18 +881,20 @@ Success:
 
 ```
 {
-	"Expired": "bool",
-	"ID": "UUID v4",
-	"Location": {
-		"lat": "float64",
-		"lng": "float64"
-	},
-	"Matched": "bool",
-	"Name": "string",
-	"Tags": [
-		null
-	],
-	"ValidityPeriod": "RFC3339 date"
+    "Expired": "bool",
+    "ID": "UUID v4",
+    "Location": {
+        "lat": "float64",
+        "lng": "float64"
+    },
+    "Matched": "bool",
+    "Name": "string",
+    "Tags": [
+        {
+            "Name": "string"
+        }
+    ],
+    "ValidityPeriod": "RFC3339 date"
 }
 ```
 
@@ -936,20 +902,22 @@ Success:
 
 ```
 [
-	{
-		"Expired": "bool",
-		"ID": "UUID v4",
-		"Location": {
-			"lat": "float64",
-			"lng": "float64"
-		},
-		"Matched": "bool",
-		"Name": "string",
-		"Tags": [
-			null
-		],
-		"ValidityPeriod": "RFC3339 date"
-	}
+    {
+        "Expired": "bool",
+        "ID": "UUID v4",
+        "Location": {
+            "lat": "float64",
+            "lng": "float64"
+        },
+        "Matched": "bool",
+        "Name": "string",
+        "Tags": [
+            {
+                "Name": "string"
+            }
+        ],
+        "ValidityPeriod": "RFC3339 date"
+    }
 ]
 ```
 
@@ -957,10 +925,48 @@ Success:
 
 ```
 {
-	"ID": "UUID v4",
-	"OfferId": "UUID v4",
-	"RegionId": "UUID v4",
-	"RequestId": "UUID v4"
+    "ID": "UUID v4",
+    "Offer": {
+        "Expired": "bool",
+        "ID": "UUID v4",
+        "Location": {
+            "lat": "float64",
+            "lng": "float64"
+        },
+        "Matched": "bool",
+        "Name": "string",
+        "Tags": [
+            null
+        ],
+        "User": {
+            "ID": "UUID v4",
+            "Mail": "string",
+            "Name": "string",
+            "PhoneNumbers": "[string, ...]"
+        },
+        "ValidityPeriod": "RFC3339 date"
+    },
+    "RegionId": "UUID v4",
+    "Request": {
+        "Expired": "bool",
+        "ID": "UUID v4",
+        "Location": {
+            "lat": "float64",
+            "lng": "float64"
+        },
+        "Matched": "bool",
+        "Name": "string",
+        "Tags": [
+            null
+        ],
+        "User": {
+            "ID": "UUID v4",
+            "Mail": "string",
+            "Name": "string",
+            "PhoneNumbers": "[string, ...]"
+        },
+        "ValidityPeriod": "RFC3339 date"
+    }
 }
 ```
 
@@ -968,12 +974,50 @@ Success:
 
 ```
 [
-	{
-		"ID": "UUID v4",
-		"OfferId": "UUID v4",
-		"RegionId": "UUID v4",
-		"RequestId": "UUID v4"
-	}
+    {
+        "ID": "UUID v4",
+        "Offer": {
+            "Expired": "bool",
+            "ID": "UUID v4",
+            "Location": {
+                "lat": "float64",
+                "lng": "float64"
+            },
+            "Matched": "bool",
+            "Name": "string",
+            "Tags": [
+                null
+            ],
+            "User": {
+                "ID": "UUID v4",
+                "Mail": "string",
+                "Name": "string",
+                "PhoneNumbers": "[string, ...]"
+            },
+            "ValidityPeriod": "RFC3339 date"
+        },
+        "RegionId": "UUID v4",
+        "Request": {
+            "Expired": "bool",
+            "ID": "UUID v4",
+            "Location": {
+                "lat": "float64",
+                "lng": "float64"
+            },
+            "Matched": "bool",
+            "Name": "string",
+            "Tags": [
+                null
+            ],
+            "User": {
+                "ID": "UUID v4",
+                "Mail": "string",
+                "Name": "string",
+                "PhoneNumbers": "[string, ...]"
+            },
+            "ValidityPeriod": "RFC3339 date"
+        }
+    }
 ]
 ```
 
@@ -981,17 +1025,17 @@ Success:
 
 ```
 {
-	"Boundaries": {
-		"Points": [
-			{
-				"lat": "float64",
-				"lng": "float64"
-			}
-		]
-	},
-	"Description": "string",
-	"ID": "UUID v4",
-	"Name": "string"
+    "Boundaries": {
+        "Points": [
+            {
+                "lat": "float64",
+                "lng": "float64"
+            }
+        ]
+    },
+    "Description": "string",
+    "ID": "UUID v4",
+    "Name": "string"
 }
 ```
 
@@ -999,19 +1043,19 @@ Success:
 
 ```
 [
-	{
-		"Boundaries": {
-			"Points": [
-				{
-					"lat": "float64",
-					"lng": "float64"
-				}
-			]
-		},
-		"Description": "string",
-		"ID": "UUID v4",
-		"Name": "string"
-	}
+    {
+        "Boundaries": {
+            "Points": [
+                {
+                    "lat": "float64",
+                    "lng": "float64"
+                }
+            ]
+        },
+        "Description": "string",
+        "ID": "UUID v4",
+        "Name": "string"
+    }
 ]
 ```
 
@@ -1019,9 +1063,63 @@ Success:
 
 ```
 {
-	"ID": "UUID v4",
-	"ItemID": "string",
-	"Type": "string"
+    "ID": "UUID v4",
+    "ItemID": "string",
+    "Type": "string"
+}
+```
+
+#### Notification object for matching notification
+
+```
+{
+    "ID": "UUID v4",
+    "ItemID": "string",
+    "Matching": {
+        "ID": "UUID v4",
+        "Offer": {
+            "Expired": "bool",
+            "ID": "UUID v4",
+            "Location": {
+                "lat": "float64",
+                "lng": "float64"
+            },
+            "Matched": "bool",
+            "Name": "string",
+            "Tags": [
+                null
+            ],
+            "User": {
+                "ID": "UUID v4",
+                "Mail": "string",
+                "Name": "string",
+                "PhoneNumbers": "[string, ...]"
+            },
+            "ValidityPeriod": "RFC3339 date"
+        },
+        "RegionId": "UUID v4",
+        "Request": {
+            "Expired": "bool",
+            "ID": "UUID v4",
+            "Location": {
+                "lat": "float64",
+                "lng": "float64"
+            },
+            "Matched": "bool",
+            "Name": "string",
+            "Tags": [
+                null
+            ],
+            "User": {
+                "ID": "UUID v4",
+                "Mail": "string",
+                "Name": "string",
+                "PhoneNumbers": "[string, ...]"
+            },
+            "ValidityPeriod": "RFC3339 date"
+        }
+    },
+    "Type": "string"
 }
 ```
 
@@ -1029,11 +1127,67 @@ Success:
 
 ```
 [
-	{
-		"ID": "UUID v4",
-		"ItemID": "string",
-		"Type": "string"
-	}
+    {
+        "ID": "UUID v4",
+        "ItemID": "string",
+        "Type": "string"
+    }
+]
+```
+
+#### Notification list for matching notifications
+
+```
+[
+    {
+        "ID": "UUID v4",
+        "ItemID": "string",
+        "Matching": {
+            "ID": "UUID v4",
+            "Offer": {
+                "Expired": "bool",
+                "ID": "UUID v4",
+                "Location": {
+                    "lat": "float64",
+                    "lng": "float64"
+                },
+                "Matched": "bool",
+                "Name": "string",
+                "Tags": [
+                    null
+                ],
+                "User": {
+                    "ID": "UUID v4",
+                    "Mail": "string",
+                    "Name": "string",
+                    "PhoneNumbers": "[string, ...]"
+                },
+                "ValidityPeriod": "RFC3339 date"
+            },
+            "RegionId": "UUID v4",
+            "Request": {
+                "Expired": "bool",
+                "ID": "UUID v4",
+                "Location": {
+                    "lat": "float64",
+                    "lng": "float64"
+                },
+                "Matched": "bool",
+                "Name": "string",
+                "Tags": [
+                    null
+                ],
+                "User": {
+                    "ID": "UUID v4",
+                    "Mail": "string",
+                    "Name": "string",
+                    "PhoneNumbers": "[string, ...]"
+                },
+                "ValidityPeriod": "RFC3339 date"
+            }
+        },
+        "Type": "string"
+    }
 ]
 ```
 

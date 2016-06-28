@@ -59,9 +59,10 @@ var fieldsRequestU = map[string]interface{}{
 	"Matched":        "Matched",
 	"Expired":        "Expired",
 	"User": map[string]interface{}{
-		"ID":   "ID",
-		"Name": "Name",
-		"Mail": "Mail",
+		"ID":           "ID",
+		"Name":         "Name",
+		"Mail":         "Mail",
+		"PhoneNumbers": "PhoneNumbers",
 	},
 }
 
@@ -94,9 +95,10 @@ var fieldsOfferU = map[string]interface{}{
 	"Matched":        "Matched",
 	"Expired":        "Expired",
 	"User": map[string]interface{}{
-		"ID":   "ID",
-		"Name": "Name",
-		"Mail": "Mail",
+		"ID":           "ID",
+		"Name":         "Name",
+		"Mail":         "Mail",
+		"PhoneNumbers": "PhoneNumbers",
 	},
 }
 
@@ -128,13 +130,13 @@ var fieldsRegion = map[string]interface{}{
 }
 
 var fieldsMatching = map[string]interface{}{
-	"ID":        "ID",
-	"RegionId":  "RegionId",
-	"OfferId":   "OfferId",
-	"RequestId": "RequestId",
+	"ID":       "ID",
+	"RegionId": "RegionId",
+	"Request":  fieldsRequestU,
+	"Offer":    fieldsOfferU,
 }
 
-var fieldsNotificationU = map[string]interface{}{
+var fieldsNotificationR = map[string]interface{}{
 	"ID":     "ID",
 	"Type":   "Type",
 	"ItemID": "ItemID",
@@ -145,6 +147,13 @@ var fieldsNotification = map[string]interface{}{
 	"ID":     "ID",
 	"Type":   "Type",
 	"ItemID": "ItemID",
+}
+
+var fieldsNotificationForMatching = map[string]interface{}{
+	"ID":       "ID",
+	"Type":     "Type",
+	"ItemID":   "ItemID",
+	"Matching": fieldsMatching,
 }
 
 // Other global response schemes, not thought to be used for CopyNestedModel

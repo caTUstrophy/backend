@@ -146,13 +146,36 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	currResponseMap = getJSONResponseInfo(notification, fieldsNotification)
 	allResponses["Notification"] = currResponseMap
 
+	// Update this to reflect changes in specific notification
+	// type for matching notifications.
+	type notificationForMatching struct {
+		ID       string
+		Type     string
+		ItemID   string
+		Matching interface{}
+	}
+
+	// NOTIFICATION FOR MATCHING
+	currResponseMap = getJSONResponseInfo(notificationForMatching{
+		ID:       notification.ID,
+		Type:     notification.Type,
+		ItemID:   notification.ItemID,
+		Matching: matching,
+	}, fieldsNotificationForMatching)
+	allResponses["Notification for matching"] = currResponseMap
+
 	// NOTIFICATIONS LIST
 	var notifications [1]map[string]interface{}
 	notifications[0] = allResponses["Notification"].(map[string]interface{})
 	allResponses["Notifications"] = notifications
 
-	// generate text from that map that can be copied to README
-	// Open file for writing footer
+	// NOTIFICATIONS LIST FOR MATCHING NOTIFICATIONS
+	var notificationsForMatchings [1]map[string]interface{}
+	notificationsForMatchings[0] = allResponses["Notification for matching"].(map[string]interface{})
+	allResponses["Notifications for matchings"] = notificationsForMatchings
+
+	// Generate text from that map that can be copied to README.
+	// Open file for writing footer.
 	f, err := os.Create("README_footer.md")
 	if err != nil {
 		log.Println("Unable to open file to write. Please check if backend has the permission to write on your server.")
@@ -189,18 +212,25 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 
 	writeFooterSection(f, "\n#### Notification object\n", allResponses["Notification"])
 
+	writeFooterSection(f, "\n#### Notification object for matching notification\n", allResponses["Notification for matching"])
+
 	writeFooterSection(f, "\n#### Notification list\n", allResponses["Notifications"])
+
+	writeFooterSection(f, "\n#### Notification list for matching notifications\n", allResponses["Notifications for matchings"])
 
 	// Send as http response
 	c.JSON(http.StatusOK, allResponses)
 }
 
 func writeFooterSection(f *os.File, title string, content interface{}) {
+
 	f.WriteString(title)
 	f.WriteString("\n```\n")
+
 	var out bytes.Buffer
 	jsonText, _ := json.Marshal(content)
 	json.Indent(&out, jsonText, "", "\t")
+
 	out.WriteTo(f)
 	f.WriteString("\n```\n")
 }

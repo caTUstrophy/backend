@@ -154,12 +154,19 @@ func (app *App) ListUserMatchings(c *gin.Context) {
 	app.DB.Find(&Notifications, "user_id = ?", User.ID)
 
 	response := make([]interface{}, len(Notifications))
-	for i, notification := range Notifications {
-			var Matching db.Matching
-			app.DB.First(&Matching, "id = ?", notification.ItemID)
-			response[i] = CopyNestedModel(Matching, fieldsMatching)
-	}
 
+	for i, notification := range Notifications {
+
+		// Find matching element and connected elements.
+		var Matching db.Matching
+		app.DB.First(&Matching, "id = ?", notification.ItemID)
+		app.DB.Model(&Matching).Related(&Matching.Offer)
+		app.DB.Model(&Matching.Offer).Related(&Matching.Offer.User)
+		app.DB.Model(&Matching).Related(&Matching.Request)
+		app.DB.Model(&Matching.Request).Related(&Matching.Request.User)
+
+		response[i] = CopyNestedModel(Matching, fieldsMatching)
+	}
 
 	c.JSON(http.StatusOK, response)
 }
