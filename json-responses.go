@@ -127,18 +127,24 @@ var fieldsRegion = map[string]interface{}{
 	"Description": "Description",
 }
 
-var fieldsMatching = map[string]interface{}{
+/*var fieldsMatching = map[string]interface{}{
 	"ID":        "ID",
 	"RegionId":  "RegionId",
 	"OfferId":   "OfferId",
 	"RequestId": "RequestId",
-}
+}*/
 
 var fieldsNotificationU = map[string]interface{}{
 	"ID":     "ID",
 	"Type":   "Type",
 	"ItemID": "ItemID",
 	"Read":   "Read",
+}
+
+var fieldsMatching = map[string]interface{}{
+	"ID":      "ID",
+	"Request": fieldsRequestU,
+	"Offer":   fieldsOfferU,
 }
 
 var fieldsNotification = map[string]interface{}{

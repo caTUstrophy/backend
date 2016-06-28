@@ -186,6 +186,10 @@ func (app *App) CreateMatching(c *gin.Context) {
 	app.DB.Create(&NotifyOfferUser)
 	app.DB.Create(&NotifyRequestUser)
 
+	app.DB.Model(&Matching).Related(&Matching.Offer)
+	app.DB.Model(&Matching.Offer).Related(&Matching.Offer.User)
+	app.DB.Model(&Matching).Related(&Matching.Request)
+	app.DB.Model(&Matching.Request).Related(&Matching.Request.User)
 	// Only expose fields that are necessary.
 	model := CopyNestedModel(Matching, fieldsMatching)
 
@@ -208,7 +212,7 @@ func (app *App) GetMatching(c *gin.Context) {
 	matchingID := app.getUUID(c, "matchingID")
 	if matchingID == "" {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error":"macthingID is not a valid UUID",
+			"Error": "macthingID is not a valid UUID",
 		})
 		return
 	}
@@ -217,6 +221,10 @@ func (app *App) GetMatching(c *gin.Context) {
 
 	// Retrieve the specified matching
 	app.DB.First(&Matching, "id = ?", matchingID)
+	app.DB.Model(&Matching).Related(&Matching.Offer)
+	app.DB.Model(&Matching.Offer).Related(&Matching.Offer.User)
+	app.DB.Model(&Matching).Related(&Matching.Request)
+	app.DB.Model(&Matching.Request).Related(&Matching.Request.User)
 
 	// Only expose fields that are necessary.
 	model := CopyNestedModel(Matching, fieldsMatching)

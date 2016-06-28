@@ -804,6 +804,7 @@ Success:
 
 
 
+
 ### Responses
 
 #### Single user complete
@@ -969,9 +970,44 @@ Success:
 ```
 {
 	"ID": "UUID v4",
-	"OfferId": "UUID v4",
-	"RegionId": "UUID v4",
-	"RequestId": "UUID v4"
+	"Offer": {
+		"Expired": "bool",
+		"ID": "UUID v4",
+		"Location": {
+			"lat": "float64",
+			"lng": "float64"
+		},
+		"Matched": "bool",
+		"Name": "string",
+		"Tags": [
+			null
+		],
+		"User": {
+			"ID": "UUID v4",
+			"Mail": "string",
+			"Name": "string"
+		},
+		"ValidityPeriod": "RFC3339 date"
+	},
+	"Request": {
+		"Expired": "bool",
+		"ID": "UUID v4",
+		"Location": {
+			"lat": "float64",
+			"lng": "float64"
+		},
+		"Matched": "bool",
+		"Name": "string",
+		"Tags": [
+			null
+		],
+		"User": {
+			"ID": "UUID v4",
+			"Mail": "string",
+			"Name": "string"
+		},
+		"ValidityPeriod": "RFC3339 date"
+	}
 }
 ```
 
@@ -981,9 +1017,44 @@ Success:
 [
 	{
 		"ID": "UUID v4",
-		"OfferId": "UUID v4",
-		"RegionId": "UUID v4",
-		"RequestId": "UUID v4"
+		"Offer": {
+			"Expired": "bool",
+			"ID": "UUID v4",
+			"Location": {
+				"lat": "float64",
+				"lng": "float64"
+			},
+			"Matched": "bool",
+			"Name": "string",
+			"Tags": [
+				null
+			],
+			"User": {
+				"ID": "UUID v4",
+				"Mail": "string",
+				"Name": "string"
+			},
+			"ValidityPeriod": "RFC3339 date"
+		},
+		"Request": {
+			"Expired": "bool",
+			"ID": "UUID v4",
+			"Location": {
+				"lat": "float64",
+				"lng": "float64"
+			},
+			"Matched": "bool",
+			"Name": "string",
+			"Tags": [
+				null
+			],
+			"User": {
+				"ID": "UUID v4",
+				"Mail": "string",
+				"Name": "string"
+			},
+			"ValidityPeriod": "RFC3339 date"
+		}
 	}
 ]
 ```

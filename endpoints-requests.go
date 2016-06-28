@@ -46,7 +46,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 	// Expect request struct fields for creation in JSON request body.
 	err := c.BindJSON(&Payload)
 	if err != nil {
-
+		//log.Println(err)
 		// Check if error was caused by failed unmarshalling string -> []string.
 		if err.Error() == "json: cannot unmarshal string into Go value of type []string" {
 
@@ -183,7 +183,7 @@ func (app *App) GetRequest(c *gin.Context) {
 	requestID := app.getUUID(c, "requestID")
 	if requestID == "" {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error":"requestID is no valid UUID", })
+			"Error": "requestID is no valid UUID"})
 		return
 	}
 
@@ -226,7 +226,7 @@ func (app *App) UpdateRequest(c *gin.Context) {
 	requestID := app.getUUID(c, "requestID")
 	if requestID == "" {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error":"requestID is no valid UUID", })
+			"Error": "requestID is no valid UUID"})
 		return
 	}
 
