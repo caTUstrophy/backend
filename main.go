@@ -81,6 +81,7 @@ func InitApp() *App {
 	app.Router.POST("/regions/:regionID/admins", app.PromoteToRegionAdmin)
 
 	app.Router.GET("/system/admins", app.ListSystemAdmins) // The endpoint might change
+	app.Router.POST("/system/admins", app.PromoteToSystemAdmin)
 
 	app.Router.GET("/me", app.GetMe)
 	app.Router.PUT("/me", app.UpdateMe)
