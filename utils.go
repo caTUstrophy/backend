@@ -14,6 +14,7 @@ import (
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
+	"github.com/leebenson/conform"
 	"github.com/nferruzzi/gormGIS"
 )
 
@@ -293,6 +294,29 @@ func getJSONResponseInfo(i interface{}, fields map[string]interface{}) map[strin
 	}
 
 	return m
+}
+
+func (app *App) ValidatePayloadShort(c *gin.Context, Payload interface{}) bool {
+	// bind payload to struct
+	err := c.BindJSON(Payload)
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Couldn't marshal JSON",
+		})
+
+		return false
+	}
+
+	// validate payload
+	conform.Strings(Payload)
+	errs, isErr := app.Validator.Struct(Payload).(validator.ValidationErrors)
+	if isErr {
+		CheckErrors(errs, c)
+		return false
+	}
+
+	return true
 }
 
 // http Responses for validation errors

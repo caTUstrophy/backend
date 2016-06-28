@@ -89,6 +89,27 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 	return true, &User, ""
 }
 
+
+
+
+// helper function for Authorize - to avoid copy n paste
+// returns user if authentication succcessful
+// on fail writes Unauthorized response header
+func (app *App) AuthorizeShort(c *gin.Context) *db.User {
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return nil
+	}
+
+	return User
+}
+
 // Checks if the supplied user is allowed to execute
 // operations labelled with permission for a given region.
 func (app *App) CheckScope(user *db.User, region db.Region, permission string) bool {

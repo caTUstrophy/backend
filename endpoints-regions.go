@@ -5,6 +5,7 @@ import (
 
 	"net/http"
 
+
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -168,8 +169,61 @@ func (app *App) GetRegion(c *gin.Context) {
 	c.JSON(http.StatusOK, model)
 }
 
+
+
+
 func (app *App) UpdateRegion(c *gin.Context) {
-	// TODO: Implement this function.
+	// Authorize user via JWT
+	User := app.AuthorizeShort(c); if User == nil {
+		return
+	}
+
+	// Bind and validate payload
+	var Payload CreateRegionPayload
+	if ok := app.ValidatePayloadShort(c, &Payload); !ok{
+		return
+	} 
+
+	// get valid region id 
+	regionID := app.getUUID(c, "regionID"); if regionID == "" {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"Error": "regionID is no valid UUID"})
+		return
+	}
+
+	// find and update region parameters
+	var Region db.Region
+	app.DB.First(&Region, "id = ?", regionID)
+
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, Region, "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+
+	Region.Name = Payload.Name
+	Region.Description = Payload.Description
+
+	// UPDATE BOUNDARIES
+	Points := make([]gormGIS.GeoPoint, len(Payload.Boundaries.Points))
+	for i, point := range Payload.Boundaries.Points {
+		Points[i] = gormGIS.GeoPoint{Lng: point.Lng, Lat: point.Lat}
+	}
+	Region.Boundaries = db.GeoPolygon{
+		Points: Points,
+	}
+
+	// write update to db and return updated obj
+	app.DB.Model(&Region).Updates(Region)
+	model := CopyNestedModel(Region, fieldsRegion)
+
+	c.JSON(http.StatusOK, model)
 }
 
 func (app *App) ListOffersForRegion(c *gin.Context) {

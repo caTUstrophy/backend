@@ -209,3 +209,58 @@ func TestMeMatchings(t *testing.T) {
 		return
 	}
 }
+
+
+
+func TestRegions(t *testing.T) {
+	// create region
+	plCreateRegion := CreateRegionPayload {
+		"Milkshake Region",
+		"Ma Region brings all the boys in the yard",
+		Boundaries{
+			[]Location{
+				Location{
+				0.0,
+				0.0,
+				},
+				Location{
+					5.0,
+					0.0,
+				},
+				Location{
+					5.0,
+					5.0,
+				},
+				Location{
+					0.0,
+					0.0,
+				},
+			},
+		},
+	}
+
+	resp := app.RequestWithJWT("POST", "/regions", plCreateRegion, tokenUserJery)
+	if resp.Code != http.StatusCreated {
+		t.Error("could not create region")
+		return
+	}
+
+	// change name
+	data := parseResponse(resp)
+	NameUpdated := "NAME UPDATED"
+	plCreateRegion.Name = NameUpdated
+	resp = app.RequestWithJWT("PUT", "/regions/" + data["ID"].(string), plCreateRegion, tokenAdmin)
+	if resp.Code != http.StatusOK {
+		t.Error("could not update region")
+		return
+	}
+
+	// check if name was actually changed
+	resp = app.RequestWithJWT("GET", "/regions/" + data["ID"].(string), nil, tokenUserJery)
+	data = parseResponse(resp)
+	if data["Name"].(string) != NameUpdated {
+		t.Error("failed to update region name")
+		return
+	}
+
+}
