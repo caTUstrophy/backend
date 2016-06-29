@@ -21,6 +21,10 @@ type CreateMatchingPayload struct {
 	Offer   string `conform:"trim" validate:"required,uuid4"`
 }
 
+type UpdateMatchingPayload struct {
+	Invalid bool `conform:"trim" validate:"exists"`
+}
+
 // Functions
 
 func (app *App) CreateMatching(c *gin.Context) {
@@ -38,7 +42,7 @@ func (app *App) CreateMatching(c *gin.Context) {
 
 	var Payload CreateMatchingPayload
 
-	// Expect user struct fields in JSON request body.
+	// Expect matching struct fields in JSON request body.
 	err := c.BindJSON(&Payload)
 	if err != nil {
 
@@ -49,7 +53,7 @@ func (app *App) CreateMatching(c *gin.Context) {
 		return
 	}
 
-	// Validate sent user login data.
+	// Validate sent matching payload data.
 	conform.Strings(&Payload)
 	errs := app.Validator.Struct(&Payload)
 
@@ -116,7 +120,7 @@ func (app *App) CreateMatching(c *gin.Context) {
 
 	// Check for duplicate of matching.
 	var CountDup int
-	app.DB.Model(&db.Matching{}).Where("offer_id = ? AND request_id = ?", Payload.Offer, Payload.Request).Count(&CountDup)
+	app.DB.Model(&db.Matching{}).Where("\"offer_id\" = ? AND \"request_id\" = ? AND \"invalid\" = ?", Payload.Offer, Payload.Request, false).Count(&CountDup)
 
 	if CountDup > 0 {
 
@@ -157,7 +161,6 @@ func (app *App) CreateMatching(c *gin.Context) {
 	// Set 'Matched' field of involved request and offer to true.
 	Offer.Matched = true
 	Request.Matched = true
-
 	app.DB.Save(&Offer)
 	app.DB.Save(&Request)
 
@@ -208,11 +211,12 @@ func (app *App) GetMatching(c *gin.Context) {
 		return
 	}
 
+	// Parse matchingID from request URL.
 	matchingID := app.getUUID(c, "matchingID")
 	if matchingID == "" {
 
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "macthingID is not a valid UUID",
+			"Error": "matchingID is not a valid UUID",
 		})
 
 		return
@@ -235,7 +239,119 @@ func (app *App) GetMatching(c *gin.Context) {
 
 func (app *App) UpdateMatching(c *gin.Context) {
 
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Parse matchingID from request URL.
+	matchingID := app.getUUID(c, "matchingID")
+	if matchingID == "" {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "matchingID is not a valid UUID",
+		})
+
+		return
+	}
+
+	var Payload UpdateMatchingPayload
+
+	// Expect an Invalid field in JSON request body.
+	err := c.BindJSON(&Payload)
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Supplied values in JSON body could not be parsed",
+		})
+
+		return
+	}
+
+	// Validate sent user login data.
+	conform.Strings(&Payload)
+	errs := app.Validator.Struct(&Payload)
+
+	if errs != nil {
+
+		errResp := make(map[string]string)
+
+		// Iterate over all validation errors.
+		for _, err := range errs.(validator.ValidationErrors) {
+
+			if err.Tag == "exists" {
+				errResp[err.Field] = "Needs to be present"
+			}
+		}
+
+		// Send prepared error message to client.
+		c.JSON(http.StatusBadRequest, errResp)
+
+		return
+	}
+
 	// Only update a matching that has 'Invalid == false'.
 	// This will prevent matchings from getting set back to valid
 	// after they have already been set to invalid.
+	var Matching db.Matching
+	app.DB.First(&Matching, "\"id\" = ? AND \"invalid\" = ?", matchingID, false)
+
+	if Matching.ID == "" {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Either you tried to access a matching that does not exist or you tried to set an once invalidated matching back to valid",
+		})
+
+		return
+	}
+
+	// Load involved region, offer and request.
+	app.DB.Model(&Matching).Related(&Matching.Region).Related(&Matching.Offer).Related(&Matching.Request)
+
+	// Check if user permissions are sufficient (user is concerned user or admin in region).
+	// This conforms to the scope 'C' level of this handler.
+	if ok := ((Matching.Offer.UserID == User.ID) || (Matching.Request.UserID == User.ID) || app.CheckScope(User, Matching.Region, "admin")); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// If Invalid flag from request was set to 'false' return an error.
+	if Payload.Invalid != true {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Invalid": "Can not be anything different than 'true'",
+		})
+
+		return
+	}
+
+	// All checks passed - set matching to invalid.
+	Matching.Invalid = true
+	app.DB.Save(&Matching)
+
+	// Set back offer and request to unmatched.
+	Matching.Offer.Matched = false
+	Matching.Request.Matched = false
+	app.DB.Save(&Matching.Offer)
+	app.DB.Save(&Matching.Request)
+
+	// Load final needed additional data.
+	app.DB.Model(&Matching.Offer).Related(&Matching.Offer.User)
+	app.DB.Model(&Matching.Request).Related(&Matching.Request.User)
+
+	// Only expose fields that are necessary.
+	model := CopyNestedModel(Matching, fieldsMatching)
+
+	// Send back results to client.
+	c.JSON(http.StatusOK, model)
 }

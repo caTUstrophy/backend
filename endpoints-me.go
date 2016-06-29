@@ -126,22 +126,29 @@ func (app *App) ListUserMatchings(c *gin.Context) {
 		return
 	}
 
-	var Notifications []db.Notification
-	app.DB.Find(&Notifications, "user_id = ?", User.ID)
+	// Get all matchings in order to filter for this user's ones.
+	// This might not be a viable option for big matching sets.
+	var Matchings []db.Matching
+	app.DB.Find(&Matchings, "\"invalid\" = ?", false)
 
-	response := make([]interface{}, len(Notifications))
+	response := make([]interface{}, 0)
 
-	for i, notification := range Notifications {
+	for _, Matching := range Matchings {
 
-		// Find matching element and connected elements.
-		var Matching db.Matching
-		app.DB.First(&Matching, "id = ?", notification.ItemID)
-		app.DB.Model(&Matching).Related(&Matching.Offer)
-		app.DB.Model(&Matching.Offer).Related(&Matching.Offer.User)
-		app.DB.Model(&Matching).Related(&Matching.Request)
-		app.DB.Model(&Matching.Request).Related(&Matching.Request.User)
+		// Load offer and request for this matching.
+		app.DB.Model(&Matching).Related(&Matching.Offer).Related(&Matching.Request)
 
-		response[i] = CopyNestedModel(Matching, fieldsMatching)
+		// Check if user is owner of either the offer or the request.
+		if (Matching.Offer.UserID == User.ID) || (Matching.Request.UserID == User.ID) {
+
+			// If so - load some more related data.
+			app.DB.Model(&Matching).Related(&Matching.Region)
+			app.DB.Model(&Matching.Offer).Related(&Matching.Offer.User)
+			app.DB.Model(&Matching.Request).Related(&Matching.Request.User)
+
+			// Add marshalled version of matching to response list.
+			response = append(response, CopyNestedModel(Matching, fieldsMatching))
+		}
 	}
 
 	c.JSON(http.StatusOK, response)

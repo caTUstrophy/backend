@@ -564,7 +564,7 @@ GET /regions/:regionID
 #### Update region with `regionID`
 
 ```
-PUT /regions/x
+PUT /regions/:regionID
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {

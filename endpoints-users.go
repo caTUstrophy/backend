@@ -171,9 +171,8 @@ func (app *App) UpdateUserObject(User *db.User, c *gin.Context, updateGroups boo
 	// Object containing fields to be updated.
 	var updatedUser db.User
 
-	// Validate sent user registration data.
+	// Validate sent user update data.
 	conform.Strings(&Payload)
-
 	errs, isErr := app.Validator.Struct(&Payload).(validator.ValidationErrors)
 	if isErr {
 		CheckErrors(errs, c)

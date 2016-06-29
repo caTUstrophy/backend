@@ -99,6 +99,7 @@ func (app *App) CreateRegion(c *gin.Context) {
 	Region.Description = Payload.Description
 
 	if len(Payload.Boundaries.Points) == 0 {
+
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Boundaries": "Has to contain {\"Points:\" [{\"lng\": float64, \"lat\": float64}, ...]}",
 		})
@@ -266,7 +267,7 @@ func (app *App) ListOffersForRegion(c *gin.Context) {
 
 	// Load all offers for specified region that were not yet matched.
 	var Region db.Region
-	app.DB.Preload("Offers", "\"matched\" = ?", "false").First(&Region, "id = ?", regionID)
+	app.DB.Preload("Offers", "\"matched\" = ?", false).First(&Region, "id = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
@@ -313,7 +314,7 @@ func (app *App) ListRequestsForRegion(c *gin.Context) {
 
 	// Load all requests for specified region that were not yet matched.
 	var Region db.Region
-	app.DB.Preload("Requests", "\"matched\" = ?", "false").First(&Region, "id = ?", regionID)
+	app.DB.Preload("Requests", "\"matched\" = ?", false).First(&Region, "id = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
@@ -358,11 +359,11 @@ func (app *App) ListMatchingsForRegion(c *gin.Context) {
 		return
 	}
 
-	var region db.Region
-	app.DB.First(&region, "id = ?", regionID)
+	var Region db.Region
+	app.DB.First(&Region, "id = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
-	if ok := app.CheckScope(User, region, "admin"); !ok {
+	if ok := app.CheckScope(User, Region, "admin"); !ok {
 
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
@@ -371,12 +372,20 @@ func (app *App) ListMatchingsForRegion(c *gin.Context) {
 		return
 	}
 
-	var matchings []db.Matching
-	app.DB.Model(&region).Related(&matchings)
+	// Find all matchings contained in this region.
+	var Matchings []db.Matching
+	app.DB.Model(&Region).Related(&Matchings)
 
-	model := make([]map[string]interface{}, len(matchings))
+	model := make([]map[string]interface{}, len(Matchings))
 
-	for i, matching := range matchings {
+	for i, matching := range Matchings {
+
+		// Load in matching involved offer and request.
+		app.DB.Model(&matching).Related(&matching.Offer).Related(&matching.Request)
+		app.DB.Model(&matching.Offer).Related(&matching.Offer.User)
+		app.DB.Model(&matching.Request).Related(&matching.Request.User)
+
+		// Marshal it to outside representation and add it to response list.
 		model[i] = CopyNestedModel(matching, fieldsMatching).(map[string]interface{})
 	}
 

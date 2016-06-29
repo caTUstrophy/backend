@@ -91,7 +91,7 @@ func (app *App) UpdateNotification(c *gin.Context) {
 		return
 	}
 
-	// Retrieve notification ID from request URL.
+	// Retrieve notificationID from request URL.
 	notificationID := app.getUUID(c, "notificationID")
 	if notificationID == "" {
 
@@ -115,7 +115,7 @@ func (app *App) UpdateNotification(c *gin.Context) {
 		return
 	}
 
-	// Validate sent request creation data.
+	// Validate sent data for updating a notification.
 	conform.Strings(&Payload)
 	errs := app.Validator.Struct(&Payload)
 
