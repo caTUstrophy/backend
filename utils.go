@@ -297,7 +297,8 @@ func getJSONResponseInfo(i interface{}, fields map[string]interface{}) map[strin
 }
 
 func (app *App) ValidatePayloadShort(c *gin.Context, Payload interface{}) bool {
-	// bind payload to struct
+
+	// Bind payload to struct.
 	err := c.BindJSON(Payload)
 	if err != nil {
 
@@ -308,7 +309,7 @@ func (app *App) ValidatePayloadShort(c *gin.Context, Payload interface{}) bool {
 		return false
 	}
 
-	// validate payload
+	// Validate payload.
 	conform.Strings(Payload)
 	errs, isErr := app.Validator.Struct(Payload).(validator.ValidationErrors)
 	if isErr {
@@ -319,8 +320,9 @@ func (app *App) ValidatePayloadShort(c *gin.Context, Payload interface{}) bool {
 	return true
 }
 
-// http Responses for validation errors
+// Response texts for validation errors.
 func CheckErrors(errs validator.ValidationErrors, c *gin.Context) {
+
 	if errs != nil {
 
 		errResp := make(map[string]string)

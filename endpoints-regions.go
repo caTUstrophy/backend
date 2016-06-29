@@ -5,7 +5,6 @@ import (
 
 	"net/http"
 
-
 	"github.com/caTUstrophy/backend/db"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -26,6 +25,12 @@ type Boundaries struct {
 }
 
 type CreateRegionPayload struct {
+	Name        string     `conform:"trim" validate:"required"`
+	Description string     `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Boundaries  Boundaries `conform:"trim" validate:"required"`
+}
+
+type UpdateRegionPayload struct {
 	Name        string     `conform:"trim" validate:"required"`
 	Description string     `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 	Boundaries  Boundaries `conform:"trim" validate:"required"`
@@ -145,12 +150,15 @@ func (app *App) ListRegions(c *gin.Context) {
 }
 
 func (app *App) GetRegion(c *gin.Context) {
+
 	// Retrieve region ID from request URL.
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
+
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "No valid region UUID",
 		})
+
 		return
 	}
 
@@ -159,7 +167,9 @@ func (app *App) GetRegion(c *gin.Context) {
 	// Select region based on supplied ID from database.
 	app.DB.First(&Region, "id = ?", regionID)
 	if Region.ID == "" {
+
 		c.JSON(http.StatusNotFound, notFound)
+
 		return
 	}
 
@@ -169,32 +179,34 @@ func (app *App) GetRegion(c *gin.Context) {
 	c.JSON(http.StatusOK, model)
 }
 
-
-
-
 func (app *App) UpdateRegion(c *gin.Context) {
-	// Authorize user via JWT
-	User := app.AuthorizeShort(c); if User == nil {
+
+	// Authorize user via JWT.
+	User := app.AuthorizeShort(c)
+	if User == nil {
 		return
 	}
 
-	// Bind and validate payload
-	var Payload CreateRegionPayload
-	if ok := app.ValidatePayloadShort(c, &Payload); !ok{
-		return
-	} 
-
-	// get valid region id 
-	regionID := app.getUUID(c, "regionID"); if regionID == "" {
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error": "regionID is no valid UUID"})
+	// Bind and validate payload.
+	var Payload UpdateRegionPayload
+	if ok := app.ValidatePayloadShort(c, &Payload); !ok {
 		return
 	}
 
-	// find and update region parameters
+	// Get valid regionID.
+	regionID := app.getUUID(c, "regionID")
+	if regionID == "" {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "regionID is no valid UUID",
+		})
+
+		return
+	}
+
+	// Find and update region parameters.
 	var Region db.Region
 	app.DB.First(&Region, "id = ?", regionID)
-
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
@@ -206,21 +218,24 @@ func (app *App) UpdateRegion(c *gin.Context) {
 		return
 	}
 
-
 	Region.Name = Payload.Name
 	Region.Description = Payload.Description
 
-	// UPDATE BOUNDARIES
+	// Update boundaries.
 	Points := make([]gormGIS.GeoPoint, len(Payload.Boundaries.Points))
+
 	for i, point := range Payload.Boundaries.Points {
 		Points[i] = gormGIS.GeoPoint{Lng: point.Lng, Lat: point.Lat}
 	}
+
 	Region.Boundaries = db.GeoPolygon{
 		Points: Points,
 	}
 
-	// write update to db and return updated obj
+	// Write update to database and return updated object.
 	app.DB.Model(&Region).Updates(Region)
+
+	// Only marshal needed fields.
 	model := CopyNestedModel(Region, fieldsRegion)
 
 	c.JSON(http.StatusOK, model)
@@ -241,8 +256,11 @@ func (app *App) ListOffersForRegion(c *gin.Context) {
 
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error": "regionID is no valid UUID"})
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "regionID is no valid UUID",
+		})
+
 		return
 	}
 
@@ -285,8 +303,11 @@ func (app *App) ListRequestsForRegion(c *gin.Context) {
 
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error": "regionID is no valid UUID"})
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "regionID is no valid UUID",
+		})
+
 		return
 	}
 
@@ -329,8 +350,11 @@ func (app *App) ListMatchingsForRegion(c *gin.Context) {
 
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error": "regionID is no valid UUID"})
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "regionID is no valid UUID",
+		})
+
 		return
 	}
 
@@ -375,8 +399,11 @@ func (app *App) ListAdminsForRegion(c *gin.Context) {
 	// Retrieve region ID from request URL.
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error": "regionID is no valid UUID"})
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "regionID is no valid UUID",
+		})
+
 		return
 	}
 
@@ -395,8 +422,7 @@ func (app *App) ListAdminsForRegion(c *gin.Context) {
 		return
 	}
 
-	// The real request
-
+	// Find users that are admins for this region.
 	var group db.Group
 	app.DB.Preload("Users").First(&group, "region_id = ? AND access_right = ?", regionID, "admin")
 	app.DB.Model(&group).Related(&group.Region)
@@ -418,11 +444,15 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 
 		return
 	}
+
 	// Retrieve region ID from request URL.
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error": "regionID is no valid UUID"})
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "regionID is no valid UUID",
+		})
+
 		return
 	}
 
@@ -432,9 +462,11 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 	app.DB.First(&Region, "id = ?", regionID)
 
 	if Region.ID == "" {
+
 		c.JSON(http.StatusNotFound, gin.H{
 			"Error": "The region you requested does not exist.",
 		})
+
 		return
 	}
 
@@ -448,7 +480,7 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 		return
 	}
 
-	// Parse the JSON and check for errors
+	// Parse the JSON and check for errors.
 	var Payload PromoteUserPayload
 
 	// Expect offer struct fields for creation in JSON request body.
@@ -488,16 +520,17 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 
 	// Everything seems fine, promote that user.
 	var group db.Group
-	//var adminPermission db.Permission
 	app.DB.First(&group, "region_id = ? AND access_right = ?", regionID, "admin")
 	if group.ID == "" {
+
 		c.JSON(http.StatusNotFound, gin.H{
 			"Error": "For the requested region, no admin group exists. Please tell the developers, this should not occur.",
 		})
+
 		return
 	}
 
-	// Find the user who is to be promoted and add the group to his or her groups
+	// Find the user who is to be promoted and add the group to his or her groups.
 	var promotedUser db.User
 	app.DB.Preload("Groups").First(&promotedUser, "mail = ?", Payload.Mail)
 

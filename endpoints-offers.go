@@ -161,7 +161,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 	// Save offer to database.
 	app.DB.Create(&Offer)
 
-	model := CopyNestedModel(Offer, fieldsOfferU)
+	model := CopyNestedModel(Offer, fieldsOfferWithUser)
 
 	c.JSON(http.StatusCreated, model)
 }
@@ -183,7 +183,7 @@ func (app *App) GetOffer(c *gin.Context) {
 	offerID := app.getUUID(c, "offerID")
 	if offerID == "" {
 
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "offerID is no valid UUID",
 		})
 
@@ -208,7 +208,7 @@ func (app *App) GetOffer(c *gin.Context) {
 	}
 
 	// He or she can have it, if he or she wants it so badly!
-	model := CopyNestedModel(offer, fieldsOfferU)
+	model := CopyNestedModel(offer, fieldsOfferWithUser)
 
 	c.JSON(http.StatusOK, model)
 }
@@ -230,9 +230,11 @@ func (app *App) UpdateOffer(c *gin.Context) {
 
 	offerID := app.getUUID(c, "offerID")
 	if offerID == "" {
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
+
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "offerID is no valid UUID",
 		})
+
 		return
 	}
 

@@ -59,6 +59,8 @@ func InitApp() *App {
 	app.Router.PUT("/users/:userID", app.UpdateUser)
 	app.Router.POST("/users/admins", app.PromoteToSystemAdmin) // The endpoint might change
 
+	app.Router.GET("/groups", app.GetGroups)
+
 	app.Router.POST("/offers", app.CreateOffer)
 	app.Router.GET("/offers/:offerID", app.GetOffer)
 	app.Router.PUT("/offers/:offerID", app.UpdateOffer)
@@ -69,6 +71,7 @@ func InitApp() *App {
 
 	app.Router.POST("/matchings", app.CreateMatching)
 	app.Router.GET("/matchings/:matchingID", app.GetMatching)
+	app.Router.PUT("/matchings/:matchingID", app.UpdateMatching)
 
 	app.Router.POST("/regions", app.CreateRegion)
 	app.Router.GET("/regions", app.ListRegions)
@@ -91,8 +94,6 @@ func InitApp() *App {
 
 	app.Router.GET("/notifications", app.ListNotifications)
 	app.Router.PUT("/notifications/:notificationID", app.UpdateNotification)
-
-	app.Router.GET("/groups", app.GetGroups)
 
 	app.Router.GET("/help", app.GetJsonResponseInfo)
 

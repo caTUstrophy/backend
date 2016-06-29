@@ -24,7 +24,7 @@ type LoginPayload struct {
 	Password string `validate:"required"`
 }
 
-// Authorization related functions.
+// Functions
 
 // Check if provided authorization data in request
 // is correct and all validity checks are positive.
@@ -89,13 +89,12 @@ func (app *App) Authorize(req *http.Request) (bool, *db.User, string) {
 	return true, &User, ""
 }
 
-
-
-
-// helper function for Authorize - to avoid copy n paste
-// returns user if authentication succcessful
-// on fail writes Unauthorized response header
+// Helper function for Authorize.
+// Avoids copy'n'paste and returns the user
+// if authentication was succcessful.
+// On fail writes an unauthorized response header.
 func (app *App) AuthorizeShort(c *gin.Context) *db.User {
+
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
 	if !ok {

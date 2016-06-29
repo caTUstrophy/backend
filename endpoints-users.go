@@ -16,6 +16,14 @@ import (
 
 // Structs
 
+type CreateUserPayload struct {
+	Name          string   `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	PreferredName string   `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Mail          string   `conform:"trim,email" validate:"required,email"`
+	PhoneNumbers  []string `conform:"trim" validate:"required"`
+	Password      string   `validate:"required,min=16,containsany=0123456789,containsany=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+}
+
 type UpdateUserPayload struct {
 	Name          string   `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 	PreferredName string   `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
@@ -32,16 +40,9 @@ type GroupPayload struct {
 type PasswordPayload struct {
 	Password string `validate:"min=16,containsany=0123456789,containsany=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 }
+
 type EmailPayload struct {
 	Mail string `conform:"trim,email" validate:"email"`
-}
-
-type CreateUserPayload struct {
-	Name          string   `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	PreferredName string   `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Mail          string   `conform:"trim,email" validate:"required,email"`
-	PhoneNumbers  []string `conform:"trim" validate:"required"`
-	Password      string   `validate:"required,min=16,containsany=0123456789,containsany=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 }
 
 // Functions
@@ -150,8 +151,8 @@ func (app *App) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, model)
 }
 
-// This function is not thought be used as handler, it updates a given user object with no permission checking
-// Used by UpdateMe and UpdateUser
+// This function is not thought be used as handler, it updates a given user
+// object with no permission checking. Used by UpdateMe and UpdateUser.
 func (app *App) UpdateUserObject(User *db.User, c *gin.Context, updateGroups bool) {
 
 	var Payload UpdateUserPayload
@@ -167,17 +168,20 @@ func (app *App) UpdateUserObject(User *db.User, c *gin.Context, updateGroups boo
 		return
 	}
 
-	// Object containing fields to be updated
+	// Object containing fields to be updated.
 	var updatedUser db.User
 
 	// Validate sent user registration data.
 	conform.Strings(&Payload)
+
 	errs, isErr := app.Validator.Struct(&Payload).(validator.ValidationErrors)
 	if isErr {
 		CheckErrors(errs, c)
 		return
 	}
+
 	if Payload.Mail != "" {
+
 		emailPayload := EmailPayload{Payload.Mail}
 		errs, isErr = app.Validator.Struct(&emailPayload).(validator.ValidationErrors)
 		if isErr {
@@ -185,13 +189,16 @@ func (app *App) UpdateUserObject(User *db.User, c *gin.Context, updateGroups boo
 			return
 		}
 	}
+
 	if Payload.Password != "" {
+
 		passwordPayload := PasswordPayload{Payload.Password}
 		errs, isErr = app.Validator.Struct(&passwordPayload).(validator.ValidationErrors)
 		if isErr {
 			CheckErrors(errs, c)
 			return
 		}
+
 		hash, hashErr := bcrypt.GenerateFromPassword([]byte(Payload.Password), app.HashCost)
 		updatedUser.PasswordHash = string(hash)
 		if hashErr != nil {
@@ -206,6 +213,7 @@ func (app *App) UpdateUserObject(User *db.User, c *gin.Context, updateGroups boo
 	updatedUser.MailVerified = false
 
 	if len(Payload.PhoneNumbers) > 0 {
+
 		jsonPhoneNumbers := new(db.PhoneNumbers)
 		err = jsonPhoneNumbers.Scan(Payload.PhoneNumbers)
 		if err != nil {
@@ -221,25 +229,34 @@ func (app *App) UpdateUserObject(User *db.User, c *gin.Context, updateGroups boo
 		updatedUser.PhoneNumbers = *jsonPhoneNumbers
 	}
 
-	// Update user
+	// Update user.
 	app.DB.Model(&User).Updates(updatedUser)
 
 	if len(Payload.Groups) > 0 && updateGroups {
-		// Load full user to save groups
+
+		// Load full user to save groups.
 		app.DB.First(&updatedUser, "id = ?", User.ID)
-		// Groups
+
+		// Groups.
 		updatedUser.Groups = make([]db.Group, len(Payload.Groups))
+
 		for i, gid := range Payload.Groups {
+
 			group := app.GetGroupObject(gid.ID)
+
 			if group.ID == "" {
+
 				c.JSON(http.StatusBadRequest, gin.H{
 					"Groups": (gid.ID + " does not exist"),
 				})
+
 				return
 			}
+
 			updatedUser.Groups[i] = group
 		}
-		// Delete all prior groups
+
+		// Delete all prior groups.
 		app.DB.Exec("DELETE FROM user_groups WHERE user_id = ?", updatedUser.ID)
 		//app.DB.Delete(&User.Groups)
 		// Save all current groups
@@ -247,18 +264,23 @@ func (app *App) UpdateUserObject(User *db.User, c *gin.Context, updateGroups boo
 		app.DB.Model(&User).Updates(updatedUser)
 	}
 
-	// Return updated user
+	// Return updated user.
 	var checkUser db.User
 	app.DB.First(&checkUser, "id = ?", User.ID)
 	app.DB.Preload("Groups").First(&checkUser, "id = ?", User.ID)
+
 	for i, _ := range checkUser.Groups {
 		app.DB.Model(&checkUser.Groups[i]).Related(&checkUser.Groups[i].Region)
 	}
+
+	// Marshal only required fields.
 	model := CopyNestedModel(checkUser, fieldsUser)
+
 	c.JSON(http.StatusOK, model)
 }
 
 func (app *App) ListUsers(c *gin.Context) {
+
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
 	if !ok {
@@ -280,12 +302,13 @@ func (app *App) ListUsers(c *gin.Context) {
 		return
 	}
 
-	// The real request
-
+	// Load all groups for an user.
 	var Users []db.User
 	app.DB.Preload("Groups").Find(&Users)
+
 	for userLoop, _ := range Users {
-		for groupLoop, _ := range Users[userLoop].Groups { //groupLoop rhymes
+
+		for groupLoop, _ := range Users[userLoop].Groups {
 			app.DB.Model(&Users[userLoop].Groups[groupLoop]).Related(&Users[userLoop].Groups[groupLoop].Region)
 		}
 	}
@@ -294,8 +317,9 @@ func (app *App) ListUsers(c *gin.Context) {
 
 	c.JSON(http.StatusOK, model)
 }
+
 func (app *App) GetUser(c *gin.Context) {
-	// TODO: Implement this function.
+
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
 	if !ok {
@@ -317,16 +341,15 @@ func (app *App) GetUser(c *gin.Context) {
 		return
 	}
 
-	// The real request
 	userID := app.getUUID(c, "userID")
-	if userID == "" { // Bad request header set by getUUID
+	if userID == "" {
 		return
 	}
 
 	var requestUser db.User
 	app.DB.Preload("Groups").First(&requestUser, "id = ?", userID)
 
-	for groupLoop, _ := range requestUser.Groups { //groupLoop rhymes
+	for groupLoop, _ := range requestUser.Groups {
 		app.DB.Model(&requestUser.Groups[groupLoop]).Related(&requestUser.Groups[groupLoop].Region)
 	}
 
@@ -336,6 +359,7 @@ func (app *App) GetUser(c *gin.Context) {
 }
 
 func (app *App) UpdateUser(c *gin.Context) {
+
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
 	if !ok {
@@ -356,8 +380,6 @@ func (app *App) UpdateUser(c *gin.Context) {
 
 		return
 	}
-
-	// The real request
 
 	userID := app.getUUID(c, "userID")
 	if userID == "" {
@@ -368,21 +390,26 @@ func (app *App) UpdateUser(c *gin.Context) {
 	app.DB.Preload("Groups").First(&updateUser, "id = ?", userID)
 
 	if updateUser.ID == "" {
+
 		c.JSON(http.StatusNotFound, gin.H{
 			"User": "The user you tried to update does not exist.",
 		})
+
 		return
 	}
 
-	for groupLoop, _ := range updateUser.Groups { //groupLoop rhymes
+	for groupLoop, _ := range updateUser.Groups {
 		app.DB.Model(&updateUser.Groups[groupLoop]).Related(&updateUser.Groups[groupLoop].Region)
 	}
 
 	if app.CheckScope(&updateUser, db.Region{}, "superadmin") && updateUser.ID != User.ID {
+
 		c.JSON(http.StatusForbidden, gin.H{
 			"Error": "You tried to update a system admin. But as you are equal bosses, you have to respect that your power is limited where the power of the other boss starts.",
 		})
+
 		return
 	}
+
 	app.UpdateUserObject(&updateUser, c, true)
 }

@@ -45,7 +45,7 @@ var fieldsGroup = map[string]interface{}{
 	"Description": "Description",
 }
 
-var fieldsRequestU = map[string]interface{}{
+var fieldsRequestWithUser = map[string]interface{}{
 	"ID":   "ID",
 	"Name": "Name",
 	"Location": map[string]interface{}{
@@ -81,7 +81,7 @@ var fieldsRequest = map[string]interface{}{
 	"Expired":        "Expired",
 }
 
-var fieldsOfferU = map[string]interface{}{
+var fieldsOfferWithUser = map[string]interface{}{
 	"ID":   "ID",
 	"Name": "Name",
 	"Location": map[string]interface{}{
@@ -132,11 +132,12 @@ var fieldsRegion = map[string]interface{}{
 var fieldsMatching = map[string]interface{}{
 	"ID":       "ID",
 	"RegionId": "RegionId",
-	"Request":  fieldsRequestU,
-	"Offer":    fieldsOfferU,
+	"Request":  fieldsRequestWithUser,
+	"Offer":    fieldsOfferWithUser,
+	"Invalid":  "Invalid",
 }
 
-var fieldsNotificationR = map[string]interface{}{
+var fieldsNotificationWithRead = map[string]interface{}{
 	"ID":     "ID",
 	"Type":   "Type",
 	"ItemID": "ItemID",
@@ -159,5 +160,5 @@ var fieldsNotificationForMatching = map[string]interface{}{
 // Other global response schemes, not thought to be used for CopyNestedModel
 
 var notFound = map[string]interface{}{
-	"Error": "Requested item does not exist in db",
+	"Error": "Requested item does not exist in database",
 }

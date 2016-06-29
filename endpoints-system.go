@@ -76,7 +76,7 @@ func (app *App) PromoteToSystemAdmin(c *gin.Context) {
 	var group db.Group
 	app.DB.First(&group, "access_right = ?", "superadmin")
 
-	// Find the user who is to be promoted and add the group to his or her groups
+	// Find the user who is to be promoted and add the group to his or her groups.
 	var promotedUser db.User
 	app.DB.Preload("Groups").First(&promotedUser, "mail = ?", Payload.Mail)
 

@@ -109,7 +109,7 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | [Create a region](#create-region)                               | L    | POST      | /regions                     | 2.0         | ✔    |
 | [List regions](#list-regions)                                   | U    | GET       | /regions                     | 2.0         | ✔    |
 | [Get region `regionID`](#get-region-regionid)                   | U    | GET       | /regions/:regionID           | 2.0         | ✔    |
-| [Update region `regionID`](#update-region-with-regionid)        | A    | PUT       | /regions/:regionID           | 3.0         |       |
+| [Update region `regionID`](#update-region-with-regionid)        | A    | PUT       | /regions/:regionID           | 3.0         | ✔    |
 | [List offers in region `regionID`](#list-offers-in-region-with-regionid) | A | GET | /regions/:regionID/offers    | 2.0         | ✔    |
 | [List requests in region `regionID`](#list-requests-in-region-with-regionid) | A | GET | /regions/:regionID/requests | 2.0      | ✔    |
 | [List matchings in region `regionID`](#list-matchings-in-region-with-regionid) | A | GET | /regions/:regionID/matchings | 2.0   | ✔    |
@@ -314,7 +314,12 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
     "Mail": optional, string/email
     "PhoneNumbers": optional, array of strings
     "Password": optional, string
-    "Groups": optinal, [{"ID": required, UUID v4}]
+    "Groups": optinal, [
+        {
+            "ID": required, UUID v4
+        },
+        ...
+    ]
 }
 ```
 
@@ -356,7 +361,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
         "lng": 12.3,
         "lat": 0.0
     }
-
 }
 ```
 
@@ -409,8 +413,8 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
     "Tags": optional, string array,
     "ValidityPeriod": required, RFC3339 date,
     "Location": {
-        "lng": float64,
-        "lat": float64
+        "lng": required, float64,
+        "lat": required, float64
     }
 }
 ```
@@ -494,6 +498,7 @@ PUT /matchings/:matchingID
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
+    "Invalid": true
 }
 ```
 
@@ -511,17 +516,17 @@ POST /regions
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
-    "Name": "Circle",
-    "Description": "Very roundy",
+    "Name": required, string,
+    "Description": required, string,
     "Boundaries": {
         "Points": [
             {
-                "lat": 52.521652565946304,
-                "lng":13.414478302001953
+                "lat": required, float64,
+                "lng": required, float64
             },
             ...
-            ]
-        }
+        ]
+    }
 }
 ```
 
@@ -563,6 +568,17 @@ PUT /regions/x
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
+    "Name": required, string,
+    "Description": required, string,
+    "Boundaries": {
+        "Points": [
+            {
+                "lat": required, float64,
+                "lng": required, float64
+            },
+            ...
+        ]
+    }
 }
 ```
 
@@ -622,7 +638,7 @@ POST /regions/:regionID/admins
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
-    "Mail": string
+    "Mail": required, string
 }
 ```
 
@@ -668,10 +684,10 @@ PUT /me
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 {
-	"Name": optional, string
-    "PreferredName": optional, string
-    "Mail": optional, string/email
-    "PhoneNumbers": optional, array of strings
+	"Name": optional, string,
+    "PreferredName": optional, string,
+    "Mail": optional, string/email,
+    "PhoneNumbers": optional, array of strings,
     "Password": optional, string
 }
 ```
@@ -745,11 +761,10 @@ or in case that notifications for matchings are included:
 
 **Request:**
 
-
+```
 PUT /notifications/:notificationID
 Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
-```
 {
     "Read": true
 }
@@ -762,7 +777,6 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 or in case that this specific notification is meant for a matching:
 
 [Single matching notification](#notification-object-for-matching-notification)
-
 
 
 ### Responses
@@ -938,6 +952,7 @@ or in case that this specific notification is meant for a matching:
 ```
 {
     "ID": "UUID v4",
+    "Invalid": "bool",
     "Offer": {
         "Expired": "bool",
         "ID": "UUID v4",
@@ -988,6 +1003,7 @@ or in case that this specific notification is meant for a matching:
 [
     {
         "ID": "UUID v4",
+        "Invalid": "bool",
         "Offer": {
             "Expired": "bool",
             "ID": "UUID v4",
@@ -1089,6 +1105,7 @@ or in case that this specific notification is meant for a matching:
     "ItemID": "string",
     "Matching": {
         "ID": "UUID v4",
+        "Invalid": "bool",
         "Offer": {
             "Expired": "bool",
             "ID": "UUID v4",
@@ -1156,6 +1173,7 @@ or in case that this specific notification is meant for a matching:
         "ItemID": "string",
         "Matching": {
             "ID": "UUID v4",
+            "Invalid": "bool",
             "Offer": {
                 "Expired": "bool",
                 "ID": "UUID v4",

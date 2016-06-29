@@ -36,8 +36,6 @@ var ReplacementsJSONbyKey = map[string]interface{}{
 func (app *App) GetJsonResponseInfo(c *gin.Context) {
 
 	// Check authorization for this function.
-
-	// TODO: decomment when authorization is pulled and works
 	ok, authUser, message := app.Authorize(c.Request)
 	if !ok {
 
@@ -47,6 +45,7 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 
 		return
 	}
+
 	// Check if user permissions are sufficient (user is admin).
 	if ok = app.CheckScope(authUser, db.Region{}, "superadmin"); !ok {
 
@@ -178,47 +177,34 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	// Open file for writing footer.
 	f, err := os.Create("README_footer.md")
 	if err != nil {
+
 		log.Println("Unable to open file to write. Please check if backend has the permission to write on your server.")
+
 		// Send as http response
 		c.JSON(http.StatusOK, allResponses)
 	}
 
-	// Write footer
+	// Write footer.
 	f.WriteString("\n### Responses\n")
 
 	writeFooterSection(f, "\n#### Single user complete\n", allResponses["User"])
-
 	writeFooterSection(f, "\n#### List users complete\n", allResponses["Users"])
-
 	writeFooterSection(f, "\n#### User without group\n", allResponses["User without groups"])
-
 	writeFooterSection(f, "\n#### List of users without group\n", allResponses["List of users without group"])
-
 	writeFooterSection(f, "\n#### Offer object\n", allResponses["Offer"])
-
 	writeFooterSection(f, "\n#### Offer list\n", allResponses["Offers"])
-
 	writeFooterSection(f, "\n#### Request object\n", allResponses["Request"])
-
 	writeFooterSection(f, "\n#### Request list\n", allResponses["Requests"])
-
 	writeFooterSection(f, "\n#### Matching object\n", allResponses["Matching"])
-
 	writeFooterSection(f, "\n#### Matching list\n", allResponses["Matchings"])
-
 	writeFooterSection(f, "\n#### Region object\n", allResponses["Region"])
-
 	writeFooterSection(f, "\n#### Region list\n", allResponses["Regions"])
-
 	writeFooterSection(f, "\n#### Notification object\n", allResponses["Notification"])
-
 	writeFooterSection(f, "\n#### Notification object for matching notification\n", allResponses["Notification for matching"])
-
 	writeFooterSection(f, "\n#### Notification list\n", allResponses["Notifications"])
-
 	writeFooterSection(f, "\n#### Notification list for matching notifications\n", allResponses["Notifications for matchings"])
 
-	// Send as http response
+	// Send as HTTP response.
 	c.JSON(http.StatusOK, allResponses)
 }
 

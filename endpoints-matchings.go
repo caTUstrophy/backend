@@ -149,6 +149,7 @@ func (app *App) CreateMatching(c *gin.Context) {
 	Matching.Offer = Offer
 	Matching.RequestId = Payload.Request
 	Matching.Request = Request
+	Matching.Invalid = false
 
 	// Save matching to database.
 	app.DB.Create(&Matching)
@@ -182,10 +183,12 @@ func (app *App) CreateMatching(c *gin.Context) {
 	app.DB.Create(&NotifyOfferUser)
 	app.DB.Create(&NotifyRequestUser)
 
+	// Preload related elements to matching.
 	app.DB.Model(&Matching).Related(&Matching.Offer)
 	app.DB.Model(&Matching.Offer).Related(&Matching.Offer.User)
 	app.DB.Model(&Matching).Related(&Matching.Request)
 	app.DB.Model(&Matching.Request).Related(&Matching.Request.User)
+
 	// Only expose fields that are necessary.
 	model := CopyNestedModel(Matching, fieldsMatching)
 
@@ -207,13 +210,15 @@ func (app *App) GetMatching(c *gin.Context) {
 
 	matchingID := app.getUUID(c, "matchingID")
 	if matchingID == "" {
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
+
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "macthingID is not a valid UUID",
 		})
+
 		return
 	}
 
-	// Retrieve the specified matching
+	// Retrieve the specified matching.
 	var Matching db.Matching
 	app.DB.First(&Matching, "id = ?", matchingID)
 	app.DB.Model(&Matching).Related(&Matching.Offer)
@@ -226,4 +231,11 @@ func (app *App) GetMatching(c *gin.Context) {
 
 	// Send back results to client.
 	c.JSON(http.StatusOK, model)
+}
+
+func (app *App) UpdateMatching(c *gin.Context) {
+
+	// Only update a matching that has 'Invalid == false'.
+	// This will prevent matchings from getting set back to valid
+	// after they have already been set to invalid.
 }

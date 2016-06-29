@@ -46,7 +46,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 	// Expect request struct fields for creation in JSON request body.
 	err := c.BindJSON(&Payload)
 	if err != nil {
-		//log.Println(err)
+
 		// Check if error was caused by failed unmarshalling string -> []string.
 		if err.Error() == "json: cannot unmarshal string into Go value of type []string" {
 
@@ -161,7 +161,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 	// Save request to database.
 	app.DB.Create(&Request)
 
-	model := CopyNestedModel(Request, fieldsRequestU)
+	model := CopyNestedModel(Request, fieldsRequestWithUser)
 
 	c.JSON(http.StatusCreated, model)
 }
@@ -183,7 +183,7 @@ func (app *App) GetRequest(c *gin.Context) {
 	requestID := app.getUUID(c, "requestID")
 	if requestID == "" {
 
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "requestID is no valid UUID",
 		})
 
@@ -208,7 +208,7 @@ func (app *App) GetRequest(c *gin.Context) {
 	}
 
 	// He or she can have it, if he or she wants it so badly! :)
-	model := CopyNestedModel(request, fieldsRequestU)
+	model := CopyNestedModel(request, fieldsRequestWithUser)
 
 	c.JSON(http.StatusOK, model)
 }
@@ -230,8 +230,11 @@ func (app *App) UpdateRequest(c *gin.Context) {
 
 	requestID := app.getUUID(c, "requestID")
 	if requestID == "" {
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"Error": "requestID is no valid UUID"})
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "requestID is no valid UUID",
+		})
+
 		return
 	}
 

@@ -78,6 +78,7 @@ type Matching struct {
 	OfferId   string  `gorm:"index;not null"`
 	Request   Request `gorm:"ForeignKey:RequestId;AssociationForeignKey:Refer"`
 	RequestId string  `gorm:"index;not null"`
+	Invalid   bool    `gorm:"not null"`
 }
 
 type Region struct {

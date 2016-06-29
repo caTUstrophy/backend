@@ -45,6 +45,7 @@ func (app *App) UpdateMe(c *gin.Context) {
 	}
 
 	app.UpdateUserObject(User, c, false)
+
 	return
 }
 
@@ -68,10 +69,10 @@ func (app *App) ListUserOffers(c *gin.Context) {
 
 	for i, o := range Offers {
 
-		// 2) Check expired field - extra argument for that?
+		// Check if offer is not already expired.
 		if o.ValidityPeriod.After(time.Now()) {
 
-			// 3) Only return what's needed
+			// Marshal only needed fields.
 			model := CopyNestedModel(o, fieldsOffer)
 			response[i] = model
 		}
@@ -100,10 +101,10 @@ func (app *App) ListUserRequests(c *gin.Context) {
 
 	for i, r := range Requests {
 
-		// 2) Check expired field - extra argument for that?
+		// Check if offer is not already expired.
 		if r.ValidityPeriod.After(time.Now()) {
 
-			// 3) Only return what's needed
+			// Marshal only needed fields.
 			model := CopyNestedModel(r, fieldsRequest)
 			response[i] = model
 		}

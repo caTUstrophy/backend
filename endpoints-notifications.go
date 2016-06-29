@@ -94,9 +94,11 @@ func (app *App) UpdateNotification(c *gin.Context) {
 	// Retrieve notification ID from request URL.
 	notificationID := app.getUUID(c, "notificationID")
 	if notificationID == "" {
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
+
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "notificationID is no valid UUID",
 		})
+
 		return
 	}
 
@@ -163,7 +165,7 @@ func (app *App) UpdateNotification(c *gin.Context) {
 	Notification.Read = true
 	app.DB.Save(&Notification)
 
-	response := CopyNestedModel(Notification, fieldsNotificationR)
+	response := CopyNestedModel(Notification, fieldsNotificationWithRead)
 
 	c.JSON(http.StatusOK, response)
 }

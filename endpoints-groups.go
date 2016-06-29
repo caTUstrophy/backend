@@ -14,6 +14,7 @@ func (app *App) GetGroupObject(groupID string) db.Group {
 	var Group db.Group
 	app.DB.Preload("Users").First(&Group, "id = ?", groupID)
 	app.DB.Model(&Group).Related(&Group.Region)
+
 	return Group
 }
 
@@ -32,6 +33,7 @@ func (app *App) GetGroups(c *gin.Context) {
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok = app.CheckScope(User, db.Region{}, "superadmin"); !ok {
+
 		// Signal client that the provided authorization was not sufficient.
 		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
 		c.Status(http.StatusUnauthorized)
@@ -43,10 +45,13 @@ func (app *App) GetGroups(c *gin.Context) {
 	app.DB.Preload("Users").Find(&Groups)
 
 	models := make([]map[string]interface{}, len(Groups))
+
 	// Iterate over all groups in database return and marshal it.
 	for i, group := range Groups {
-		// TODO : resolve region in smarter way
+
+		// TODO: Resolve region in smarter way.
 		if group.RegionId != "" {
+
 			var Region db.Region
 			app.DB.First(&Region, "id = ?", group.RegionId)
 			group.Region = Region
@@ -80,8 +85,6 @@ func (app *App) ListSystemAdmins(c *gin.Context) {
 
 		return
 	}
-
-	// The real request
 
 	var group db.Group
 	app.DB.Preload("Users").First(&group, "access_right = ?", "superadmin")
