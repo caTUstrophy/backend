@@ -105,7 +105,7 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | [Update request `requestID`](#update-request-with-requestid)    | C    | PUT       | /requests/:requestID         | 3.0         |       |
 | [Create matching](#create-matching)                             | A    | POST      | /matchings                   | MVP         | ✔    |
 | [Get matching `matchingID`](#get-matching-with-matchingid)      | C    | GET       | /matchings/:matchingID       | MVP         | ✔    |
-| [Update matching `matchingID`](#update-matching-with-matchingid)| C    | PUT       | /matchings/:matchingID       | 3.0         |       |
+| [Update matching `matchingID`](#update-matching-with-matchingid)| C    | PUT       | /matchings/:matchingID       | 3.0         | ✔    |
 | [Create a region](#create-region)                               | L    | POST      | /regions                     | 2.0         | ✔    |
 | [List regions](#list-regions)                                   | U    | GET       | /regions                     | 2.0         | ✔    |
 | [Get region `regionID`](#get-region-regionid)                   | U    | GET       | /regions/:regionID           | 2.0         | ✔    |

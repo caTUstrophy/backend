@@ -265,9 +265,11 @@ func (app *App) ListOffersForRegion(c *gin.Context) {
 		return
 	}
 
-	// Load all offers for specified region that were not yet matched.
+	// Load all offers for specified region that are
+	// - not yet expired
+	// - and not yet matched.
 	var Region db.Region
-	app.DB.Preload("Offers", "\"matched\" = ?", false).First(&Region, "id = ?", regionID)
+	app.DB.Preload("Offers", "\"expired\" = ? AND \"matched\" = ?", false, false).First(&Region, "id = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
@@ -312,9 +314,11 @@ func (app *App) ListRequestsForRegion(c *gin.Context) {
 		return
 	}
 
-	// Load all requests for specified region that were not yet matched.
+	// Load all requests for specified region that are
+	// - not yet expired
+	// - and not yet matched.
 	var Region db.Region
-	app.DB.Preload("Requests", "\"matched\" = ?", false).First(&Region, "id = ?", regionID)
+	app.DB.Preload("Requests", "\"expired\" = ? AND \"matched\" = ?", false, false).First(&Region, "id = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
