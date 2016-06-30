@@ -26,6 +26,17 @@ type CreateOfferPayload struct {
 	ValidityPeriod string   `conform:"trim" validate:"required"`
 }
 
+type UpdateOfferPayload struct {
+	Name     string `conform:"trim" validate:"required"`
+	Location struct {
+		Longitude float64 `json:"lng" conform:"trim"`
+		Latitude  float64 `json:"lat" conform:"trim"`
+	} `validate:"dive,required"`
+	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	ValidityPeriod string   `conform:"trim" validate:"required"`
+	Matched bool `conform:"trim" validate:"exists"`
+}
+
 // Functions
 
 func (app *App) CreateOffer(c *gin.Context) {
@@ -216,7 +227,7 @@ func (app *App) GetOffer(c *gin.Context) {
 func (app *App) UpdateOffer(c *gin.Context) {
 
 	// Check authorization for this function.
-	ok, _, message := app.Authorize(c.Request)
+	ok, User, message := app.Authorize(c.Request)
 	if !ok {
 
 		// Signal client an error and expect authorization.
@@ -226,8 +237,7 @@ func (app *App) UpdateOffer(c *gin.Context) {
 		return
 	}
 
-	// TODO: Add edit rights for concerned user vs. admin.
-
+	// Load offerID from request.
 	offerID := app.getUUID(c, "offerID")
 	if offerID == "" {
 
@@ -238,21 +248,112 @@ func (app *App) UpdateOffer(c *gin.Context) {
 		return
 	}
 
-	// TODO: Change this stub to real function.
-	c.JSON(http.StatusOK, gin.H{
-		"Name": "Offering COMPLETELY NEW bread",
-		"Location": struct {
-			Longitude float64
-			Latitude  float64
-		}{
-			15.5,
-			45.3,
-		},
-		"Tags": struct {
-			Name string
-		}{
-			"Food",
-		},
-		"ValidityPeriod": time.Now().Format(time.RFC3339),
-	})
+	// Retrieve corresponding entry from database.
+	var Offer db.Offer
+	app.DB.Preload("Regions").Preload("Tags").First(&Offer, "id = ?", offerID)
+	app.DB.Model(&Offer).Related(&Offer.User)
+
+	// Validity check:
+	// User accessing this offer has to be either an admin in any region
+	// of this offer or has to be the owning user of this offer.
+	if ok := ((Offer.UserID == User.ID) || app.CheckScopes(User, Offer.Regions, "admin")); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+
+	// Bind payload
+	var Payload UpdateRequestPayload
+	if ok := app.ValidatePayloadShort(c, &Payload); !ok {
+		return
+	}
+
+
+	Offer.Name = Payload.Name
+	Offer.Location = gormGIS.GeoPoint{Lng: Payload.Location.Longitude, Lat: Payload.Location.Latitude}
+
+	// delete all tags associated with request
+	for _, Tag := range Offer.Tags {
+		app.DB.Exec("DELETE FROM offer_tags WHERE request_id = ? AND tag_id = ?", Offer.ID, Tag.ID)
+	}
+
+	Offer.Tags = make([]db.Tag, 0)
+	// If tags were supplied, check if they exist in our system.
+	if len(Payload.Tags) > 0 {
+
+		allTagsExist := true
+
+		for _, tag := range Payload.Tags {
+
+			var Tag db.Tag
+
+			// Count number of results for query of name of tags.
+			app.DB.First(&Tag, "name = ?", tag)
+
+			// Set flag to false, if one tag was not found.
+			if Tag.Name == "" {
+				allTagsExist = false
+			} else {
+				Offer.Tags = append(Offer.Tags, Tag)
+			}
+		}
+
+		// If at least one of the tags does not exist - return error.
+		if !allTagsExist {
+
+			c.JSON(http.StatusBadRequest, gin.H{
+				"Tags": "One or multiple tags do not exist",
+			})
+
+			return
+		}
+	} else {
+		Offer.Tags = nil
+	}
+
+
+
+	// Check if supplied date is a RFC3339 compliant date.
+	PayloadTime, err := time.Parse(time.RFC3339, Payload.ValidityPeriod)
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"ValidityPeriod": "Request has to be a RFC3339 compliant date",
+		})
+
+		return
+	}
+
+	// Check if validity period is yet to come.
+	if PayloadTime.Unix() <= time.Now().Unix() {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"ValidityPeriod": "Request has to be valid until a date in the future",
+		})
+
+		return
+	} else {
+		Offer.ValidityPeriod = PayloadTime
+		Offer.Expired = false
+	}
+
+
+
+	// delete all regions associated with request
+	app.DB.Exec("DELETE FROM region_requests WHERE request_id = ?", Offer.ID)
+	// Try to map the provided location to all containing regions.
+
+	// map into new regions
+	Offer.Regions = []db.Region{}
+	app.mapLocationToRegions(Offer)
+
+
+	app.DB.Model(&Offer).Updates(Offer)
+	model := CopyNestedModel(Offer, fieldsRequestWithUser)
+	c.JSON(http.StatusOK, model)
+
 }

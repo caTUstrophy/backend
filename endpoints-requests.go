@@ -26,6 +26,17 @@ type CreateRequestPayload struct {
 	ValidityPeriod string   `conform:"trim" validate:"required"`
 }
 
+type UpdateRequestPayload struct {
+	Name     string `conform:"trim" validate:"required"`
+	Location struct {
+		Longitude float64 `json:"lng" conform:"trim"`
+		Latitude  float64 `json:"lat" conform:"trim"`
+	} `validate:"dive,required"`
+	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	ValidityPeriod string   `conform:"trim" validate:"required"`
+	Matched bool `conform:"trim" validate:"exists"`
+}
+
 // Functions
 
 func (app *App) CreateRequest(c *gin.Context) {
@@ -197,7 +208,6 @@ func (app *App) GetRequest(c *gin.Context) {
 
 	// Validity check:
 	// User accessing this request has to be either an admin in any region
-	// of this request or has to be the owning user of this request.
 	if ok := ((request.UserID == User.ID) || app.CheckScopes(User, request.Regions, "admin")); !ok {
 
 		// Signal client that the provided authorization was not sufficient.
@@ -216,7 +226,7 @@ func (app *App) GetRequest(c *gin.Context) {
 func (app *App) UpdateRequest(c *gin.Context) {
 
 	// Check authorization for this function.
-	ok, _, message := app.Authorize(c.Request)
+	ok, User, message := app.Authorize(c.Request)
 	if !ok {
 
 		// Signal client an error and expect authorization.
@@ -226,8 +236,7 @@ func (app *App) UpdateRequest(c *gin.Context) {
 		return
 	}
 
-	// TODO: Add edit rights for concerned user vs. admin.
-
+	// Parse requestID from HTTP request.
 	requestID := app.getUUID(c, "requestID")
 	if requestID == "" {
 
@@ -238,21 +247,110 @@ func (app *App) UpdateRequest(c *gin.Context) {
 		return
 	}
 
-	// TODO: Change this stub to real function.
-	c.JSON(http.StatusOK, gin.H{
-		"Name": "Looking for COMPLETELY NEW bread",
-		"Location": struct {
-			Longitude float64
-			Latitude  float64
-		}{
-			14.0,
-			49.9,
-		},
-		"Tags": struct {
-			Name string
-		}{
-			"Food",
-		},
-		"ValidityPeriod": time.Now().Format(time.RFC3339),
-	})
+	// Load request from database.
+	var Request db.Request
+	app.DB.Preload("Regions").Preload("Tags").First(&Request, "id = ?", requestID)
+	app.DB.Model(&Request).Related(&Request.User)
+
+
+	// check scope for user / admin on request
+	if ok := ((Request.UserID == User.ID) || app.CheckScopes(User, Request.Regions, "admin")); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+
+	// Bind payload
+	var Payload UpdateRequestPayload
+	if ok := app.ValidatePayloadShort(c, &Payload); !ok {
+		return
+	}
+
+
+	Request.Name = Payload.Name
+	Request.Location = gormGIS.GeoPoint{Lng: Payload.Location.Longitude, Lat: Payload.Location.Latitude}
+
+	// delete all tags associated with request
+	for _, Tag := range Request.Tags {
+		app.DB.Exec("DELETE FROM request_tags WHERE request_id = ? AND tag_id = ?", Request.ID, Tag.ID)
+	}
+
+	Request.Tags = make([]db.Tag, 0)
+	// If tags were supplied, check if they exist in our system.
+	if len(Payload.Tags) > 0 {
+
+		allTagsExist := true
+
+		for _, tag := range Payload.Tags {
+
+			var Tag db.Tag
+
+			// Count number of results for query of name of tags.
+			app.DB.First(&Tag, "name = ?", tag)
+
+			// Set flag to false, if one tag was not found.
+			if Tag.Name == "" {
+				allTagsExist = false
+			} else {
+				Request.Tags = append(Request.Tags, Tag)
+			}
+		}
+
+		// If at least one of the tags does not exist - return error.
+		if !allTagsExist {
+
+			c.JSON(http.StatusBadRequest, gin.H{
+				"Tags": "One or multiple tags do not exist",
+			})
+
+			return
+		}
+	} else {
+		Request.Tags = nil
+	}
+
+
+
+	// Check if supplied date is a RFC3339 compliant date.
+	PayloadTime, err := time.Parse(time.RFC3339, Payload.ValidityPeriod)
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"ValidityPeriod": "Request has to be a RFC3339 compliant date",
+		})
+
+		return
+	}
+
+	// Check if validity period is yet to come.
+	if PayloadTime.Unix() <= time.Now().Unix() {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"ValidityPeriod": "Request has to be valid until a date in the future",
+		})
+
+		return
+	} else {
+		Request.ValidityPeriod = PayloadTime
+		Request.Expired = false
+	}
+
+
+
+	// delete all regions associated with request
+	app.DB.Exec("DELETE FROM region_requests WHERE request_id = ?", Request.ID)
+	// Try to map the provided location to all containing regions.
+
+	// map into new regions
+	Request.Regions = []db.Region{}
+	app.mapLocationToRegions(Request)
+
+
+	app.DB.Model(&Request).Updates(Request)
+	model := CopyNestedModel(Request, fieldsRequestWithUser)
+	c.JSON(http.StatusOK, model)
 }
