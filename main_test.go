@@ -37,25 +37,6 @@ func TestMain(m *testing.M) {
 type PromoteAdminPayload struct {
 	Mail string
 }
-/*
-func TestGetRegions(t *testing.T) {
-
-	resp := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/regions", nil)
-	if err != nil {
-		t.Error("Error while trying to get regions", err)
-		return
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	app.Router.ServeHTTP(resp, req)
-
-	regions := parseResponseToArray(resp)
-	regionID = regions[0]["ID"].(string)
-}*/
-
-
-
 
 // ----------------------------------------------------------------- AUTH
 
@@ -104,9 +85,9 @@ func LoginTest(t *testing.T, Email string, Password string, AssertCode int) stri
 // ----------------------------------------------------------------- USERS
 
 	// [X] CreateUser : U
-	// [] UpdateUser : S
-	// [] ListUsers : A
-	// [] GetUser : A
+	// [X] UpdateUser : S
+	// [X] ListUsers : A
+	// [X] GetUser : A
 	// [] PromoteToSystemAdmin : S
 
 
@@ -130,12 +111,127 @@ func CreateUserTest(t *testing.T, Email string, Password string, Name string, As
 	}
 }
 
+func UpdateUserTest(t *testing.T, jwt string, User string, Name string, PreferredName string, Mail string, 
+	PhoneNumbers []string, Password string, Groups []GroupPayload, AssertCode int) map[string]interface{} {
+
+	updateParams := UpdateUserPayload {
+		Name,
+		PreferredName,
+		Mail,
+		PhoneNumbers,
+		Password,
+		Groups,
+	}
+
+	resp := app.RequestWithJWT("PUT", "/users/" + User, updateParams, jwt)
+
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("Could not update user")
+		return map[string]interface{}{}
+	}
+	if AssertCode == 400 {
+		if resp.Code != 400{
+			t.Error(fmt.Printf("UpdateUser should return BadRequest, but didnt"))
+		}
+		return map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401{
+			t.Error(fmt.Printf("UpdateUser should return Unauthorized, but didnt"))
+		}
+		return map[string]interface{}{}
+	}
+	if AssertCode == 403 {
+		if resp.Code != 403{
+			t.Error(fmt.Printf("UpdateUser should return Forbidden, but didnt"))
+		}
+		return map[string]interface{}{}
+	}
+
+	return parseResponse(resp)
+}
+
+func ListUsersTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
+	resp := app.RequestWithJWT("GET", "/users", nil, jwt)
+
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("ListUsers fail ", resp.Body.String())
+		return []map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401 {
+			t.Error("ListUsers should return UnAuthorized but didnt")
+		}
+		return []map[string]interface{}{} 
+	}
+
+	return parseResponseToArray(resp)
+}
+
+func GetUser(t *testing.T, jwt string, User string, AssertCode int) map[string]interface{}{
+	resp := app.RequestWithJWT("GET", "/users/" + User, nil, jwt)
+	
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("Could not get user")
+		return map[string]interface{}{}
+	}
+	if AssertCode == 400 {
+		if resp.Code != 400{
+			t.Error(fmt.Printf("GetUser should return BadRequest, but didnt"))
+		}
+		return map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401{
+			t.Error(fmt.Printf("GetUser should return Unauthorized, but didnt"))
+		}
+		return map[string]interface{}{}
+	}
+
+	return parseResponse(resp)
+}
+
 
 // ----------------------------------------------------------------- GROUPS
 
-	// [] GetGroups : S
-	// [] ListSystemAdmins : S
+	// [X] GetGroups : S
+	// [X] ListSystemAdmins : S
 
+func GetGroupsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
+	resp := app.RequestWithJWT("GET", "/groups" , nil, jwt)	
+
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("Could not get groups")
+		return []map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401{
+			t.Error(fmt.Printf("GetGroups should return Unauthorized, but didnt"))
+		}
+		return []map[string]interface{}{}
+	}
+
+	data := parseResponseToArray(resp)
+	return data
+}
+
+func ListSystemAdminsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
+	resp := app.RequestWithJWT("GET", "/system/admins" , nil, jwt)
+
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("Could not get System  admin list")
+		return []map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401{
+			t.Error(fmt.Printf("ListSystemAdmins should return Unauthorized, but didnt"))
+		}
+		return []map[string]interface{}{}
+	}
+
+	data := parseResponseToArray(resp)
+	return data
+}
 
 // ----------------------------------------------------------------- OFFERS
 
@@ -320,8 +416,8 @@ func UpdateRequestTest(t *testing.T, jwt string, Request string, Name string, Lo
 // ----------------------------------------------------------------- MATCHINGS
 
 	// [X] CreateMatching - A
-	// [] GetMatching - C
-	// [] UpdateMatching - C
+	// [X] GetMatching - C
+	// [X] UpdateMatching - C
 
 func CreateMatchingTest(t *testing.T, jwt string, Region string, Offer string, Request string, AssertCode int) string {
 	plCreateMatching := CreateMatchingPayload{
@@ -353,17 +449,70 @@ func CreateMatchingTest(t *testing.T, jwt string, Region string, Offer string, R
 	return data["ID"].(string)
 }
 
+func GetMatchingTest(t *testing.T, jwt string, Matching string, AssertCode int) map[string]interface{}{
+	resp := app.RequestWithJWT("GET", "/matchings/" + Matching, nil, jwt)
+
+	if AssertCode == 201 && resp.Code != 201 {
+		t.Error("Could not get matching")
+		return map[string]interface{}{}
+	}
+	if AssertCode == 400 {
+		if resp.Code != 400{
+			t.Error(fmt.Printf("GetMatching should return BadRequest, but did return %d", resp.Code))
+		}
+		return map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401 {
+			t.Error("GetMatching should return UnAuthorized but didnt")
+		}
+		return map[string]interface{}{} 
+	}
+
+	data := parseResponse(resp)
+	return data
+}
+
+func UpdateMatchingTest(t *testing.T, jwt string, Matching string, Invalid bool, AssertCode int) map[string]interface{} {
+	updateParams := UpdateMatchingPayload {
+		Invalid,
+	}
+
+	resp := app.RequestWithJWT("PUT", "/matchings/" + Matching, updateParams, jwt)
+
+	if AssertCode == 201 && resp.Code != 201 {
+		t.Error("Could not update matching")
+		return map[string]interface{}{}
+	}
+	if AssertCode == 400 {
+		if resp.Code != 400{
+			t.Error(fmt.Printf("UpdateMatching should return BadRequest, but did return %d", resp.Code))
+		}
+		return map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401 {
+			t.Error("UpdateMatching should return UnAuthorized but didnt")
+		}
+		return map[string]interface{}{} 
+	}
+
+	data := parseResponse(resp)
+	return data
+}
+
+
 // ----------------------------------------------------------------- REGIONS
 
 	// [X] CreateRegion - L
-	// [] ListRegions - U
+	// [X] ListRegions - U
 	// [X] GetRegion - U
 	// [] UpdateRegion - A
-	// [] ListOffersForRegion - A
-	// [] ListRequestsForRegion - A
-	// [] ListMatchingsForRegion - A
+	// [X] ListOffersForRegion - A
+	// [X] ListRequestsForRegion - A
+	// [X] ListMatchingsForRegion - A
 	// [X] PromoteUserToAdminForRegion - A
-	// [] ListAdminsForRegion - A
+	// [X] ListAdminsForRegion - A
 
 func CreateRegionTest(t *testing.T, jwt string, Name string, Desc string, Locations []Location, AssertCode int) string {
 	// create region
@@ -398,6 +547,25 @@ func CreateRegionTest(t *testing.T, jwt string, Name string, Desc string, Locati
 	return dat["ID"].(string)
 }
 
+
+func ListRegions(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
+	resp := app.RequestWithJWT("GET", "/regions" , nil, jwt)
+
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("Could not get region list")
+		return []map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401{
+			t.Error(fmt.Printf("ListRegions should return Unauthorized, but didnt"))
+		}
+		return []map[string]interface{}{}
+	}
+
+	data := parseResponseToArray(resp)
+	return data
+}
+
 func GetRegionTest(t *testing.T, jwt string, Region string, AssertCode int) map[string]interface{} {
 	resp := app.RequestWithJWT("GET", "/regions/" + Region, nil, jwt)
 
@@ -418,6 +586,62 @@ func GetRegionTest(t *testing.T, jwt string, Region string, AssertCode int) map[
 		t.Error("Wrong region was returned")
 	}
 
+	return data
+}
+
+
+
+func ListOffersForRegionTest(t *testing.T, jwt string, Region string, AssertCode int) []map[string]interface{}{
+	resp := app.RequestWithJWT("GET", "/regions/" + Region + "/offers" , nil, jwt)
+
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("Could not get offerlist for region" + resp.Body.String())
+		return []map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401{
+			t.Error(fmt.Printf("ListOffersForRegion should return Unauthorized, but didnt"))
+		}
+		return []map[string]interface{}{}
+	}
+
+	data := parseResponseToArray(resp)
+	return data
+}
+
+func ListRequestsForRegionTest(t *testing.T, jwt string, Region string, AssertCode int) []map[string]interface{}{
+	resp := app.RequestWithJWT("GET", "/regions/" + Region + "/requests" , nil, jwt)
+
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("Could not get requestlist for region" + resp.Body.String())
+		return []map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401{
+			t.Error(fmt.Printf("ListRequestsForRegion should return Unauthorized, but didnt"))
+		}
+		return []map[string]interface{}{}
+	}
+
+	data := parseResponseToArray(resp)
+	return data
+}
+
+func ListMatchingsForRegionTest(t *testing.T, jwt string, Region string, AssertCode int) []map[string]interface{}{
+	resp := app.RequestWithJWT("GET", "/regions/" + Region + "/matchings" , nil, jwt)
+
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("Could not get matchinglist for region" + resp.Body.String())
+		return []map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401{
+			t.Error(fmt.Printf("ListMatchingsForRegion should return Unauthorized, but didnt"))
+		}
+		return []map[string]interface{}{}
+	}
+
+	data := parseResponseToArray(resp)
 	return data
 }
 
@@ -453,13 +677,32 @@ func PromoteUserToAdminForRegionTest(t *testing.T, jwt string, Email string, Reg
 }
 
 
+func ListAdminsForRegionTest(t *testing.T, jwt string, Region string, AssertCode int) []map[string]interface{}{
+	resp := app.RequestWithJWT("GET", "/regions/" + Region + "/admins" , nil, jwt)
+
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("Could not get adminlist for region" + resp.Body.String())
+		return []map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401{
+			t.Error(fmt.Printf("ListAdminsForRegion should return Unauthorized, but didnt"))
+		}
+		return []map[string]interface{}{}
+	}
+
+	data := parseResponseToArray(resp)
+	return data
+}
+
+
 // ------------------------------------------------------------------------------- ME
 
 	// [X] GetMe - L
-	// [] UpdateMe - L
-	// [] ListUserOffers - L
-	// [] ListUserRequests - L
-	// [] ListUserMatchings - L
+	// [X] UpdateMe - L
+	// [X] ListUserOffers - L
+	// [X] ListUserRequests - L
+	// [X] ListUserMatchings - L
 
 func GetMeTest(t *testing.T, jwt string, AssertCode int) map[string]interface{}{
 	resp := app.RequestWithJWT("GET", "/me", nil, jwt)
@@ -473,11 +716,147 @@ func GetMeTest(t *testing.T, jwt string, AssertCode int) map[string]interface{}{
 	return data
 }
 
+func UpdateMeTest(t *testing.T, jwt string, Name string, PreferredName string, Mail string, 
+	PhoneNumbers []string, Password string, Groups []GroupPayload, AssertCode int) map[string]interface{}{
+
+	updateParams := UpdateUserPayload {
+		Name,
+		PreferredName,
+		Mail,
+		PhoneNumbers,
+		Password,
+		Groups,
+	}
+
+	resp := app.RequestWithJWT("PUT", "/me", updateParams, jwt)
+
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("Could not UpdateMe")
+		return map[string]interface{}{}
+	}
+	if AssertCode == 400 {
+		if resp.Code != 400{
+			t.Error(fmt.Printf("UpdateMe should return BadRequest, but didnt"))
+		}
+		return map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401{
+			t.Error(fmt.Printf("UpdateMe should return Unauthorized, but didnt"))
+		}
+		return map[string]interface{}{}
+	}
+	if AssertCode == 403 {
+		if resp.Code != 403{
+			t.Error(fmt.Printf("UpdateMe should return Forbidden, but didnt"))
+		}
+		return map[string]interface{}{}
+	}
+
+	return parseResponse(resp)
+}
+
+func ListUserOffersTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
+	resp := app.RequestWithJWT("GET", "/me/offers", nil, jwt)
+
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("ListUserOffers fail ", resp.Body.String())
+		return []map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401 {
+			t.Error("ListUserOffers should return UnAuthorized but didnt")
+		}
+		return []map[string]interface{}{} 
+	}
+
+	return parseResponseToArray(resp)
+}
+
+func ListUserRequestsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
+	resp := app.RequestWithJWT("GET", "/me/requests", nil, jwt)
+
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("ListUserRequests fail ", resp.Body.String())
+		return []map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401 {
+			t.Error("ListUserRequests should return UnAuthorized but didnt")
+		}
+		return []map[string]interface{}{} 
+	}
+
+	return parseResponseToArray(resp)
+}
+
+func ListUserMatchingsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
+	resp := app.RequestWithJWT("GET", "/me/matchings", nil, jwt)
+
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("ListUserMatchings fail ", resp.Body.String())
+		return []map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401 {
+			t.Error("ListUserMatchings should return UnAuthorized but didnt")
+		}
+		return []map[string]interface{}{} 
+	}
+
+	return parseResponseToArray(resp)
+}
+
 // ------------------------------------------------------------------------------- Notifications
 
-	// [] ListNotifications - L
-	// [] UpdateNotification - C
+	// [X] ListNotifications - L
+	// [X] UpdateNotification - C
 
+func ListNotificationsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
+	resp := app.RequestWithJWT("GET", "/notifications", nil, jwt)
+
+	if AssertCode == 200 && resp.Code != 200 {
+		t.Error("ListNotifications fail ", resp.Body.String())
+		return []map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401 {
+			t.Error("ListNotificationsTest should return UnAuthorized but didnt")
+		}
+		return []map[string]interface{}{} 
+	}
+
+	data := parseResponseToArray(resp)
+	return data
+}
+
+func UpdateNotificationTest(t *testing.T, jwt string, Notification string, Read bool, AssertCode int) map[string]interface{}{
+	updateParams := UpdateNotificationPayload {
+		Read,
+	}
+
+	resp := app.RequestWithJWT("PUT", "/notifications/" + Notification, updateParams, jwt)
+
+	if AssertCode == 201 && resp.Code != 201 {
+		t.Error("Could not update notification")
+		return map[string]interface{}{}
+	}
+	if AssertCode == 400 {
+		if resp.Code != 400{
+			t.Error(fmt.Printf("UpdateNotification should return BadRequest, but did return %d", resp.Code))
+		}
+		return map[string]interface{}{}
+	}
+	if AssertCode == 401 {
+		if resp.Code != 401 {
+			t.Error("UpdateNotification should return UnAuthorized but didnt")
+		}
+		return map[string]interface{}{} 
+	}
+
+	data := parseResponse(resp)
+	return data
+}
 
 
 // ----------------------------------------------------- SCENARIO ALPHA
@@ -523,12 +902,33 @@ func TestSetupAlpha(t *testing.T) {
 		t.Error("CreateRegion followed by GetRegion returns not the same value for field Region.Name")
 	}
 
+	// VALID GetGroup - check if group was created for region
+	groups := GetGroupsTest(t, userSuperAdmin, 200)
+	newGroupFound := false
+	for _, group := range groups {
+		if group["RegionId"].(string) == regionID {
+			newGroupFound = true
+			break
+		}
+	}
+
+	if !newGroupFound {
+		t.Error("GetGroups failed or CreateRegion did not create new group")
+	}
+
+
 	// INVALID: PromoteUserToAdminForRegion
 	PromoteUserToAdminForRegionTest(t, userSuperAdmin, "", regionID, 400)
 	PromoteUserToAdminForRegionTest(t, userRegionAdmin, emailRegionAdmin, regionID, 401)
 	PromoteUserToAdminForRegionTest(t, userSuperAdmin, "nobody@donotexist.com", regionID, 404)
 	// VALID: PromoteUserToAdminForRegion
 	PromoteUserToAdminForRegionTest(t, userSuperAdmin, emailRegionAdmin, regionID, 200)
+
+	// VALID ListSystemAdmins
+	admins := ListSystemAdminsTest(t, userSuperAdmin, 200)
+	if len(admins) == 0 {
+		t.Error("ListSystemAdmins returned no SuperAdmins")
+	}
 }
 
 func TestMatchingAlpha(t *testing.T) {
@@ -568,6 +968,27 @@ func TestMatchingAlpha(t *testing.T) {
 	CreateMatchingTest(t, userRegionAdmin, "", offerID, requestID, 400)
 	// VALID CreateMatching
 	matchingID = CreateMatchingTest(t, userRegionAdmin, regionID, offerID, requestID, 201)
+
+	// VALID GetMatching and compare against CreateMatching
+	GetMatchingTest(t, userRequesting, matchingID, 200)
+	matching := GetMatchingTest(t, userOffering, matchingID, 200)
+	if matching["Request"].(map[string]interface{})["ID"] != requestID {
+		t.Error("GetMatching Matching.Request.ID is not same as Request.ID")
+	}
+	if matching["Offer"].(map[string]interface{})["ID"] != offerID {
+		t.Error("GetMatching Matching.Offer.ID is not same as Offer.ID")
+	}
+
+	// VALID UpdateMatching with Invalid
+	UpdateMatchingTest(t, userOffering, matchingID, true, 200)
+	matching = GetMatchingTest(t, userOffering, matchingID, 200)
+	if !matching["Invalid"].(bool) {
+		t.Error("UpdateMatching with invalid:true failed - matching still valid")
+	}
+
+	// VALID CreateMatch - recreate the matching that was set invalid
+	matchingID = CreateMatchingTest(t, userRegionAdmin, regionID, offerID, requestID, 201)
+	matching = GetMatchingTest(t, userOffering, matchingID, 200)
 
 
 	// VALID UpdateOfferTest
@@ -622,4 +1043,23 @@ func TestMatchingAlpha(t *testing.T) {
 		//t.Error("UpdateRequest didnt update Location")
 	}
 
+
+	// VALID ListNotifications
+	notifications := ListNotificationsTest(t, userOffering, 200)
+	if len(notifications) == 0 {
+		t.Error("ListNotifications returned empty array, but matching was created prior to that")
+	}
+	notificationID := notifications[0]["ID"].(string)
+
+
+	//VALID UpdateNotification
+	UpdateNotificationTest(t, userOffering, notificationID, true, 200)
+	notifications = ListNotificationsTest(t, userOffering, 200)
+
+	for _, not := range notifications {
+		if not["ID"].(string) == notificationID {
+			t.Error("ListNotification should not contain updated notification, since it was just READ")
+			break
+		}
+	}
 }
