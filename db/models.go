@@ -40,8 +40,7 @@ type User struct {
 }
 
 type Tag struct {
-	ID   string `gorm:"primary_key"`
-	Name string `gorm:"index;not null;unique"`
+	Name string `gorm:"primary_key"`
 }
 
 type Offer struct {

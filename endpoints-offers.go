@@ -34,7 +34,7 @@ type UpdateOfferPayload struct {
 	} `validate:"dive,required"`
 	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 	ValidityPeriod string   `conform:"trim" validate:"required"`
-	Matched bool `conform:"trim" validate:"exists"`
+	Matched        bool     `conform:"trim" validate:"exists"`
 }
 
 // Functions
@@ -265,20 +265,18 @@ func (app *App) UpdateOffer(c *gin.Context) {
 		return
 	}
 
-
-	// Bind payload
+	// Bind payload.
 	var Payload UpdateRequestPayload
 	if ok := app.ValidatePayloadShort(c, &Payload); !ok {
 		return
 	}
 
-
 	Offer.Name = Payload.Name
 	Offer.Location = gormGIS.GeoPoint{Lng: Payload.Location.Longitude, Lat: Payload.Location.Latitude}
 
-	// delete all tags associated with request
+	// Delete all tags associated with request.
 	for _, Tag := range Offer.Tags {
-		app.DB.Exec("DELETE FROM offer_tags WHERE request_id = ? AND tag_id = ?", Offer.ID, Tag.ID)
+		app.DB.Exec("DELETE FROM offer_tags WHERE \"request_id\" = ? AND \"tag_name\" = ?", Offer.ID, Tag.Name)
 	}
 
 	Offer.Tags = make([]db.Tag, 0)
@@ -315,8 +313,6 @@ func (app *App) UpdateOffer(c *gin.Context) {
 		Offer.Tags = nil
 	}
 
-
-
 	// Check if supplied date is a RFC3339 compliant date.
 	PayloadTime, err := time.Parse(time.RFC3339, Payload.ValidityPeriod)
 	if err != nil {
@@ -341,8 +337,6 @@ func (app *App) UpdateOffer(c *gin.Context) {
 		Offer.Expired = false
 	}
 
-
-
 	// delete all regions associated with request
 	app.DB.Exec("DELETE FROM region_requests WHERE request_id = ?", Offer.ID)
 	// Try to map the provided location to all containing regions.
@@ -350,7 +344,6 @@ func (app *App) UpdateOffer(c *gin.Context) {
 	// map into new regions
 	Offer.Regions = []db.Region{}
 	app.mapLocationToRegions(Offer)
-
 
 	app.DB.Model(&Offer).Updates(Offer)
 	model := CopyNestedModel(Offer, fieldsRequestWithUser)

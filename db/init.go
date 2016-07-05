@@ -118,11 +118,11 @@ func AddDefaultData(db *gorm.DB) {
 
 	// Some default tag entities.
 
-	TagFood := Tag{ID: fmt.Sprintf("%s", uuid.NewV4()), Name: "Food"}
-	TagWater := Tag{ID: fmt.Sprintf("%s", uuid.NewV4()), Name: "Water"}
-	TagVehicle := Tag{ID: fmt.Sprintf("%s", uuid.NewV4()), Name: "Vehicle"}
-	TagTool := Tag{ID: fmt.Sprintf("%s", uuid.NewV4()), Name: "Tool"}
-	TagInformation := Tag{ID: fmt.Sprintf("%s", uuid.NewV4()), Name: "Information"}
+	TagFood := Tag{Name: "Food"}
+	TagWater := Tag{Name: "Water"}
+	TagVehicle := Tag{Name: "Vehicle"}
+	TagTool := Tag{Name: "Tool"}
+	TagInformation := Tag{Name: "Information"}
 
 	Tags := []Tag{TagFood, TagWater, TagVehicle, TagTool, TagInformation}
 

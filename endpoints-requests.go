@@ -34,7 +34,7 @@ type UpdateRequestPayload struct {
 	} `validate:"dive,required"`
 	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 	ValidityPeriod string   `conform:"trim" validate:"required"`
-	Matched bool `conform:"trim" validate:"exists"`
+	Matched        bool     `conform:"trim" validate:"exists"`
 }
 
 // Functions
@@ -252,7 +252,6 @@ func (app *App) UpdateRequest(c *gin.Context) {
 	app.DB.Preload("Regions").Preload("Tags").First(&Request, "id = ?", requestID)
 	app.DB.Model(&Request).Related(&Request.User)
 
-
 	// check scope for user / admin on request
 	if ok := ((Request.UserID == User.ID) || app.CheckScopes(User, Request.Regions, "admin")); !ok {
 
@@ -263,20 +262,18 @@ func (app *App) UpdateRequest(c *gin.Context) {
 		return
 	}
 
-
-	// Bind payload
+	// Bind payload.
 	var Payload UpdateRequestPayload
 	if ok := app.ValidatePayloadShort(c, &Payload); !ok {
 		return
 	}
 
-
 	Request.Name = Payload.Name
 	Request.Location = gormGIS.GeoPoint{Lng: Payload.Location.Longitude, Lat: Payload.Location.Latitude}
 
-	// delete all tags associated with request
+	// Delete all tags associated with request.
 	for _, Tag := range Request.Tags {
-		app.DB.Exec("DELETE FROM request_tags WHERE request_id = ? AND tag_id = ?", Request.ID, Tag.ID)
+		app.DB.Exec("DELETE FROM request_tags WHERE \"request_id\" = ? AND \"tag_name\" = ?", Request.ID, Tag.Name)
 	}
 
 	Request.Tags = make([]db.Tag, 0)
@@ -313,8 +310,6 @@ func (app *App) UpdateRequest(c *gin.Context) {
 		Request.Tags = nil
 	}
 
-
-
 	// Check if supplied date is a RFC3339 compliant date.
 	PayloadTime, err := time.Parse(time.RFC3339, Payload.ValidityPeriod)
 	if err != nil {
@@ -339,8 +334,6 @@ func (app *App) UpdateRequest(c *gin.Context) {
 		Request.Expired = false
 	}
 
-
-
 	// delete all regions associated with request
 	app.DB.Exec("DELETE FROM region_requests WHERE request_id = ?", Request.ID)
 	// Try to map the provided location to all containing regions.
@@ -348,7 +341,6 @@ func (app *App) UpdateRequest(c *gin.Context) {
 	// map into new regions
 	Request.Regions = []db.Region{}
 	app.mapLocationToRegions(Request)
-
 
 	app.DB.Model(&Request).Updates(Request)
 	model := CopyNestedModel(Request, fieldsRequestWithUser)
