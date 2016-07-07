@@ -9,6 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Functions
+
 func (app *App) GetGroupObject(groupID string) db.Group {
 
 	var Group db.Group

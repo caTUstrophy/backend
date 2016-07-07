@@ -45,6 +45,10 @@ var fieldsGroup = map[string]interface{}{
 	"Description": "Description",
 }
 
+var fieldsTag = map[string]interface{}{
+	"Name": "Name",
+}
+
 var fieldsRequestWithUser = map[string]interface{}{
 	"ID":   "ID",
 	"Name": "Name",

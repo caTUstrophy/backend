@@ -97,6 +97,7 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | [List users](#list-all-users)                                   | A    | GET       | /users                       | 3.0         | ✔    |
 | [Get user `userID`](#get-user-with-id-userid)                   | A    | GET       | /users/:userID               | 3.0         | ✔    |
 | [Update user `userID`](#update-user-with-id-userid)             | A    | PUT       | /users/:userID               | 3.0         | ✔    |
+| [List tags](#list-all-tags)                                     | L    | GET       | /tags                        | 4.0         |       |
 | [Create offer](#create-offer)                                   | L    | POST      | /offers                      | MVP         | ✔    |
 | [Get offer `offerID`](#get-offer-with-offerid)                  | C    | GET       | /offers/:offerID             | 2.0         | ✔    |
 | [Update offer `offerID`](#update-offer-with-offerid)            | C    | PUT       | /offers/:offerID             | 3.0         |       |
@@ -326,6 +327,18 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 **Response:**
 
 [Single complete user object](#single-user-complete)
+
+
+#### List all tags
+
+```
+GET /tags
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+[Tag list](#tag-list)
 
 
 #### Create offer
@@ -859,6 +872,16 @@ or in case that this specific notification is meant for a matching:
 ]
 ```
 
+#### Tag list
+
+```
+[
+    {
+        "Name": "string"
+    }
+]
+```
+
 #### Offer object
 
 ```
@@ -872,9 +895,7 @@ or in case that this specific notification is meant for a matching:
     "Matched": "bool",
     "Name": "string",
     "Tags": [
-        {
-            "Name": "string"
-        }
+        null
     ],
     "ValidityPeriod": "RFC3339 date"
 }
@@ -894,9 +915,7 @@ or in case that this specific notification is meant for a matching:
         "Matched": "bool",
         "Name": "string",
         "Tags": [
-            {
-                "Name": "string"
-            }
+            null
         ],
         "ValidityPeriod": "RFC3339 date"
     }
@@ -916,9 +935,7 @@ or in case that this specific notification is meant for a matching:
     "Matched": "bool",
     "Name": "string",
     "Tags": [
-        {
-            "Name": "string"
-        }
+        null
     ],
     "ValidityPeriod": "RFC3339 date"
 }
@@ -938,9 +955,7 @@ or in case that this specific notification is meant for a matching:
         "Matched": "bool",
         "Name": "string",
         "Tags": [
-            {
-                "Name": "string"
-            }
+            null
         ],
         "ValidityPeriod": "RFC3339 date"
     }

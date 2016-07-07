@@ -93,6 +93,13 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	usersNoGroup[0] = allResponses["User without groups"].(map[string]interface{})
 	allResponses["List of users without group"] = usersNoGroup
 
+	// TAGS LIST
+	var tag db.Tag
+	var tags [1]map[string]interface{}
+	app.DB.First(&tag)
+	tags[0] = getJSONResponseInfo(tag, fieldsTag)
+	allResponses["Tags"] = tags
+
 	// REGION
 	var region db.Region
 	app.DB.First(&region)
@@ -191,6 +198,7 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	writeFooterSection(f, "\n#### List users complete\n", allResponses["Users"])
 	writeFooterSection(f, "\n#### User without group\n", allResponses["User without groups"])
 	writeFooterSection(f, "\n#### List of users without group\n", allResponses["List of users without group"])
+	writeFooterSection(f, "\n#### Tag list\n", allResponses["Tags"])
 	writeFooterSection(f, "\n#### Offer object\n", allResponses["Offer"])
 	writeFooterSection(f, "\n#### Offer list\n", allResponses["Offers"])
 	writeFooterSection(f, "\n#### Request object\n", allResponses["Request"])

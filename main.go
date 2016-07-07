@@ -60,6 +60,7 @@ func InitApp() *App {
 	app.Router.POST("/users/admins", app.PromoteToSystemAdmin) // The endpoint might change
 
 	app.Router.GET("/groups", app.GetGroups)
+	app.Router.GET("/tags", app.GetTags)
 
 	app.Router.POST("/offers", app.CreateOffer)
 	app.Router.GET("/offers/:offerID", app.GetOffer)
@@ -95,6 +96,7 @@ func InitApp() *App {
 	app.Router.GET("/notifications", app.ListNotifications)
 	app.Router.PUT("/notifications/:notificationID", app.UpdateNotification)
 
+	// This endpoint is for internal usage only.
 	app.Router.GET("/help", app.GetJsonResponseInfo)
 
 	return app
