@@ -23,6 +23,7 @@ type CreateOfferPayload struct {
 		Latitude  float64 `json:"lat" conform:"trim"`
 	} `validate:"dive,required"`
 	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Description    string   `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 	ValidityPeriod string   `conform:"trim" validate:"required"`
 }
 
@@ -33,6 +34,7 @@ type UpdateOfferPayload struct {
 		Latitude  float64 `json:"lat" conform:"trim"`
 	} `validate:"dive,required"`
 	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Description    string   `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 	ValidityPeriod string   `conform:"trim" validate:"required"`
 	Matched        bool     `conform:"trim" validate:"exists"`
 }
@@ -107,6 +109,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 	Offer.User = *User
 	Offer.UserID = User.ID
 	Offer.Location = gormGIS.GeoPoint{Lng: Payload.Location.Longitude, Lat: Payload.Location.Latitude}
+	Offer.Description = Payload.Description
 	Offer.Tags = make([]db.Tag, 0)
 
 	// If tags were supplied, check if they exist in our system.
@@ -273,6 +276,7 @@ func (app *App) UpdateOffer(c *gin.Context) {
 
 	Offer.Name = Payload.Name
 	Offer.Location = gormGIS.GeoPoint{Lng: Payload.Location.Longitude, Lat: Payload.Location.Latitude}
+	Offer.Description = Payload.Description
 
 	// Delete all tags associated with request.
 	for _, Tag := range Offer.Tags {

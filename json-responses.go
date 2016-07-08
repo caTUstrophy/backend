@@ -59,6 +59,7 @@ var fieldsRequestWithUser = map[string]interface{}{
 	"Tags": map[string]interface{}{
 		"Name": "Name",
 	},
+	"Description":    "Description",
 	"ValidityPeriod": "ValidityPeriod",
 	"Matched":        "Matched",
 	"Expired":        "Expired",
@@ -80,6 +81,7 @@ var fieldsRequest = map[string]interface{}{
 	"Tags": map[string]interface{}{
 		"Name": "Name",
 	},
+	"Description":    "Description",
 	"ValidityPeriod": "ValidityPeriod",
 	"Matched":        "Matched",
 	"Expired":        "Expired",
@@ -95,6 +97,7 @@ var fieldsOfferWithUser = map[string]interface{}{
 	"Tags": map[string]interface{}{
 		"Name": "Name",
 	},
+	"Description":    "Description",
 	"ValidityPeriod": "ValidityPeriod",
 	"Matched":        "Matched",
 	"Expired":        "Expired",
@@ -116,6 +119,7 @@ var fieldsOffer = map[string]interface{}{
 	"Tags": map[string]interface{}{
 		"Name": "Name",
 	},
+	"Description":    "Description",
 	"ValidityPeriod": "ValidityPeriod",
 	"Matched":        "Matched",
 	"Expired":        "Expired",

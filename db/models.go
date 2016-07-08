@@ -50,10 +50,11 @@ type Offer struct {
 	UserID         string           `gorm:"index;not null"`
 	Location       gormGIS.GeoPoint `gorm:"not null" sql:"type:geometry(Geometry,4326)"`
 	Tags           []Tag            `gorm:"many2many:offer_tags"`
-	Regions        []Region         `gorm:"many2many:region_offers"`
-	ValidityPeriod time.Time        `gorm:"not null"`
-	Matched        bool             `gorm:"not null"`
-	Expired        bool             `gorm:"not null"`
+	Description    string
+	Regions        []Region  `gorm:"many2many:region_offers"`
+	ValidityPeriod time.Time `gorm:"not null"`
+	Matched        bool      `gorm:"not null"`
+	Expired        bool      `gorm:"not null"`
 }
 
 type Request struct {
@@ -63,10 +64,11 @@ type Request struct {
 	UserID         string           `gorm:"index;not null"`
 	Location       gormGIS.GeoPoint `gorm:"not null" sql:"type:geometry(Geometry,4326)"`
 	Tags           []Tag            `gorm:"many2many:request_tags"`
-	Regions        []Region         `gorm:"many2many:region_requests"`
-	ValidityPeriod time.Time        `gorm:"not null"`
-	Matched        bool             `gorm:"not null"`
-	Expired        bool             `gorm:"not null"`
+	Description    string
+	Regions        []Region  `gorm:"many2many:region_requests"`
+	ValidityPeriod time.Time `gorm:"not null"`
+	Matched        bool      `gorm:"not null"`
+	Expired        bool      `gorm:"not null"`
 }
 
 type Matching struct {
