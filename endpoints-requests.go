@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"net/http"
@@ -115,20 +116,28 @@ func (app *App) CreateRequest(c *gin.Context) {
 	// If tags were supplied, check if they exist in our system.
 	if len(Payload.Tags) > 0 {
 
+		// Retrieve all currently available tags from database.
+		var Tags []db.Tag
+		app.DB.Find(&Tags)
+
+		// Make tags list searchable in fast time.
+		sort.Sort(db.TagsByName(Tags))
+
 		allTagsExist := true
 
 		for _, tag := range Payload.Tags {
 
-			var Tag db.Tag
+			// Find tag in sorted tags list.
+			i := sort.Search(len(Tags), func(i int) bool {
+				return Tags[i].Name >= tag
+			})
 
-			// Count number of results for query of name of tags.
-			app.DB.First(&Tag, "name = ?", tag)
-
-			// Set flag to false, if one tag was not found.
-			if Tag.Name == "" {
-				allTagsExist = false
+			if i < len(Tags) && Tags[i].Name == tag {
+				// We found the supplied tag, add it to tags list.
+				Request.Tags = append(Request.Tags, Tags[i])
 			} else {
-				Request.Tags = append(Request.Tags, Tag)
+				// Set flag to false, if one tag was not found.
+				allTagsExist = false
 			}
 		}
 

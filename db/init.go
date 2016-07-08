@@ -128,7 +128,7 @@ func AddDefaultData(db *gorm.DB) {
 
 	// Two default phone numbers.
 	PhoneNumbers := new(PhoneNumbers)
-	err := PhoneNumbers.Scan([]string{"012012312367", "+49111222333"})
+	err := PhoneNumbers.Scan([]string{"01611234567", "0419123456"})
 	if err != nil {
 		log.Fatalf("[AddDefaultData] JSON marshaling of default phone numbers went wrong: %s\n", err)
 	}
