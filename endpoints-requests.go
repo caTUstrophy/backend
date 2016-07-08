@@ -23,8 +23,9 @@ type CreateRequestPayload struct {
 		Longitude float64 `json:"lng" conform:"trim"`
 		Latitude  float64 `json:"lat" conform:"trim"`
 	} `validate:"dive,required"`
+	Radius         float64  `validate:"required"`
 	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Description    string   `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Description    string   `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 	ValidityPeriod string   `conform:"trim" validate:"required"`
 }
 
@@ -34,8 +35,9 @@ type UpdateRequestPayload struct {
 		Longitude float64 `json:"lng" conform:"trim"`
 		Latitude  float64 `json:"lat" conform:"trim"`
 	} `validate:"dive,required"`
+	Radius         float64  `validate:"required"`
 	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Description    string   `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Description    string   `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 	ValidityPeriod string   `conform:"trim" validate:"required"`
 	Matched        bool     `conform:"trim" validate:"exists"`
 }
@@ -111,6 +113,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 	Request.UserID = User.ID
 	Request.Location = gormGIS.GeoPoint{Lng: Payload.Location.Longitude, Lat: Payload.Location.Latitude}
 	Request.Description = Payload.Description
+	Request.Radius = Payload.Radius
 	Request.Tags = make([]db.Tag, 0)
 
 	// If tags were supplied, check if they exist in our system.
@@ -282,6 +285,7 @@ func (app *App) UpdateRequest(c *gin.Context) {
 
 	Request.Name = Payload.Name
 	Request.Location = gormGIS.GeoPoint{Lng: Payload.Location.Longitude, Lat: Payload.Location.Latitude}
+	Request.Radius = Payload.Radius
 	Request.Description = Payload.Description
 
 	// Delete all tags associated with request.

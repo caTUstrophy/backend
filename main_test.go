@@ -7,18 +7,18 @@ import (
 )
 
 var (
-	app              *App
+	app *App
 
-	userOffering		string
-	userRequesting		string
-	userRegionAdmin 	string
-	userSuperAdmin		string
+	userOffering    string
+	userRequesting  string
+	userRegionAdmin string
+	userSuperAdmin  string
 
-	regionID         	string
-	offerID				string
-	requestID			string
-	matchingID			string
-	notificationID		string
+	regionID       string
+	offerID        string
+	requestID      string
+	matchingID     string
+	notificationID string
 )
 
 // init() will always be called before TestMain or Tests
@@ -33,29 +33,25 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-
 type PromoteAdminPayload struct {
 	Mail string
 }
 
 // ----------------------------------------------------------------- AUTH
 
-	// [X] Login a: N - check if returns JWT
-	// [] Authorize : L
-	// [] Renew Token : L - check if returns new JWT
-	// [] Logout : L -
+// [X] Login a: N - check if returns JWT
+// [] Authorize : L
+// [] Renew Token : L - check if returns new JWT
+// [] Logout : L -
 
-
-
-func LoginTest(t *testing.T, Email string, Password string, AssertCode int) string{
+func LoginTest(t *testing.T, Email string, Password string, AssertCode int) string {
 	loginParams := LoginPayload{
 		Email,
 		Password,
 	}
 	resp := app.Request("POST", "/auth", loginParams)
 
-
-	// expected login to work 
+	// expected login to work
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("User login failed", resp.Body.String())
 		return ""
@@ -80,16 +76,13 @@ func LoginTest(t *testing.T, Email string, Password string, AssertCode int) stri
 	return dat["AccessToken"].(string)
 }
 
-
-
 // ----------------------------------------------------------------- USERS
 
-	// [X] CreateUser : U
-	// [X] UpdateUser : S
-	// [X] ListUsers : A
-	// [X] GetUser : A
-	// [] PromoteToSystemAdmin : S
-
+// [X] CreateUser : U
+// [X] UpdateUser : S
+// [X] ListUsers : A
+// [X] GetUser : A
+// [] PromoteToSystemAdmin : S
 
 func CreateUserTest(t *testing.T, Email string, Password string, Name string, AssertCode int) {
 	// Create User
@@ -102,7 +95,7 @@ func CreateUserTest(t *testing.T, Email string, Password string, Name string, As
 	}
 	resp := app.Request("POST", "/users", createParams)
 
-	if AssertCode == 200 && resp.Code != 200{
+	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("User creation failed")
 	}
 
@@ -111,10 +104,10 @@ func CreateUserTest(t *testing.T, Email string, Password string, Name string, As
 	}
 }
 
-func UpdateUserTest(t *testing.T, jwt string, User string, Name string, PreferredName string, Mail string, 
+func UpdateUserTest(t *testing.T, jwt string, User string, Name string, PreferredName string, Mail string,
 	PhoneNumbers []string, Password string, Groups []GroupPayload, AssertCode int) map[string]interface{} {
 
-	updateParams := UpdateUserPayload {
+	updateParams := UpdateUserPayload{
 		Name,
 		PreferredName,
 		Mail,
@@ -123,26 +116,26 @@ func UpdateUserTest(t *testing.T, jwt string, User string, Name string, Preferre
 		Groups,
 	}
 
-	resp := app.RequestWithJWT("PUT", "/users/" + User, updateParams, jwt)
+	resp := app.RequestWithJWT("PUT", "/users/"+User, updateParams, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("Could not update user")
 		return map[string]interface{}{}
 	}
 	if AssertCode == 400 {
-		if resp.Code != 400{
+		if resp.Code != 400 {
 			t.Error(fmt.Printf("UpdateUser should return BadRequest, but didnt"))
 		}
 		return map[string]interface{}{}
 	}
 	if AssertCode == 401 {
-		if resp.Code != 401{
+		if resp.Code != 401 {
 			t.Error(fmt.Printf("UpdateUser should return Unauthorized, but didnt"))
 		}
 		return map[string]interface{}{}
 	}
 	if AssertCode == 403 {
-		if resp.Code != 403{
+		if resp.Code != 403 {
 			t.Error(fmt.Printf("UpdateUser should return Forbidden, but didnt"))
 		}
 		return map[string]interface{}{}
@@ -151,7 +144,7 @@ func UpdateUserTest(t *testing.T, jwt string, User string, Name string, Preferre
 	return parseResponse(resp)
 }
 
-func ListUsersTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
+func ListUsersTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{} {
 	resp := app.RequestWithJWT("GET", "/users", nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
@@ -162,27 +155,27 @@ func ListUsersTest(t *testing.T, jwt string, AssertCode int) []map[string]interf
 		if resp.Code != 401 {
 			t.Error("ListUsers should return UnAuthorized but didnt")
 		}
-		return []map[string]interface{}{} 
+		return []map[string]interface{}{}
 	}
 
 	return parseResponseToArray(resp)
 }
 
-func GetUser(t *testing.T, jwt string, User string, AssertCode int) map[string]interface{}{
-	resp := app.RequestWithJWT("GET", "/users/" + User, nil, jwt)
-	
+func GetUser(t *testing.T, jwt string, User string, AssertCode int) map[string]interface{} {
+	resp := app.RequestWithJWT("GET", "/users/"+User, nil, jwt)
+
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("Could not get user")
 		return map[string]interface{}{}
 	}
 	if AssertCode == 400 {
-		if resp.Code != 400{
+		if resp.Code != 400 {
 			t.Error(fmt.Printf("GetUser should return BadRequest, but didnt"))
 		}
 		return map[string]interface{}{}
 	}
 	if AssertCode == 401 {
-		if resp.Code != 401{
+		if resp.Code != 401 {
 			t.Error(fmt.Printf("GetUser should return Unauthorized, but didnt"))
 		}
 		return map[string]interface{}{}
@@ -191,21 +184,20 @@ func GetUser(t *testing.T, jwt string, User string, AssertCode int) map[string]i
 	return parseResponse(resp)
 }
 
-
 // ----------------------------------------------------------------- GROUPS
 
-	// [X] GetGroups : S
-	// [X] ListSystemAdmins : S
+// [X] GetGroups : S
+// [X] ListSystemAdmins : S
 
-func GetGroupsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
-	resp := app.RequestWithJWT("GET", "/groups" , nil, jwt)	
+func GetGroupsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{} {
+	resp := app.RequestWithJWT("GET", "/groups", nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("Could not get groups")
 		return []map[string]interface{}{}
 	}
 	if AssertCode == 401 {
-		if resp.Code != 401{
+		if resp.Code != 401 {
 			t.Error(fmt.Printf("GetGroups should return Unauthorized, but didnt"))
 		}
 		return []map[string]interface{}{}
@@ -215,15 +207,15 @@ func GetGroupsTest(t *testing.T, jwt string, AssertCode int) []map[string]interf
 	return data
 }
 
-func ListSystemAdminsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
-	resp := app.RequestWithJWT("GET", "/system/admins" , nil, jwt)
+func ListSystemAdminsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{} {
+	resp := app.RequestWithJWT("GET", "/system/admins", nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("Could not get System  admin list")
 		return []map[string]interface{}{}
 	}
 	if AssertCode == 401 {
-		if resp.Code != 401{
+		if resp.Code != 401 {
 			t.Error(fmt.Printf("ListSystemAdmins should return Unauthorized, but didnt"))
 		}
 		return []map[string]interface{}{}
@@ -235,28 +227,29 @@ func ListSystemAdminsTest(t *testing.T, jwt string, AssertCode int) []map[string
 
 // ----------------------------------------------------------------- OFFERS
 
-	// [X] CreateOffer - L
-	// [X] GetOffer - C
-	// [X] UpdateOffer - C
+// [X] CreateOffer - L
+// [X] GetOffer - C
+// [X] UpdateOffer - C
 
-
-func CreateOfferTest(t *testing.T, jwt string, Name string, Location GeoLocation, Validity string, AssertCode int) string{
-	plCreateOffer := CreateOfferPayload {
+func CreateOfferTest(t *testing.T, jwt string, Name string, Location GeoLocation, Radius float64, Validity string, AssertCode int) string {
+	plCreateOffer := CreateOfferPayload{
 		Name,
 		Location,
+		Radius,
 		[]string{},
+		"This is a description of itsself because some text is needed for the description field.",
 		Validity,
 	}
 
 	// check if offer was created
 	resp := app.RequestWithJWT("POST", "/offers", plCreateOffer, jwt)
-	
+
 	if AssertCode == 201 && resp.Code != 201 {
 		t.Error("Could not CreateOffer")
 		return ""
 	}
 	if AssertCode == 400 {
-		if resp.Code != 400{
+		if resp.Code != 400 {
 			t.Error("CreateOffer should return BadRequest, but didnt")
 		}
 		return ""
@@ -266,21 +259,21 @@ func CreateOfferTest(t *testing.T, jwt string, Name string, Location GeoLocation
 	return data["ID"].(string)
 }
 
-func GetOfferTest(t *testing.T, jwt string, Offer string, AssertCode int) map[string]interface{}{
-	resp := app.RequestWithJWT("GET", "/offers/" + Offer, nil, jwt)
+func GetOfferTest(t *testing.T, jwt string, Offer string, AssertCode int) map[string]interface{} {
+	resp := app.RequestWithJWT("GET", "/offers/"+Offer, nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("Could not get offer")
 		return map[string]interface{}{}
 	}
 	if AssertCode == 400 {
-		if resp.Code != 400{
+		if resp.Code != 400 {
 			t.Error(fmt.Printf("GetOffer should return BadRequest, but didnt"))
 		}
 		return map[string]interface{}{}
 	}
 	if AssertCode == 401 {
-		if resp.Code != 401{
+		if resp.Code != 401 {
 			t.Error(fmt.Printf("GetOffer should return Unauthorized, but didnt"))
 		}
 		return map[string]interface{}{}
@@ -290,31 +283,31 @@ func GetOfferTest(t *testing.T, jwt string, Offer string, AssertCode int) map[st
 	return data
 }
 
-
-func UpdateOfferTest(t *testing.T, jwt string, Offer string, Name string, Location GeoLocation, Validity string, Tags []string, Matched bool, AssertCode int) map[string]interface{}{
-	updateOfferParams := UpdateOfferPayload {
+func UpdateOfferTest(t *testing.T, jwt string, Offer string, Name string, Location GeoLocation, Radius float64, Validity string, Tags []string, Description string, Matched bool, AssertCode int) map[string]interface{} {
+	updateOfferParams := UpdateOfferPayload{
 		Name,
 		Location,
+		Radius,
 		Tags,
+		Description,
 		Validity,
 		Matched,
 	}
 
-	resp := app.RequestWithJWT("PUT", "/offers/" + Offer, updateOfferParams, jwt)
+	resp := app.RequestWithJWT("PUT", "/offers/"+Offer, updateOfferParams, jwt)
 
-	
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("Could not get offer")
 		return map[string]interface{}{}
 	}
 	if AssertCode == 400 {
-		if resp.Code != 400{
+		if resp.Code != 400 {
 			t.Error(fmt.Printf("GetOffer should return BadRequest, but didnt"))
 		}
 		return map[string]interface{}{}
 	}
 	if AssertCode == 401 {
-		if resp.Code != 401{
+		if resp.Code != 401 {
 			t.Error(fmt.Printf("GetOffer should return Unauthorized, but didnt"))
 		}
 		return map[string]interface{}{}
@@ -324,19 +317,19 @@ func UpdateOfferTest(t *testing.T, jwt string, Offer string, Name string, Locati
 	return data
 }
 
-
 // ----------------------------------------------------------------- REQUESTS
 
-	// [X] CreateRequest - L
-	// [X] GetRequest - C
-	// [X] UpdateRequest - C
+// [X] CreateRequest - L
+// [X] GetRequest - C
+// [X] UpdateRequest - C
 
-
-func CreateRequestTest(t *testing.T, jwt string, Name string, Location GeoLocation, Validity string, Tags []string, AssertCode int) string {
-	plCreateRequest := CreateRequestPayload {
+func CreateRequestTest(t *testing.T, jwt string, Name string, Location GeoLocation, Radius float64, Validity string, Tags []string, Description string, AssertCode int) string {
+	plCreateRequest := CreateRequestPayload{
 		Name,
 		Location,
+		Radius,
 		Tags,
+		Description,
 		Validity,
 	}
 
@@ -347,7 +340,7 @@ func CreateRequestTest(t *testing.T, jwt string, Name string, Location GeoLocati
 		return ""
 	}
 	if AssertCode == 400 {
-		if resp.Code != 400{
+		if resp.Code != 400 {
 			t.Error(fmt.Printf("CreateRequest should return BadRequest, but did return %d", resp.Code))
 		}
 		return ""
@@ -357,21 +350,21 @@ func CreateRequestTest(t *testing.T, jwt string, Name string, Location GeoLocati
 	return data["ID"].(string)
 }
 
-func GetRequestTest(t *testing.T, jwt string, Request string, AssertCode int) map[string]interface{}{
-	resp := app.RequestWithJWT("GET", "/requests/" + Request, nil, jwt)
+func GetRequestTest(t *testing.T, jwt string, Request string, AssertCode int) map[string]interface{} {
+	resp := app.RequestWithJWT("GET", "/requests/"+Request, nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("Could not get request")
 		return map[string]interface{}{}
 	}
 	if AssertCode == 400 {
-		if resp.Code != 400{
+		if resp.Code != 400 {
 			t.Error(fmt.Printf("GetRequest should return BadRequest, but didnt"))
 		}
 		return map[string]interface{}{}
 	}
 	if AssertCode == 401 {
-		if resp.Code != 401{
+		if resp.Code != 401 {
 			t.Error(fmt.Printf("GetRequest should return Unauthorized, but didnt"))
 		}
 		return map[string]interface{}{}
@@ -381,29 +374,31 @@ func GetRequestTest(t *testing.T, jwt string, Request string, AssertCode int) ma
 	return data
 }
 
-func UpdateRequestTest(t *testing.T, jwt string, Request string, Name string, Location GeoLocation, Validity string, Tags []string, Matched bool, AssertCode int) map[string]interface{}{
-	updateRequestParams := UpdateRequestPayload {
+func UpdateRequestTest(t *testing.T, jwt string, Request string, Name string, Location GeoLocation, Radius float64, Validity string, Tags []string, Description string, Matched bool, AssertCode int) map[string]interface{} {
+	updateRequestParams := UpdateRequestPayload{
 		Name,
 		Location,
+		Radius,
 		Tags,
+		Description,
 		Validity,
 		Matched,
 	}
 
-	resp := app.RequestWithJWT("PUT", "/requests/" + Request, updateRequestParams, jwt)
+	resp := app.RequestWithJWT("PUT", "/requests/"+Request, updateRequestParams, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("Could not update request" + resp.Body.String())
 		return map[string]interface{}{}
 	}
 	if AssertCode == 400 {
-		if resp.Code != 400{
+		if resp.Code != 400 {
 			t.Error(fmt.Printf("UpdateRequest should return BadRequest, but didnt"))
 		}
 		return map[string]interface{}{}
 	}
 	if AssertCode == 401 {
-		if resp.Code != 401{
+		if resp.Code != 401 {
 			t.Error(fmt.Printf("UpdateRequest should return Unauthorized, but didnt"))
 		}
 		return map[string]interface{}{}
@@ -415,9 +410,9 @@ func UpdateRequestTest(t *testing.T, jwt string, Request string, Name string, Lo
 
 // ----------------------------------------------------------------- MATCHINGS
 
-	// [X] CreateMatching - A
-	// [X] GetMatching - C
-	// [X] UpdateMatching - C
+// [X] CreateMatching - A
+// [X] GetMatching - C
+// [X] UpdateMatching - C
 
 func CreateMatchingTest(t *testing.T, jwt string, Region string, Offer string, Request string, AssertCode int) string {
 	plCreateMatching := CreateMatchingPayload{
@@ -427,13 +422,13 @@ func CreateMatchingTest(t *testing.T, jwt string, Region string, Offer string, R
 	}
 
 	resp := app.RequestWithJWT("POST", "/matchings", plCreateMatching, jwt)
-	
+
 	if AssertCode == 201 && resp.Code != 201 {
 		t.Error("Could not create matching")
 		return ""
 	}
 	if AssertCode == 400 {
-		if resp.Code != 400{
+		if resp.Code != 400 {
 			t.Error(fmt.Printf("CreateMatching should return BadRequest, but did return %d", resp.Code))
 		}
 		return ""
@@ -442,22 +437,22 @@ func CreateMatchingTest(t *testing.T, jwt string, Region string, Offer string, R
 		if resp.Code != 401 {
 			t.Error("CreateMatching should return UnAuthorized but didnt")
 		}
-		return "" 
+		return ""
 	}
 
 	data := parseResponse(resp)
 	return data["ID"].(string)
 }
 
-func GetMatchingTest(t *testing.T, jwt string, Matching string, AssertCode int) map[string]interface{}{
-	resp := app.RequestWithJWT("GET", "/matchings/" + Matching, nil, jwt)
+func GetMatchingTest(t *testing.T, jwt string, Matching string, AssertCode int) map[string]interface{} {
+	resp := app.RequestWithJWT("GET", "/matchings/"+Matching, nil, jwt)
 
 	if AssertCode == 201 && resp.Code != 201 {
 		t.Error("Could not get matching")
 		return map[string]interface{}{}
 	}
 	if AssertCode == 400 {
-		if resp.Code != 400{
+		if resp.Code != 400 {
 			t.Error(fmt.Printf("GetMatching should return BadRequest, but did return %d", resp.Code))
 		}
 		return map[string]interface{}{}
@@ -466,7 +461,7 @@ func GetMatchingTest(t *testing.T, jwt string, Matching string, AssertCode int) 
 		if resp.Code != 401 {
 			t.Error("GetMatching should return UnAuthorized but didnt")
 		}
-		return map[string]interface{}{} 
+		return map[string]interface{}{}
 	}
 
 	data := parseResponse(resp)
@@ -474,18 +469,18 @@ func GetMatchingTest(t *testing.T, jwt string, Matching string, AssertCode int) 
 }
 
 func UpdateMatchingTest(t *testing.T, jwt string, Matching string, Invalid bool, AssertCode int) map[string]interface{} {
-	updateParams := UpdateMatchingPayload {
+	updateParams := UpdateMatchingPayload{
 		Invalid,
 	}
 
-	resp := app.RequestWithJWT("PUT", "/matchings/" + Matching, updateParams, jwt)
+	resp := app.RequestWithJWT("PUT", "/matchings/"+Matching, updateParams, jwt)
 
 	if AssertCode == 201 && resp.Code != 201 {
 		t.Error("Could not update matching")
 		return map[string]interface{}{}
 	}
 	if AssertCode == 400 {
-		if resp.Code != 400{
+		if resp.Code != 400 {
 			t.Error(fmt.Printf("UpdateMatching should return BadRequest, but did return %d", resp.Code))
 		}
 		return map[string]interface{}{}
@@ -494,29 +489,28 @@ func UpdateMatchingTest(t *testing.T, jwt string, Matching string, Invalid bool,
 		if resp.Code != 401 {
 			t.Error("UpdateMatching should return UnAuthorized but didnt")
 		}
-		return map[string]interface{}{} 
+		return map[string]interface{}{}
 	}
 
 	data := parseResponse(resp)
 	return data
 }
 
-
 // ----------------------------------------------------------------- REGIONS
 
-	// [X] CreateRegion - L
-	// [X] ListRegions - U
-	// [X] GetRegion - U
-	// [] UpdateRegion - A
-	// [X] ListOffersForRegion - A
-	// [X] ListRequestsForRegion - A
-	// [X] ListMatchingsForRegion - A
-	// [X] PromoteUserToAdminForRegion - A
-	// [X] ListAdminsForRegion - A
+// [X] CreateRegion - L
+// [X] ListRegions - U
+// [X] GetRegion - U
+// [] UpdateRegion - A
+// [X] ListOffersForRegion - A
+// [X] ListRequestsForRegion - A
+// [X] ListMatchingsForRegion - A
+// [X] PromoteUserToAdminForRegion - A
+// [X] ListAdminsForRegion - A
 
 func CreateRegionTest(t *testing.T, jwt string, Name string, Desc string, Locations []Location, AssertCode int) string {
 	// create region
-	plCreateRegion := CreateRegionPayload {
+	plCreateRegion := CreateRegionPayload{
 		Name,
 		Desc,
 		Boundaries{
@@ -525,12 +519,12 @@ func CreateRegionTest(t *testing.T, jwt string, Name string, Desc string, Locati
 	}
 
 	resp := app.RequestWithJWT("POST", "/regions", plCreateRegion, jwt)
-	if AssertCode == 201 && resp.Code != 201{
+	if AssertCode == 201 && resp.Code != 201 {
 		t.Error("could not create region")
 		return ""
 	}
 
-	if AssertCode == 400 { 
+	if AssertCode == 400 {
 		if resp.Code != 400 {
 			t.Error("CreateRegion should return BadRequest but didnt")
 		}
@@ -547,16 +541,15 @@ func CreateRegionTest(t *testing.T, jwt string, Name string, Desc string, Locati
 	return dat["ID"].(string)
 }
 
-
-func ListRegions(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
-	resp := app.RequestWithJWT("GET", "/regions" , nil, jwt)
+func ListRegions(t *testing.T, jwt string, AssertCode int) []map[string]interface{} {
+	resp := app.RequestWithJWT("GET", "/regions", nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("Could not get region list")
 		return []map[string]interface{}{}
 	}
 	if AssertCode == 401 {
-		if resp.Code != 401{
+		if resp.Code != 401 {
 			t.Error(fmt.Printf("ListRegions should return Unauthorized, but didnt"))
 		}
 		return []map[string]interface{}{}
@@ -567,7 +560,7 @@ func ListRegions(t *testing.T, jwt string, AssertCode int) []map[string]interfac
 }
 
 func GetRegionTest(t *testing.T, jwt string, Region string, AssertCode int) map[string]interface{} {
-	resp := app.RequestWithJWT("GET", "/regions/" + Region, nil, jwt)
+	resp := app.RequestWithJWT("GET", "/regions/"+Region, nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("GetRegion failed")
@@ -575,31 +568,29 @@ func GetRegionTest(t *testing.T, jwt string, Region string, AssertCode int) map[
 	}
 
 	if AssertCode == 400 {
-		if resp.Code != 400  {
+		if resp.Code != 400 {
 			t.Error("GetRegion should return bad request, but didnt")
 		}
 		return map[string]interface{}{}
 	}
 
 	data := parseResponse(resp)
-	if(data["ID"] != Region) {
+	if data["ID"] != Region {
 		t.Error("Wrong region was returned")
 	}
 
 	return data
 }
 
-
-
-func ListOffersForRegionTest(t *testing.T, jwt string, Region string, AssertCode int) []map[string]interface{}{
-	resp := app.RequestWithJWT("GET", "/regions/" + Region + "/offers" , nil, jwt)
+func ListOffersForRegionTest(t *testing.T, jwt string, Region string, AssertCode int) []map[string]interface{} {
+	resp := app.RequestWithJWT("GET", "/regions/"+Region+"/offers", nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("Could not get offerlist for region" + resp.Body.String())
 		return []map[string]interface{}{}
 	}
 	if AssertCode == 401 {
-		if resp.Code != 401{
+		if resp.Code != 401 {
 			t.Error(fmt.Printf("ListOffersForRegion should return Unauthorized, but didnt"))
 		}
 		return []map[string]interface{}{}
@@ -609,15 +600,15 @@ func ListOffersForRegionTest(t *testing.T, jwt string, Region string, AssertCode
 	return data
 }
 
-func ListRequestsForRegionTest(t *testing.T, jwt string, Region string, AssertCode int) []map[string]interface{}{
-	resp := app.RequestWithJWT("GET", "/regions/" + Region + "/requests" , nil, jwt)
+func ListRequestsForRegionTest(t *testing.T, jwt string, Region string, AssertCode int) []map[string]interface{} {
+	resp := app.RequestWithJWT("GET", "/regions/"+Region+"/requests", nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("Could not get requestlist for region" + resp.Body.String())
 		return []map[string]interface{}{}
 	}
 	if AssertCode == 401 {
-		if resp.Code != 401{
+		if resp.Code != 401 {
 			t.Error(fmt.Printf("ListRequestsForRegion should return Unauthorized, but didnt"))
 		}
 		return []map[string]interface{}{}
@@ -627,15 +618,15 @@ func ListRequestsForRegionTest(t *testing.T, jwt string, Region string, AssertCo
 	return data
 }
 
-func ListMatchingsForRegionTest(t *testing.T, jwt string, Region string, AssertCode int) []map[string]interface{}{
-	resp := app.RequestWithJWT("GET", "/regions/" + Region + "/matchings" , nil, jwt)
+func ListMatchingsForRegionTest(t *testing.T, jwt string, Region string, AssertCode int) []map[string]interface{} {
+	resp := app.RequestWithJWT("GET", "/regions/"+Region+"/matchings", nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("Could not get matchinglist for region" + resp.Body.String())
 		return []map[string]interface{}{}
 	}
 	if AssertCode == 401 {
-		if resp.Code != 401{
+		if resp.Code != 401 {
 			t.Error(fmt.Printf("ListMatchingsForRegion should return Unauthorized, but didnt"))
 		}
 		return []map[string]interface{}{}
@@ -645,10 +636,9 @@ func ListMatchingsForRegionTest(t *testing.T, jwt string, Region string, AssertC
 	return data
 }
 
-func PromoteUserToAdminForRegionTest(t *testing.T, jwt string, Email string, Region string, AssertCode int) bool{
+func PromoteUserToAdminForRegionTest(t *testing.T, jwt string, Email string, Region string, AssertCode int) bool {
 	promoteParams := PromoteAdminPayload{Email}
-	resp := app.RequestWithJWT("POST", "/regions/" + Region + "/admins", promoteParams, jwt)
-	
+	resp := app.RequestWithJWT("POST", "/regions/"+Region+"/admins", promoteParams, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("Promoting User to Admin did not work, but should: ", resp.Body.String())
@@ -658,34 +648,33 @@ func PromoteUserToAdminForRegionTest(t *testing.T, jwt string, Email string, Reg
 		if resp.Code != 400 {
 			t.Error("PromoteUserToAdmin should return BadRequest but didnt")
 		}
-		return false 
+		return false
 	}
 	if AssertCode == 401 {
 		if resp.Code != 401 {
 			t.Error("PromoteUserToAdmin should return UnAuthorized but didnt")
 		}
-		return false 
+		return false
 	}
 	if AssertCode == 404 {
 		if resp.Code != 404 {
 			t.Error("PromoteUserToAdmin should return NotFound but didnt")
 		}
-		return false 
+		return false
 	}
 
 	return true
 }
 
-
-func ListAdminsForRegionTest(t *testing.T, jwt string, Region string, AssertCode int) []map[string]interface{}{
-	resp := app.RequestWithJWT("GET", "/regions/" + Region + "/admins" , nil, jwt)
+func ListAdminsForRegionTest(t *testing.T, jwt string, Region string, AssertCode int) []map[string]interface{} {
+	resp := app.RequestWithJWT("GET", "/regions/"+Region+"/admins", nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
 		t.Error("Could not get adminlist for region" + resp.Body.String())
 		return []map[string]interface{}{}
 	}
 	if AssertCode == 401 {
-		if resp.Code != 401{
+		if resp.Code != 401 {
 			t.Error(fmt.Printf("ListAdminsForRegion should return Unauthorized, but didnt"))
 		}
 		return []map[string]interface{}{}
@@ -695,16 +684,15 @@ func ListAdminsForRegionTest(t *testing.T, jwt string, Region string, AssertCode
 	return data
 }
 
-
 // ------------------------------------------------------------------------------- ME
 
-	// [X] GetMe - L
-	// [X] UpdateMe - L
-	// [X] ListUserOffers - L
-	// [X] ListUserRequests - L
-	// [X] ListUserMatchings - L
+// [X] GetMe - L
+// [X] UpdateMe - L
+// [X] ListUserOffers - L
+// [X] ListUserRequests - L
+// [X] ListUserMatchings - L
 
-func GetMeTest(t *testing.T, jwt string, AssertCode int) map[string]interface{}{
+func GetMeTest(t *testing.T, jwt string, AssertCode int) map[string]interface{} {
 	resp := app.RequestWithJWT("GET", "/me", nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
@@ -716,10 +704,10 @@ func GetMeTest(t *testing.T, jwt string, AssertCode int) map[string]interface{}{
 	return data
 }
 
-func UpdateMeTest(t *testing.T, jwt string, Name string, PreferredName string, Mail string, 
-	PhoneNumbers []string, Password string, Groups []GroupPayload, AssertCode int) map[string]interface{}{
+func UpdateMeTest(t *testing.T, jwt string, Name string, PreferredName string, Mail string,
+	PhoneNumbers []string, Password string, Groups []GroupPayload, AssertCode int) map[string]interface{} {
 
-	updateParams := UpdateUserPayload {
+	updateParams := UpdateUserPayload{
 		Name,
 		PreferredName,
 		Mail,
@@ -735,19 +723,19 @@ func UpdateMeTest(t *testing.T, jwt string, Name string, PreferredName string, M
 		return map[string]interface{}{}
 	}
 	if AssertCode == 400 {
-		if resp.Code != 400{
+		if resp.Code != 400 {
 			t.Error(fmt.Printf("UpdateMe should return BadRequest, but didnt"))
 		}
 		return map[string]interface{}{}
 	}
 	if AssertCode == 401 {
-		if resp.Code != 401{
+		if resp.Code != 401 {
 			t.Error(fmt.Printf("UpdateMe should return Unauthorized, but didnt"))
 		}
 		return map[string]interface{}{}
 	}
 	if AssertCode == 403 {
-		if resp.Code != 403{
+		if resp.Code != 403 {
 			t.Error(fmt.Printf("UpdateMe should return Forbidden, but didnt"))
 		}
 		return map[string]interface{}{}
@@ -756,7 +744,7 @@ func UpdateMeTest(t *testing.T, jwt string, Name string, PreferredName string, M
 	return parseResponse(resp)
 }
 
-func ListUserOffersTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
+func ListUserOffersTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{} {
 	resp := app.RequestWithJWT("GET", "/me/offers", nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
@@ -767,13 +755,13 @@ func ListUserOffersTest(t *testing.T, jwt string, AssertCode int) []map[string]i
 		if resp.Code != 401 {
 			t.Error("ListUserOffers should return UnAuthorized but didnt")
 		}
-		return []map[string]interface{}{} 
+		return []map[string]interface{}{}
 	}
 
 	return parseResponseToArray(resp)
 }
 
-func ListUserRequestsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
+func ListUserRequestsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{} {
 	resp := app.RequestWithJWT("GET", "/me/requests", nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
@@ -784,13 +772,13 @@ func ListUserRequestsTest(t *testing.T, jwt string, AssertCode int) []map[string
 		if resp.Code != 401 {
 			t.Error("ListUserRequests should return UnAuthorized but didnt")
 		}
-		return []map[string]interface{}{} 
+		return []map[string]interface{}{}
 	}
 
 	return parseResponseToArray(resp)
 }
 
-func ListUserMatchingsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
+func ListUserMatchingsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{} {
 	resp := app.RequestWithJWT("GET", "/me/matchings", nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
@@ -801,7 +789,7 @@ func ListUserMatchingsTest(t *testing.T, jwt string, AssertCode int) []map[strin
 		if resp.Code != 401 {
 			t.Error("ListUserMatchings should return UnAuthorized but didnt")
 		}
-		return []map[string]interface{}{} 
+		return []map[string]interface{}{}
 	}
 
 	return parseResponseToArray(resp)
@@ -809,10 +797,10 @@ func ListUserMatchingsTest(t *testing.T, jwt string, AssertCode int) []map[strin
 
 // ------------------------------------------------------------------------------- Notifications
 
-	// [X] ListNotifications - L
-	// [X] UpdateNotification - C
+// [X] ListNotifications - L
+// [X] UpdateNotification - C
 
-func ListNotificationsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{}{
+func ListNotificationsTest(t *testing.T, jwt string, AssertCode int) []map[string]interface{} {
 	resp := app.RequestWithJWT("GET", "/notifications", nil, jwt)
 
 	if AssertCode == 200 && resp.Code != 200 {
@@ -823,26 +811,26 @@ func ListNotificationsTest(t *testing.T, jwt string, AssertCode int) []map[strin
 		if resp.Code != 401 {
 			t.Error("ListNotificationsTest should return UnAuthorized but didnt")
 		}
-		return []map[string]interface{}{} 
+		return []map[string]interface{}{}
 	}
 
 	data := parseResponseToArray(resp)
 	return data
 }
 
-func UpdateNotificationTest(t *testing.T, jwt string, Notification string, Read bool, AssertCode int) map[string]interface{}{
-	updateParams := UpdateNotificationPayload {
+func UpdateNotificationTest(t *testing.T, jwt string, Notification string, Read bool, AssertCode int) map[string]interface{} {
+	updateParams := UpdateNotificationPayload{
 		Read,
 	}
 
-	resp := app.RequestWithJWT("PUT", "/notifications/" + Notification, updateParams, jwt)
+	resp := app.RequestWithJWT("PUT", "/notifications/"+Notification, updateParams, jwt)
 
 	if AssertCode == 201 && resp.Code != 201 {
 		t.Error("Could not update notification")
 		return map[string]interface{}{}
 	}
 	if AssertCode == 400 {
-		if resp.Code != 400{
+		if resp.Code != 400 {
 			t.Error(fmt.Printf("UpdateNotification should return BadRequest, but did return %d", resp.Code))
 		}
 		return map[string]interface{}{}
@@ -851,13 +839,12 @@ func UpdateNotificationTest(t *testing.T, jwt string, Notification string, Read 
 		if resp.Code != 401 {
 			t.Error("UpdateNotification should return UnAuthorized but didnt")
 		}
-		return map[string]interface{}{} 
+		return map[string]interface{}{}
 	}
 
 	data := parseResponse(resp)
 	return data
 }
-
 
 // ----------------------------------------------------- SCENARIO ALPHA
 
@@ -890,12 +877,12 @@ func TestSetupAlpha(t *testing.T) {
 	CreateRegionTest(t, userRegionAdmin, "", "", []Location{}, 400)
 	// VALID: CreateRegion
 	regionName := "Milkshake Region"
-	regionID = CreateRegionTest(t, userRegionAdmin, regionName, "Ma Region brings all the boys in the yard", 
-		[]Location{ Location{ 10.0, 0.0, }, Location{ 11.0, 0.0, }, Location{ 10.0, 1.0, }, Location{ 10.0, 0.0, }, }, 201)
+	regionID = CreateRegionTest(t, userRegionAdmin, regionName, "Ma Region brings all the boys in the yard",
+		[]Location{Location{10.0, 0.0}, Location{11.0, 0.0}, Location{10.0, 1.0}, Location{10.0, 0.0}}, 201)
 
-	// INVALID: GetRegion 
-	GetRegionTest(t, userOffering, regionID + "a", 400)
-	// VALID: GetRegion 
+	// INVALID: GetRegion
+	GetRegionTest(t, userOffering, regionID+"a", 400)
+	// VALID: GetRegion
 	region := GetRegionTest(t, userOffering, regionID, 200)
 	// compare region names of Create & Get
 	if region["Name"] != regionName {
@@ -916,7 +903,6 @@ func TestSetupAlpha(t *testing.T) {
 		t.Error("GetGroups failed or CreateRegion did not create new group")
 	}
 
-
 	// INVALID: PromoteUserToAdminForRegion
 	PromoteUserToAdminForRegionTest(t, userSuperAdmin, "", regionID, 400)
 	PromoteUserToAdminForRegionTest(t, userRegionAdmin, emailRegionAdmin, regionID, 401)
@@ -935,25 +921,25 @@ func TestMatchingAlpha(t *testing.T) {
 	fmt.Println("\n--------------------- MatchingTestAlpha ---------------------\n")
 
 	// INVALID CreateOffer
-	CreateOfferTest(t, userOffering, "", GeoLocation{10.2, .0}, "2017-11-01T22:08:41+00:00", 400)
+	CreateOfferTest(t, userOffering, "", GeoLocation{10.2, .0}, 10.4, "2017-11-01T22:08:41+00:00", 400)
 	// VALID CreateOffer
-	offerID = CreateOfferTest(t, userOffering, "Milk x10", GeoLocation{10.2, .0}, "2017-11-01T22:08:41+00:00", 201)
+	offerID = CreateOfferTest(t, userOffering, "Milk x10", GeoLocation{10.2, .0}, 20.3, "2017-11-01T22:08:41+00:00", 201)
 
 	// INVALID GetOffer
-	GetOfferTest(t, userOffering, offerID + "a", 400)
+	GetOfferTest(t, userOffering, offerID+"a", 400)
 	GetOfferTest(t, userRequesting, offerID, 401)
 	// VALID GetOffer
 	offer := GetOfferTest(t, userOffering, offerID, 200)
 	GetOfferTest(t, userRegionAdmin, offerID, 200)
 
 	// INVALID CreateRequest
-	CreateRequestTest(t, userRequesting, "", GeoLocation{10.3, 0.2}, "2016-11-01T22:08:41+00:00", []string{}, 400)
+	CreateRequestTest(t, userRequesting, "", GeoLocation{10.3, 0.2}, 2.0, "2016-11-01T22:08:41+00:00", []string{}, "Description", 400)
 	// VALID CreateRequest
 	requestName := "Me thirsty"
-	requestID = CreateRequestTest(t, userRequesting, requestName, GeoLocation{10.3, 0.2}, "2016-11-01T22:08:41+00:00", []string{"Food"}, 201)
+	requestID = CreateRequestTest(t, userRequesting, requestName, GeoLocation{10.3, 0.2}, 1000.2, "2016-11-01T22:08:41+00:00", []string{"Food"}, "", 201)
 
 	// INVALID GetRequest
-	GetRequestTest(t, userRequesting, requestID + "a", 400)
+	GetRequestTest(t, userRequesting, requestID+"a", 400)
 	GetRequestTest(t, userOffering, requestID, 401)
 	// VALID GetRequest
 	request := GetRequestTest(t, userRequesting, requestID, 200)
@@ -990,17 +976,19 @@ func TestMatchingAlpha(t *testing.T) {
 	matchingID = CreateMatchingTest(t, userRegionAdmin, regionID, offerID, requestID, 201)
 	matching = GetMatchingTest(t, userOffering, matchingID, 200)
 
-
 	// VALID UpdateOfferTest
 	offer = UpdateOfferTest(t, userOffering, offerID,
-		offer["Name"].(string) + " Updated",  
-		GeoLocation{0,0}, 
-		offer["ValidityPeriod"].(string), 
-		[]string{"Tool"}, false, 
+		offer["Name"].(string)+" Updated",
+		GeoLocation{0, 0},
+		99.3,
+		offer["ValidityPeriod"].(string),
+		[]string{"Tool"},
+		offer["Description"].(string)+" also updated",
+		false,
 		200,
 	)
 	// GetOffer and check if updates were propagated
-	offer =  GetOfferTest(t, userOffering, offerID, 200)
+	offer = GetOfferTest(t, userOffering, offerID, 200)
 	// check if tags were updated
 	tags := offer["Tags"].([]interface{})
 	if len(tags) == 0 {
@@ -1012,22 +1000,24 @@ func TestMatchingAlpha(t *testing.T) {
 
 	// check if location was updated
 	location := offer["Location"].(map[string]interface{})
-	if location["lat"].(float64) != 0 || location["lng"].(float64) != 0{
+	if location["lat"].(float64) != 0 || location["lng"].(float64) != 0 {
 		//t.Error("UpdateOfffer didnt update Location")
 	}
 
-
 	// VALID UpdateRequestTest
 	request = UpdateRequestTest(t, userRequesting, requestID,
-		request["Name"].(string) + " Updated",  
-		GeoLocation{0,0}, 
-		request["ValidityPeriod"].(string), 
-		[]string{"Water"}, false, 
+		request["Name"].(string)+" Updated",
+		GeoLocation{0, 0},
+		100.1,
+		request["ValidityPeriod"].(string),
+		[]string{"Water"},
+		"Completely new description",
+		false,
 		200,
 	)
 
 	// GetRequest and check if updates were propagated
-	request =  GetRequestTest(t, userRequesting, requestID, 200)
+	request = GetRequestTest(t, userRequesting, requestID, 200)
 	// check if tags were updated
 	tags = request["Tags"].([]interface{})
 	if len(tags) == 0 {
@@ -1039,10 +1029,9 @@ func TestMatchingAlpha(t *testing.T) {
 
 	// check if location was updated
 	location = request["Location"].(map[string]interface{})
-	if location["lat"].(float64) != 0 || location["lng"].(float64) != 0{
+	if location["lat"].(float64) != 0 || location["lng"].(float64) != 0 {
 		//t.Error("UpdateRequest didnt update Location")
 	}
-
 
 	// VALID ListNotifications
 	notifications := ListNotificationsTest(t, userOffering, 200)
@@ -1050,7 +1039,6 @@ func TestMatchingAlpha(t *testing.T) {
 		t.Error("ListNotifications returned empty array, but matching was created prior to that")
 	}
 	notificationID := notifications[0]["ID"].(string)
-
 
 	//VALID UpdateNotification
 	UpdateNotificationTest(t, userOffering, notificationID, true, 200)

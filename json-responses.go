@@ -56,6 +56,7 @@ var fieldsRequestWithUser = map[string]interface{}{
 		"Lng": "lng",
 		"Lat": "lat",
 	},
+	"Radius": "Radius",
 	"Tags": map[string]interface{}{
 		"Name": "Name",
 	},
@@ -78,6 +79,7 @@ var fieldsRequest = map[string]interface{}{
 		"Lng": "lng",
 		"Lat": "lat",
 	},
+	"Radius": "Radius",
 	"Tags": map[string]interface{}{
 		"Name": "Name",
 	},
@@ -94,6 +96,7 @@ var fieldsOfferWithUser = map[string]interface{}{
 		"Lng": "lng",
 		"Lat": "lat",
 	},
+	"Radius": "Radius",
 	"Tags": map[string]interface{}{
 		"Name": "Name",
 	},
@@ -116,6 +119,7 @@ var fieldsOffer = map[string]interface{}{
 		"Lng": "lng",
 		"Lat": "lat",
 	},
+	"Radius": "Radius",
 	"Tags": map[string]interface{}{
 		"Name": "Name",
 	},

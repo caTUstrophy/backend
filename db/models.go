@@ -49,6 +49,7 @@ type Offer struct {
 	User           User             `gorm:"ForeignKey:UserID;AssociationForeignKey:Refer"`
 	UserID         string           `gorm:"index;not null"`
 	Location       gormGIS.GeoPoint `gorm:"not null" sql:"type:geometry(Geometry,4326)"`
+	Radius         float64          `gorm:"not null"`
 	Tags           []Tag            `gorm:"many2many:offer_tags"`
 	Description    string
 	Regions        []Region  `gorm:"many2many:region_offers"`
@@ -63,6 +64,7 @@ type Request struct {
 	User           User             `gorm:"ForeignKey:UserID;AssociationForeignKey:Refer"`
 	UserID         string           `gorm:"index;not null"`
 	Location       gormGIS.GeoPoint `gorm:"not null" sql:"type:geometry(Geometry,4326)"`
+	Radius         float64          `gorm:"not null"`
 	Tags           []Tag            `gorm:"many2many:request_tags"`
 	Description    string
 	Regions        []Region  `gorm:"many2many:region_requests"`
