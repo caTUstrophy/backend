@@ -98,3 +98,12 @@ type Notification struct {
 	Read      bool      `gorm:"not null"`
 	CreatedAt time.Time `gorm:"not null"`
 }
+
+// Helpers
+
+// Make tags model sortable.
+type TagsByName []Tag
+
+func (t TagsByName) Len() int           { return len(t) }
+func (t TagsByName) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+func (t TagsByName) Less(i, j int) bool { return t[i].Name < t[j].Name }

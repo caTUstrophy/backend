@@ -97,13 +97,13 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | [List users](#list-all-users)                                   | A    | GET       | /users                       | 3.0         | ✔    |
 | [Get user `userID`](#get-user-with-id-userid)                   | A    | GET       | /users/:userID               | 3.0         | ✔    |
 | [Update user `userID`](#update-user-with-id-userid)             | A    | PUT       | /users/:userID               | 3.0         | ✔    |
-| [List tags](#list-all-tags)                                     | L    | GET       | /tags                        | 4.0         |       |
+| [List tags](#list-all-tags)                                     | L    | GET       | /tags                        | 4.0         | ✔    |
 | [Create offer](#create-offer)                                   | L    | POST      | /offers                      | MVP         | ✔    |
 | [Get offer `offerID`](#get-offer-with-offerid)                  | C    | GET       | /offers/:offerID             | 2.0         | ✔    |
-| [Update offer `offerID`](#update-offer-with-offerid)            | C    | PUT       | /offers/:offerID             | 3.0         |       |
+| [Update offer `offerID`](#update-offer-with-offerid)            | C    | PUT       | /offers/:offerID             | 3.0         | ✔    |
 | [Create request](#create-request)                               | L    | POST      | /requests                    | MVP         | ✔    |
 | [Get request `requestID`](#get-request-with-requestid)          | C    | GET       | /requests/:requestID         | 2.0         | ✔    |
-| [Update request `requestID`](#update-request-with-requestid)    | C    | PUT       | /requests/:requestID         | 3.0         |       |
+| [Update request `requestID`](#update-request-with-requestid)    | C    | PUT       | /requests/:requestID         | 3.0         | ✔    |
 | [Create matching](#create-matching)                             | A    | POST      | /matchings                   | MVP         | ✔    |
 | [Get matching `matchingID`](#get-matching-with-matchingid)      | C    | GET       | /matchings/:matchingID       | MVP         | ✔    |
 | [Update matching `matchingID`](#update-matching-with-matchingid)| C    | PUT       | /matchings/:matchingID       | 3.0         | ✔    |
