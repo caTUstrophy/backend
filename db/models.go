@@ -20,8 +20,8 @@ const (
 type Group struct {
 	ID           string `gorm:"primary_key"`
 	DefaultGroup bool   `gorm:"not null"`
-	Region       Region `gorm:"ForeignKey:RegionId;AssociationForeignKey:Refer"`
 	RegionId     string `gorm:"index;not null"`
+	Region       Region `gorm:"ForeignKey:RegionId;AssociationForeignKey:Refer"`
 	Users        []User `gorm:"many2many:user_groups"`
 	AccessRight  string
 	Description  string
@@ -46,10 +46,11 @@ type Tag struct {
 type Offer struct {
 	ID             string           `gorm:"primary_key"`
 	Name           string           `gorm:"index;not null"`
-	User           User             `gorm:"ForeignKey:UserID;AssociationForeignKey:Refer"`
 	UserID         string           `gorm:"index;not null"`
+	User           User             `gorm:"ForeignKey:UserID;AssociationForeignKey:Refer"`
 	Location       gormGIS.GeoPoint `gorm:"not null" sql:"type:geometry(Geometry,4326)"`
 	Tags           []Tag            `gorm:"many2many:offer_tags"`
+	Description    string           `gorm:"not null"`
 	Regions        []Region         `gorm:"many2many:region_offers"`
 	ValidityPeriod time.Time        `gorm:"not null"`
 	Matched        bool             `gorm:"not null"`
@@ -59,10 +60,11 @@ type Offer struct {
 type Request struct {
 	ID             string           `gorm:"primary_key"`
 	Name           string           `gorm:"index;not null"`
-	User           User             `gorm:"ForeignKey:UserID;AssociationForeignKey:Refer"`
 	UserID         string           `gorm:"index;not null"`
+	User           User             `gorm:"ForeignKey:UserID;AssociationForeignKey:Refer"`
 	Location       gormGIS.GeoPoint `gorm:"not null" sql:"type:geometry(Geometry,4326)"`
 	Tags           []Tag            `gorm:"many2many:request_tags"`
+	Description    string           `gorm:"not null"`
 	Regions        []Region         `gorm:"many2many:region_requests"`
 	ValidityPeriod time.Time        `gorm:"not null"`
 	Matched        bool             `gorm:"not null"`
@@ -71,12 +73,12 @@ type Request struct {
 
 type Matching struct {
 	ID        string  `gorm:"primary_key"`
-	Region    Region  `gorm:"ForeignKey:RegionId;AssociationForeignKey:Refer"`
 	RegionId  string  `gorm:"index;not null"`
-	Offer     Offer   `gorm:"ForeignKey:OfferId;AssociationForeignKey:Refer"`
+	Region    Region  `gorm:"ForeignKey:RegionId;AssociationForeignKey:Refer"`
 	OfferId   string  `gorm:"index;not null"`
-	Request   Request `gorm:"ForeignKey:RequestId;AssociationForeignKey:Refer"`
+	Offer     Offer   `gorm:"ForeignKey:OfferId;AssociationForeignKey:Refer"`
 	RequestId string  `gorm:"index;not null"`
+	Request   Request `gorm:"ForeignKey:RequestId;AssociationForeignKey:Refer"`
 	Invalid   bool    `gorm:"not null"`
 }
 
@@ -97,6 +99,16 @@ type Notification struct {
 	ItemID    string    `gorm:"not null"`
 	Read      bool      `gorm:"not null"`
 	CreatedAt time.Time `gorm:"not null"`
+}
+
+type MatchingScore struct {
+	RegionID      string  `gorm:"primary_key"`
+	Region        Region  `gorm:"ForeignKey:RegionID;AssociationForeignKey:Refer"`
+	OfferID       string  `gorm:"primary_key"`
+	Offer         Offer   `gorm:"ForeignKey:OfferID;AssociationForeignKey:Refer"`
+	RequestID     string  `gorm:"primary_key"`
+	Request       Request `gorm:"ForeignKey:RequestID;AssociationForeignKey:Refer"`
+	MatchingScore float64 `gorm:"not null"`
 }
 
 // Helpers

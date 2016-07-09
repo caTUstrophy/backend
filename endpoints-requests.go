@@ -181,6 +181,12 @@ func (app *App) CreateRequest(c *gin.Context) {
 	// Save request to database.
 	app.DB.Create(&Request)
 
+	// Load all regions to which we just mapped the request's location.
+	app.DB.Preload("Regions").First(&Request)
+
+	// Calculate the matching score of this request with all possible offers.
+	go app.CalcMatchScoreForRequest(Request)
+
 	model := CopyNestedModel(Request, fieldsRequestWithUser)
 
 	c.JSON(http.StatusCreated, model)

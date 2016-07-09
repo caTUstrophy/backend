@@ -80,5 +80,17 @@ func InitAndConfig() *App {
 	}
 	app.NotifSleepOffset = time.Duration(notifSleepOffset) * time.Minute
 
+	// Set weight for tags similarity in matching score calculation.
+	app.TagsWeightAlpha, err = strconv.ParseFloat(os.Getenv("TAGS_WEIGHT_ALPHA"), 64)
+	if err != nil {
+		log.Fatal("[InitAndConfig] Could not load TAGS_WEIGHT_ALPHA from .env file. Missing or not an integer?")
+	}
+
+	// Set weight for free text description similarity in matching score calculation.
+	app.DescWeightBeta, err = strconv.ParseFloat(os.Getenv("DESCRIPTIONS_WEIGHT_BETA"), 64)
+	if err != nil {
+		log.Fatal("[InitAndConfig] Could not load DESCRIPTIONS_WEIGHT_BETA from .env file. Missing or not an integer?")
+	}
+
 	return app
 }

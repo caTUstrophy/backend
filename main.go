@@ -25,6 +25,8 @@ type App struct {
 	OffReqSleepOffset time.Duration
 	NotifExpOffset    time.Duration
 	NotifSleepOffset  time.Duration
+	TagsWeightAlpha   float64
+	DescWeightBeta    float64
 }
 
 // Main

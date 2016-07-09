@@ -181,6 +181,12 @@ func (app *App) CreateOffer(c *gin.Context) {
 	// Save offer to database.
 	app.DB.Create(&Offer)
 
+	// Load all regions to which we just mapped the offer's location.
+	app.DB.Preload("Regions").First(&Offer)
+
+	// Calculate the matching score of this offer with all possible requests.
+	go app.CalcMatchScoreForOffer(Offer)
+
 	model := CopyNestedModel(Offer, fieldsOfferWithUser)
 
 	c.JSON(http.StatusCreated, model)
