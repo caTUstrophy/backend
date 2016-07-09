@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/caTUstrophy/backend/db"
+	"github.com/nferruzzi/gormGIS"
 )
 
 var (
@@ -35,6 +38,33 @@ func TestMain(m *testing.M) {
 
 type PromoteAdminPayload struct {
 	Mail string
+}
+
+// --------------------------------------------------- Matching Algorithm
+
+// [x] Distance
+// [x] DistanceFactor
+// TagFactor
+// NLP Factor
+
+func DistanceTest(t *testing.T, request db.Request, offer db.Offer, AssertDistance float64, epsilon float64) float64 {
+	distance := Distance(GeoLocation{request.Location.Lng, request.Location.Lat}, GeoLocation{offer.Location.Lng, offer.Location.Lat})
+	if distance-AssertDistance < distance*epsilon {
+		// everything is ok
+		return distance
+	}
+	t.Error("Distance Test failed: Asserted distance = ", AssertDistance, " \nCalculated distance = ", distance)
+	return distance
+}
+
+func DistanceFactorTest(t *testing.T, request db.Request, offer db.Offer, AssertDistance float64, epsilon float64) float64 {
+	distance := GetDistanceFactor(request, offer)
+	if distance-AssertDistance < distance*epsilon {
+		// everything is ok
+		return distance
+	}
+	t.Error("DistanceFactor Test failed: Asserted distance factor= ", AssertDistance, " \nCalculated distance factor = ", distance)
+	return distance
 }
 
 // ----------------------------------------------------------------- AUTH
@@ -1050,4 +1080,12 @@ func TestMatchingAlpha(t *testing.T) {
 			break
 		}
 	}
+
+	// Distance test:
+	// Create offer and request with distance 11.132km and very large Radius
+	distRequest := db.Request{Location: gormGIS.GeoPoint{0.0, 0.0}, Radius: 10000}
+	distOffer := db.Offer{Location: gormGIS.GeoPoint{0.0, 0.1}, Radius: 10000}
+	DistanceTest(t, distRequest, distOffer, 11.132, 0.001)
+	DistanceFactorTest(t, distRequest, distOffer, 10, 0.5)
+
 }

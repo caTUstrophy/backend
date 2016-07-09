@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 
 	"bytes"
 	"encoding/json"
@@ -134,6 +135,36 @@ func (app *App) mapLocationToRegions(item interface{}) {
 	} else {
 		log.Println("[mapLocationToRegions] No intersecting regions found.")
 	}
+}
+
+// haversin(θ) function
+func hsin(theta float64) float64 {
+	return math.Pow(math.Sin(theta/2), 2)
+}
+
+// Distance function returns the distance (in kilometers) between two points of
+//     a given longitude and latitude relatively accurately (using a spherical
+//     approximation of the Earth) through the Haversin Distance Formula for
+//     great arc distance on a sphere with accuracy for small distances
+//
+// point coordinates are supplied in degrees and converted into rad. in the func
+//
+// http://en.wikipedia.org/wiki/Haversine_formula
+func Distance(p1 GeoLocation, p2 GeoLocation) float64 {
+	// convert to radians
+	// must cast radius as float to multiply later
+	var la1, lo1, la2, lo2, r float64
+	la1 = p1.Latitude * math.Pi / 180
+	lo1 = p1.Longitude * math.Pi / 180
+	la2 = p2.Latitude * math.Pi / 180
+	lo2 = p2.Longitude * math.Pi / 180
+
+	r = 6378100 // Earth radius in METERS
+
+	// calculate
+	h := hsin(la2-la1) + math.Cos(la1)*math.Cos(la2)*hsin(lo2-lo1)
+
+	return 2 * r * math.Asin(math.Sqrt(h)) / 1000
 }
 
 // Takes in any data type as i and a fields map containing
