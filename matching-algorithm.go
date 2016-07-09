@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/caTUstrophy/backend/db"
-	"github.com/nferruzzi/gormGIS"
 )
 
 // Functions
@@ -31,13 +30,17 @@ func CalculateDescriptionSimilarity(descChannel chan float64, offerDesc, request
 
 // Returns the geometric distance between the offer's and the request's
 // location. Result is normalized to be within [0, 10].
-func CalculateLocationDistance(distChannel chan float64, offerLocation, requestLocation gormGIS.GeoPoint) {
+func CalculateLocationDistance(distChannel chan float64, offer db.Offer, request db.Request) {
 
-	// Normalize similarity value to be within [0, 10].
-	locDistance := 7.5
+	// Calculate distance between offer's and request's location.
+	distance := distance(offer.Location, request.Location)
 
-	// Pass result into distance channel.
-	distChannel <- locDistance
+	// Depending on result, pass normalized distance into channel.
+	if distance > (request.Radius + offer.Radius) {
+		distChannel <- 0.0
+	} else {
+		distChannel <- scale((request.Radius+offer.Radius)/distance, 1, 0, 10)
+	}
 }
 
 // This function calculates the possible matching score
@@ -63,7 +66,7 @@ func (app *App) CalculateMatchingScore(region db.Region, offer db.Offer, request
 
 	// In a goroutine: Calculate the geometric distance between the offer's
 	// and the request's location fields.
-	go CalculateLocationDistance(distChannel, offer.Location, request.Location)
+	go CalculateLocationDistance(distChannel, offer, request)
 
 	// Wait until all goroutines have finished.
 	for i := 0; i < 3; i++ {

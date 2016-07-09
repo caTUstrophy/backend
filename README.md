@@ -352,11 +352,13 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 {
     "Name": required, string,
     "Tags": optional, string array,
+    "Description": optional, string,
     "ValidityPeriod": required, RFC3339 date,
     "Location": {
         "lng": float64,
         "lat": float64
-    }
+    },
+    "Radius": required, float64, [km]
 }
 ```
 
@@ -374,6 +376,7 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
         "lng": 12.3,
         "lat": 0.0
     }
+    "Radius": 10
 }
 ```
 
@@ -428,7 +431,8 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
     "Location": {
         "lng": required, float64,
         "lat": required, float64
-    }
+    },
+    "Radius": required, float64, [km]
 }
 ```
 
@@ -798,24 +802,24 @@ or in case that this specific notification is meant for a matching:
 
 ```
 {
-    "Groups": [
-        {
-            "AccessRight": "string",
-            "Description": "string",
-            "ID": "UUID v4",
-            "Region": {
-                "Description": "string",
-                "ID": "UUID v4",
-                "Name": "string"
-            }
-        }
-    ],
-    "ID": "UUID v4",
-    "Mail": "string",
-    "MailVerified": "bool",
-    "Name": "string",
-    "PhoneNumbers": "[string, ...]",
-    "PreferredName": "string"
+	"Groups": [
+		{
+			"AccessRight": "string",
+			"Description": "string",
+			"ID": "UUID v4",
+			"Region": {
+				"Description": "string",
+				"ID": "UUID v4",
+				"Name": "string"
+			}
+		}
+	],
+	"ID": "UUID v4",
+	"Mail": "string",
+	"MailVerified": "bool",
+	"Name": "string",
+	"PhoneNumbers": "[string, ...]",
+	"PreferredName": "string"
 }
 ```
 
@@ -823,26 +827,26 @@ or in case that this specific notification is meant for a matching:
 
 ```
 [
-    {
-        "Groups": [
-            {
-                "AccessRight": "string",
-                "Description": "string",
-                "ID": "UUID v4",
-                "Region": {
-                    "Description": "string",
-                    "ID": "UUID v4",
-                    "Name": "string"
-                }
-            }
-        ],
-        "ID": "UUID v4",
-        "Mail": "string",
-        "MailVerified": "bool",
-        "Name": "string",
-        "PhoneNumbers": "[string, ...]",
-        "PreferredName": "string"
-    }
+	{
+		"Groups": [
+			{
+				"AccessRight": "string",
+				"Description": "string",
+				"ID": "UUID v4",
+				"Region": {
+					"Description": "string",
+					"ID": "UUID v4",
+					"Name": "string"
+				}
+			}
+		],
+		"ID": "UUID v4",
+		"Mail": "string",
+		"MailVerified": "bool",
+		"Name": "string",
+		"PhoneNumbers": "[string, ...]",
+		"PreferredName": "string"
+	}
 ]
 ```
 
@@ -850,11 +854,11 @@ or in case that this specific notification is meant for a matching:
 
 ```
 {
-    "ID": "UUID v4",
-    "Mail": "string",
-    "MailVerified": "bool",
-    "Name": "string",
-    "PhoneNumbers": "[string, ...]"
+	"ID": "UUID v4",
+	"Mail": "string",
+	"MailVerified": "bool",
+	"Name": "string",
+	"PhoneNumbers": "[string, ...]"
 }
 ```
 
@@ -862,13 +866,13 @@ or in case that this specific notification is meant for a matching:
 
 ```
 [
-    {
-        "ID": "UUID v4",
-        "Mail": "string",
-        "MailVerified": "bool",
-        "Name": "string",
-        "PhoneNumbers": "[string, ...]"
-    }
+	{
+		"ID": "UUID v4",
+		"Mail": "string",
+		"MailVerified": "bool",
+		"Name": "string",
+		"PhoneNumbers": "[string, ...]"
+	}
 ]
 ```
 
@@ -876,9 +880,9 @@ or in case that this specific notification is meant for a matching:
 
 ```
 [
-    {
-        "Name": "string"
-    }
+	{
+		"Name": "string"
+	}
 ]
 ```
 
@@ -886,18 +890,22 @@ or in case that this specific notification is meant for a matching:
 
 ```
 {
-    "Expired": "bool",
-    "ID": "UUID v4",
-    "Location": {
-        "lat": "float64",
-        "lng": "float64"
-    },
-    "Matched": "bool",
-    "Name": "string",
-    "Tags": [
-        null
-    ],
-    "ValidityPeriod": "RFC3339 date"
+	"Description": "string",
+	"Expired": "bool",
+	"ID": "UUID v4",
+	"Location": {
+		"lat": "float64",
+		"lng": "float64"
+	},
+	"Matched": "bool",
+	"Name": "string",
+	"Radius": "float64",
+	"Tags": [
+		{
+			"Name": "string"
+		}
+	],
+	"ValidityPeriod": "RFC3339 date"
 }
 ```
 
@@ -905,20 +913,24 @@ or in case that this specific notification is meant for a matching:
 
 ```
 [
-    {
-        "Expired": "bool",
-        "ID": "UUID v4",
-        "Location": {
-            "lat": "float64",
-            "lng": "float64"
-        },
-        "Matched": "bool",
-        "Name": "string",
-        "Tags": [
-            null
-        ],
-        "ValidityPeriod": "RFC3339 date"
-    }
+	{
+		"Description": "string",
+		"Expired": "bool",
+		"ID": "UUID v4",
+		"Location": {
+			"lat": "float64",
+			"lng": "float64"
+		},
+		"Matched": "bool",
+		"Name": "string",
+		"Radius": "float64",
+		"Tags": [
+			{
+				"Name": "string"
+			}
+		],
+		"ValidityPeriod": "RFC3339 date"
+	}
 ]
 ```
 
@@ -926,18 +938,22 @@ or in case that this specific notification is meant for a matching:
 
 ```
 {
-    "Expired": "bool",
-    "ID": "UUID v4",
-    "Location": {
-        "lat": "float64",
-        "lng": "float64"
-    },
-    "Matched": "bool",
-    "Name": "string",
-    "Tags": [
-        null
-    ],
-    "ValidityPeriod": "RFC3339 date"
+	"Description": "string",
+	"Expired": "bool",
+	"ID": "UUID v4",
+	"Location": {
+		"lat": "float64",
+		"lng": "float64"
+	},
+	"Matched": "bool",
+	"Name": "string",
+	"Radius": "float64",
+	"Tags": [
+		{
+			"Name": "string"
+		}
+	],
+	"ValidityPeriod": "RFC3339 date"
 }
 ```
 
@@ -945,20 +961,24 @@ or in case that this specific notification is meant for a matching:
 
 ```
 [
-    {
-        "Expired": "bool",
-        "ID": "UUID v4",
-        "Location": {
-            "lat": "float64",
-            "lng": "float64"
-        },
-        "Matched": "bool",
-        "Name": "string",
-        "Tags": [
-            null
-        ],
-        "ValidityPeriod": "RFC3339 date"
-    }
+	{
+		"Description": "string",
+		"Expired": "bool",
+		"ID": "UUID v4",
+		"Location": {
+			"lat": "float64",
+			"lng": "float64"
+		},
+		"Matched": "bool",
+		"Name": "string",
+		"Radius": "float64",
+		"Tags": [
+			{
+				"Name": "string"
+			}
+		],
+		"ValidityPeriod": "RFC3339 date"
+	}
 ]
 ```
 
@@ -966,49 +986,53 @@ or in case that this specific notification is meant for a matching:
 
 ```
 {
-    "ID": "UUID v4",
-    "Invalid": "bool",
-    "Offer": {
-        "Expired": "bool",
-        "ID": "UUID v4",
-        "Location": {
-            "lat": "float64",
-            "lng": "float64"
-        },
-        "Matched": "bool",
-        "Name": "string",
-        "Tags": [
-            null
-        ],
-        "User": {
-            "ID": "UUID v4",
-            "Mail": "string",
-            "Name": "string",
-            "PhoneNumbers": "[string, ...]"
-        },
-        "ValidityPeriod": "RFC3339 date"
-    },
-    "RegionId": "UUID v4",
-    "Request": {
-        "Expired": "bool",
-        "ID": "UUID v4",
-        "Location": {
-            "lat": "float64",
-            "lng": "float64"
-        },
-        "Matched": "bool",
-        "Name": "string",
-        "Tags": [
-            null
-        ],
-        "User": {
-            "ID": "UUID v4",
-            "Mail": "string",
-            "Name": "string",
-            "PhoneNumbers": "[string, ...]"
-        },
-        "ValidityPeriod": "RFC3339 date"
-    }
+	"ID": "UUID v4",
+	"Invalid": "bool",
+	"Offer": {
+		"Description": "string",
+		"Expired": "bool",
+		"ID": "UUID v4",
+		"Location": {
+			"lat": "float64",
+			"lng": "float64"
+		},
+		"Matched": "bool",
+		"Name": "string",
+		"Radius": "float64",
+		"Tags": [
+			null
+		],
+		"User": {
+			"ID": "UUID v4",
+			"Mail": "string",
+			"Name": "string",
+			"PhoneNumbers": "[string, ...]"
+		},
+		"ValidityPeriod": "RFC3339 date"
+	},
+	"RegionId": "UUID v4",
+	"Request": {
+		"Description": "string",
+		"Expired": "bool",
+		"ID": "UUID v4",
+		"Location": {
+			"lat": "float64",
+			"lng": "float64"
+		},
+		"Matched": "bool",
+		"Name": "string",
+		"Radius": "float64",
+		"Tags": [
+			null
+		],
+		"User": {
+			"ID": "UUID v4",
+			"Mail": "string",
+			"Name": "string",
+			"PhoneNumbers": "[string, ...]"
+		},
+		"ValidityPeriod": "RFC3339 date"
+	}
 }
 ```
 
@@ -1016,51 +1040,55 @@ or in case that this specific notification is meant for a matching:
 
 ```
 [
-    {
-        "ID": "UUID v4",
-        "Invalid": "bool",
-        "Offer": {
-            "Expired": "bool",
-            "ID": "UUID v4",
-            "Location": {
-                "lat": "float64",
-                "lng": "float64"
-            },
-            "Matched": "bool",
-            "Name": "string",
-            "Tags": [
-                null
-            ],
-            "User": {
-                "ID": "UUID v4",
-                "Mail": "string",
-                "Name": "string",
-                "PhoneNumbers": "[string, ...]"
-            },
-            "ValidityPeriod": "RFC3339 date"
-        },
-        "RegionId": "UUID v4",
-        "Request": {
-            "Expired": "bool",
-            "ID": "UUID v4",
-            "Location": {
-                "lat": "float64",
-                "lng": "float64"
-            },
-            "Matched": "bool",
-            "Name": "string",
-            "Tags": [
-                null
-            ],
-            "User": {
-                "ID": "UUID v4",
-                "Mail": "string",
-                "Name": "string",
-                "PhoneNumbers": "[string, ...]"
-            },
-            "ValidityPeriod": "RFC3339 date"
-        }
-    }
+	{
+		"ID": "UUID v4",
+		"Invalid": "bool",
+		"Offer": {
+			"Description": "string",
+			"Expired": "bool",
+			"ID": "UUID v4",
+			"Location": {
+				"lat": "float64",
+				"lng": "float64"
+			},
+			"Matched": "bool",
+			"Name": "string",
+			"Radius": "float64",
+			"Tags": [
+				null
+			],
+			"User": {
+				"ID": "UUID v4",
+				"Mail": "string",
+				"Name": "string",
+				"PhoneNumbers": "[string, ...]"
+			},
+			"ValidityPeriod": "RFC3339 date"
+		},
+		"RegionId": "UUID v4",
+		"Request": {
+			"Description": "string",
+			"Expired": "bool",
+			"ID": "UUID v4",
+			"Location": {
+				"lat": "float64",
+				"lng": "float64"
+			},
+			"Matched": "bool",
+			"Name": "string",
+			"Radius": "float64",
+			"Tags": [
+				null
+			],
+			"User": {
+				"ID": "UUID v4",
+				"Mail": "string",
+				"Name": "string",
+				"PhoneNumbers": "[string, ...]"
+			},
+			"ValidityPeriod": "RFC3339 date"
+		}
+	}
 ]
 ```
 
@@ -1068,17 +1096,17 @@ or in case that this specific notification is meant for a matching:
 
 ```
 {
-    "Boundaries": {
-        "Points": [
-            {
-                "lat": "float64",
-                "lng": "float64"
-            }
-        ]
-    },
-    "Description": "string",
-    "ID": "UUID v4",
-    "Name": "string"
+	"Boundaries": {
+		"Points": [
+			{
+				"lat": "float64",
+				"lng": "float64"
+			}
+		]
+	},
+	"Description": "string",
+	"ID": "UUID v4",
+	"Name": "string"
 }
 ```
 
@@ -1086,19 +1114,19 @@ or in case that this specific notification is meant for a matching:
 
 ```
 [
-    {
-        "Boundaries": {
-            "Points": [
-                {
-                    "lat": "float64",
-                    "lng": "float64"
-                }
-            ]
-        },
-        "Description": "string",
-        "ID": "UUID v4",
-        "Name": "string"
-    }
+	{
+		"Boundaries": {
+			"Points": [
+				{
+					"lat": "float64",
+					"lng": "float64"
+				}
+			]
+		},
+		"Description": "string",
+		"ID": "UUID v4",
+		"Name": "string"
+	}
 ]
 ```
 
@@ -1106,9 +1134,9 @@ or in case that this specific notification is meant for a matching:
 
 ```
 {
-    "ID": "UUID v4",
-    "ItemID": "string",
-    "Type": "string"
+	"ID": "UUID v4",
+	"ItemID": "string",
+	"Type": "string"
 }
 ```
 
@@ -1116,54 +1144,58 @@ or in case that this specific notification is meant for a matching:
 
 ```
 {
-    "ID": "UUID v4",
-    "ItemID": "string",
-    "Matching": {
-        "ID": "UUID v4",
-        "Invalid": "bool",
-        "Offer": {
-            "Expired": "bool",
-            "ID": "UUID v4",
-            "Location": {
-                "lat": "float64",
-                "lng": "float64"
-            },
-            "Matched": "bool",
-            "Name": "string",
-            "Tags": [
-                null
-            ],
-            "User": {
-                "ID": "UUID v4",
-                "Mail": "string",
-                "Name": "string",
-                "PhoneNumbers": "[string, ...]"
-            },
-            "ValidityPeriod": "RFC3339 date"
-        },
-        "RegionId": "UUID v4",
-        "Request": {
-            "Expired": "bool",
-            "ID": "UUID v4",
-            "Location": {
-                "lat": "float64",
-                "lng": "float64"
-            },
-            "Matched": "bool",
-            "Name": "string",
-            "Tags": [
-                null
-            ],
-            "User": {
-                "ID": "UUID v4",
-                "Mail": "string",
-                "Name": "string",
-                "PhoneNumbers": "[string, ...]"
-            },
-            "ValidityPeriod": "RFC3339 date"
-        }
-    },
-    "Type": "string"
+	"ID": "UUID v4",
+	"ItemID": "string",
+	"Matching": {
+		"ID": "UUID v4",
+		"Invalid": "bool",
+		"Offer": {
+			"Description": "string",
+			"Expired": "bool",
+			"ID": "UUID v4",
+			"Location": {
+				"lat": "float64",
+				"lng": "float64"
+			},
+			"Matched": "bool",
+			"Name": "string",
+			"Radius": "float64",
+			"Tags": [
+				null
+			],
+			"User": {
+				"ID": "UUID v4",
+				"Mail": "string",
+				"Name": "string",
+				"PhoneNumbers": "[string, ...]"
+			},
+			"ValidityPeriod": "RFC3339 date"
+		},
+		"RegionId": "UUID v4",
+		"Request": {
+			"Description": "string",
+			"Expired": "bool",
+			"ID": "UUID v4",
+			"Location": {
+				"lat": "float64",
+				"lng": "float64"
+			},
+			"Matched": "bool",
+			"Name": "string",
+			"Radius": "float64",
+			"Tags": [
+				null
+			],
+			"User": {
+				"ID": "UUID v4",
+				"Mail": "string",
+				"Name": "string",
+				"PhoneNumbers": "[string, ...]"
+			},
+			"ValidityPeriod": "RFC3339 date"
+		}
+	},
+	"Type": "string"
 }
 ```
 
@@ -1171,11 +1203,11 @@ or in case that this specific notification is meant for a matching:
 
 ```
 [
-    {
-        "ID": "UUID v4",
-        "ItemID": "string",
-        "Type": "string"
-    }
+	{
+		"ID": "UUID v4",
+		"ItemID": "string",
+		"Type": "string"
+	}
 ]
 ```
 
@@ -1183,56 +1215,60 @@ or in case that this specific notification is meant for a matching:
 
 ```
 [
-    {
-        "ID": "UUID v4",
-        "ItemID": "string",
-        "Matching": {
-            "ID": "UUID v4",
-            "Invalid": "bool",
-            "Offer": {
-                "Expired": "bool",
-                "ID": "UUID v4",
-                "Location": {
-                    "lat": "float64",
-                    "lng": "float64"
-                },
-                "Matched": "bool",
-                "Name": "string",
-                "Tags": [
-                    null
-                ],
-                "User": {
-                    "ID": "UUID v4",
-                    "Mail": "string",
-                    "Name": "string",
-                    "PhoneNumbers": "[string, ...]"
-                },
-                "ValidityPeriod": "RFC3339 date"
-            },
-            "RegionId": "UUID v4",
-            "Request": {
-                "Expired": "bool",
-                "ID": "UUID v4",
-                "Location": {
-                    "lat": "float64",
-                    "lng": "float64"
-                },
-                "Matched": "bool",
-                "Name": "string",
-                "Tags": [
-                    null
-                ],
-                "User": {
-                    "ID": "UUID v4",
-                    "Mail": "string",
-                    "Name": "string",
-                    "PhoneNumbers": "[string, ...]"
-                },
-                "ValidityPeriod": "RFC3339 date"
-            }
-        },
-        "Type": "string"
-    }
+	{
+		"ID": "UUID v4",
+		"ItemID": "string",
+		"Matching": {
+			"ID": "UUID v4",
+			"Invalid": "bool",
+			"Offer": {
+				"Description": "string",
+				"Expired": "bool",
+				"ID": "UUID v4",
+				"Location": {
+					"lat": "float64",
+					"lng": "float64"
+				},
+				"Matched": "bool",
+				"Name": "string",
+				"Radius": "float64",
+				"Tags": [
+					null
+				],
+				"User": {
+					"ID": "UUID v4",
+					"Mail": "string",
+					"Name": "string",
+					"PhoneNumbers": "[string, ...]"
+				},
+				"ValidityPeriod": "RFC3339 date"
+			},
+			"RegionId": "UUID v4",
+			"Request": {
+				"Description": "string",
+				"Expired": "bool",
+				"ID": "UUID v4",
+				"Location": {
+					"lat": "float64",
+					"lng": "float64"
+				},
+				"Matched": "bool",
+				"Name": "string",
+				"Radius": "float64",
+				"Tags": [
+					null
+				],
+				"User": {
+					"ID": "UUID v4",
+					"Mail": "string",
+					"Name": "string",
+					"PhoneNumbers": "[string, ...]"
+				},
+				"ValidityPeriod": "RFC3339 date"
+			}
+		},
+		"Type": "string"
+	}
 ]
 ```
 

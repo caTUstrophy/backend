@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 
 	"bytes"
 	"encoding/json"
@@ -17,13 +18,6 @@ import (
 	"github.com/leebenson/conform"
 	"github.com/nferruzzi/gormGIS"
 )
-
-// structs
-
-type GeoLocation struct {
-	Longitude float64 `json:"lng" conform:"trim"`
-	Latitude  float64 `json:"lat" conform:"trim"`
-}
 
 // Checks if a generic URL substring is present in the
 // current request and, if so, attempts to validate it
@@ -134,6 +128,42 @@ func (app *App) mapLocationToRegions(item interface{}) {
 	} else {
 		log.Println("[mapLocationToRegions] No intersecting regions found.")
 	}
+}
+
+// haversin(θ) function
+func hsin(theta float64) float64 {
+	return math.Pow(math.Sin(theta/2), 2)
+}
+
+func scale(value, currMin, supposedFrom, supposedTo float64) float64 {
+	return (math.Tanh(value-2*currMin)+1)*(supposedTo-supposedFrom)/2 + supposedFrom
+}
+
+// Distance function returns the distance (in kilometers) between two points of
+// a given longitude and latitude relatively accurately (using a spherical
+// approximation of the Earth) through the Haversin Distance Formula for
+// great arc distance on a sphere with accuracy for small distances.
+//
+// Point coordinates are supplied in degrees and converted into rad. in the func
+//
+// http://en.wikipedia.org/wiki/Haversine_formula
+func distance(p1 gormGIS.GeoPoint, p2 gormGIS.GeoPoint) float64 {
+
+	// convert to radians
+	// must cast radius as float to multiply later
+	var la1, lo1, la2, lo2, r float64
+	la1 = p1.Lat * math.Pi / 180
+	lo1 = p1.Lng * math.Pi / 180
+	la2 = p2.Lat * math.Pi / 180
+	lo2 = p2.Lng * math.Pi / 180
+
+	// Earth radius in METERS
+	r = 6378100
+
+	// calculate
+	h := hsin(la2-la1) + math.Cos(la1)*math.Cos(la2)*hsin(lo2-lo1)
+
+	return 2 * r * math.Asin(math.Sqrt(h)) / 1000
 }
 
 // Takes in any data type as i and a fields map containing
