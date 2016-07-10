@@ -135,8 +135,8 @@ func hsin(theta float64) float64 {
 	return math.Pow(math.Sin(theta/2), 2)
 }
 
-func scale(value, currMin, supposedFrom, supposedTo float64) float64 {
-	return (math.Tanh(value-2*currMin)+1)*(supposedTo-supposedFrom)/2 + supposedFrom
+func scale(value, steepnessFactor, currMin, supposedFrom, supposedTo float64) float64 {
+	return ((math.Tanh((steepnessFactor * (value - (2 * currMin)))) + 1) * ((supposedTo - supposedFrom) / 2)) + supposedFrom
 }
 
 // Distance function returns the distance (in kilometers) between two points of

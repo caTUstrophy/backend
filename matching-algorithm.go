@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"math"
+
 	"github.com/caTUstrophy/backend/db"
 )
 
@@ -10,8 +13,56 @@ import (
 // tag sets. Result is normalized to be within [0, 1].
 func CalculateTagSimilarity(tagChannel chan float64, offerTags, requestTags []db.Tag) {
 
+	var exp float64
+	exp = 2.0 / 3.0
+
+	// Initialize an empty list to add intersect and union elements to.
+	tagsIntersection := make([]db.Tag, 0)
+	tagsUnion := make([]db.Tag, 0)
+
+	// Maintain a lookup union map: fast existence check.
+	tagsUnionMap := make(map[string]bool)
+
+	// Maintain a lookup request's tags map: fast existence check.
+	requestTagsMap := make(map[string]bool)
+	for _, requestTag := range requestTags {
+		requestTagsMap[requestTag.Name] = true
+	}
+
+	// Iterate over offer's tags list and check for intersection.
+	for _, tag := range offerTags {
+
+		// If existing in both, add to intersection.
+		if requestTagsMap[tag.Name] {
+			tagsIntersection = append(tagsIntersection, tag)
+		}
+
+		// Add tag to union and update lookup map.
+		tagsUnion = append(tagsUnion, tag)
+		tagsUnionMap[tag.Name] = true
+	}
+
+	for _, tag := range requestTags {
+
+		if !tagsUnionMap[tag.Name] {
+
+			// Add tag to union and update lookup map.
+			tagsUnion = append(tagsUnion, tag)
+			tagsUnionMap[tag.Name] = true
+		}
+	}
+
+	fmt.Printf("offerTags     : %q\n", offerTags)
+	fmt.Printf("requestTags   : %q\n", requestTags)
+	fmt.Printf("intersection  : %q  -  Length: %d\n", tagsIntersection, len(tagsIntersection))
+	fmt.Printf("union         : %q  -  Length: %d\n", tagsUnion, len(tagsUnion))
+
 	// Normalize similarity value to be within [0, 1].
-	tagSimilarity := 0.75
+	tagSimilarity := float64(len(tagsIntersection)) / math.Pow(float64(len(tagsUnion)), exp)
+	fmt.Printf("tagSimilarity : %f\n", tagSimilarity)
+
+	tagSimilarity = scale(tagSimilarity, 2, 0.5, 0, 1)
+	fmt.Printf("norm tagSim   : %f\n\n", tagSimilarity)
 
 	// Pass result into tag channel.
 	tagChannel <- tagSimilarity
@@ -39,7 +90,7 @@ func CalculateLocationDistance(distChannel chan float64, offer db.Offer, request
 	if distance > (request.Radius + offer.Radius) {
 		distChannel <- 0.0
 	} else {
-		distChannel <- scale((request.Radius+offer.Radius)/distance, 1, 0, 10)
+		distChannel <- scale(((request.Radius + offer.Radius) / distance), 1, 1, 0, 10)
 	}
 }
 
@@ -120,6 +171,9 @@ func (app *App) CalcMatchScoreForOffer(offer db.Offer) {
 		// Load all requests in this region.
 		app.DB.Preload("Requests").First(&Region)
 
+		// Preload needed tags.
+		app.DB.Preload("Tags").Find(&Region.Requests)
+
 		for _, request := range Region.Requests {
 
 			// Calculate pair wise matching score between
@@ -136,6 +190,9 @@ func (app *App) CalcMatchScoreForRequest(request db.Request) {
 
 		// Load all offers in this region.
 		app.DB.Preload("Offers").First(&Region)
+
+		// Preload needed tags.
+		app.DB.Preload("Tags").Find(&Region.Offers)
 
 		for _, offer := range Region.Offers {
 
