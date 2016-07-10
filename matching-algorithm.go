@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/caTUstrophy/backend/db"
+	"github.com/caTUstrophy/backend/tfidf"
 )
 
 // Functions
@@ -52,17 +52,9 @@ func CalculateTagSimilarity(tagChannel chan float64, offerTags, requestTags []db
 		}
 	}
 
-	fmt.Printf("offerTags     : %q\n", offerTags)
-	fmt.Printf("requestTags   : %q\n", requestTags)
-	fmt.Printf("intersection  : %q  -  Length: %d\n", tagsIntersection, len(tagsIntersection))
-	fmt.Printf("union         : %q  -  Length: %d\n", tagsUnion, len(tagsUnion))
-
-	// Normalize similarity value to be within [0, 1].
+	// Calculate similarity and normalize it to be within [0, 1].
 	tagSimilarity := float64(len(tagsIntersection)) / math.Pow(float64(len(tagsUnion)), exp)
-	fmt.Printf("tagSimilarity : %f\n", tagSimilarity)
-
 	tagSimilarity = scale(tagSimilarity, 2, 0.5, 0, 1)
-	fmt.Printf("norm tagSim   : %f\n\n", tagSimilarity)
 
 	// Pass result into tag channel.
 	tagChannel <- tagSimilarity
@@ -72,8 +64,17 @@ func CalculateTagSimilarity(tagChannel chan float64, offerTags, requestTags []db
 // of offer and request. Result is normalized to be within [0, 1].
 func CalculateDescriptionSimilarity(descChannel chan float64, offerDesc, requestDesc string) {
 
-	// Normalize similarity value to be within [0, 1].
+	// Compute tf-idf vector for offer's description field.
+	_ = tfidf.ComputeTFIDF(offerDesc)
+
+	// Compute tf-idf vector for request's description field.
+	_ = tfidf.ComputeTFIDF(requestDesc)
+
+	// Compute cosine similarity between both tf-idf vectors.
 	descSimilarity := 0.75
+
+	// Normalize similarity value to be within [0, 1].
+	descSimilarity = scale(descSimilarity, 1, 1, 0, 1)
 
 	// Pass result into description channel.
 	descChannel <- descSimilarity

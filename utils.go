@@ -1,11 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"math"
 
-	"bytes"
 	"encoding/json"
 	"net/http"
 	"reflect"
@@ -132,7 +132,7 @@ func (app *App) mapLocationToRegions(item interface{}) {
 
 // haversin(θ) function
 func hsin(theta float64) float64 {
-	return math.Pow(math.Sin(theta/2), 2)
+	return math.Pow(math.Sin((theta / 2)), 2)
 }
 
 func scale(value, steepnessFactor, currMin, supposedFrom, supposedTo float64) float64 {
