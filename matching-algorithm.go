@@ -1,10 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"math"
 
+	"github.com/allisonmorgan/tfidf"
 	"github.com/caTUstrophy/backend/db"
-	"github.com/caTUstrophy/backend/tfidf"
 )
 
 // Functions
@@ -64,11 +65,17 @@ func CalculateTagSimilarity(tagChannel chan float64, offerTags, requestTags []db
 // of offer and request. Result is normalized to be within [0, 1].
 func CalculateDescriptionSimilarity(descChannel chan float64, offerDesc, requestDesc string) {
 
-	// Compute tf-idf vector for offer's description field.
-	_ = tfidf.ComputeTFIDF(offerDesc)
+	// Create new tf-idf struct.
+	frequency := tfidf.NewTermFrequencyStruct()
 
-	// Compute tf-idf vector for request's description field.
-	_ = tfidf.ComputeTFIDF(requestDesc)
+	// Insert the offer's and the request's description fields as new documents.
+	frequency.AddDocument(offerDesc)
+	frequency.AddDocument(requestDesc)
+
+	// Calculate the inverse document frequency.
+	frequency.InverseDocumentFrequency()
+
+	fmt.Printf("tf-idf for '%s' and '%s': %v.\n", offerDesc, requestDesc, frequency.InverseDocMap)
 
 	// Compute cosine similarity between both tf-idf vectors.
 	descSimilarity := 0.75

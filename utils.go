@@ -135,6 +135,12 @@ func hsin(theta float64) float64 {
 	return math.Pow(math.Sin((theta / 2)), 2)
 }
 
+// Cosine similarity
+func cosineSimilarity() {
+	// TODO
+}
+
+// Scaling function.
 func scale(value, steepnessFactor, currMin, supposedFrom, supposedTo float64) float64 {
 	return ((math.Tanh((steepnessFactor * (value - (2 * currMin)))) + 1) * ((supposedTo - supposedFrom) / 2)) + supposedFrom
 }
@@ -161,7 +167,7 @@ func distance(p1 gormGIS.GeoPoint, p2 gormGIS.GeoPoint) float64 {
 	r = 6378100
 
 	// calculate
-	h := hsin(la2-la1) + math.Cos(la1)*math.Cos(la2)*hsin(lo2-lo1)
+	h := hsin((la2 - la1)) + (math.Cos(la1) * math.Cos(la2) * hsin((lo2 - lo1)))
 
 	return 2 * r * math.Asin(math.Sqrt(h)) / 1000
 }
