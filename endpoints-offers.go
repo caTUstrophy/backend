@@ -182,7 +182,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 	}
 
 	// Try to map the provided location to all containing regions.
-	app.mapLocationToRegions(Offer)
+	app.MapLocationToRegions(Offer)
 
 	// Save offer to database.
 	app.DB.Create(&Offer)
@@ -366,7 +366,7 @@ func (app *App) UpdateOffer(c *gin.Context) {
 
 	// map into new regions
 	Offer.Regions = []db.Region{}
-	app.mapLocationToRegions(Offer)
+	app.MapLocationToRegions(Offer)
 
 	app.DB.Model(&Offer).Updates(Offer)
 	model := CopyNestedModel(Offer, fieldsRequestWithUser)

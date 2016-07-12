@@ -565,3 +565,211 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 
 	c.JSON(http.StatusOK, model)
 }
+
+func (app *App) ListRecommendationsForRegion(c *gin.Context) {
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Retrieve region ID from request URL.
+	regionID := app.getUUID(c, "regionID")
+	if regionID == "" {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "regionID is no valid UUID",
+		})
+
+		return
+	}
+
+	var Region db.Region
+
+	// Select region based on supplied ID from database.
+	app.DB.First(&Region, "id = ?", regionID)
+
+	if Region.ID == "" {
+
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": "The region you requested does not exist.",
+		})
+
+		return
+	}
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, Region, "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	if !Region.RecommendationUpdated {
+		app.RecommendMatching(Region)
+	}
+
+	var recommendations []db.MatchingScore
+	app.DB.Preload("Offer").Preload("Request").Find(&recommendations, "recommended = ?", true)
+
+	model := CopyNestedModel(recommendations, fieldsRecommendations)
+
+	c.JSON(200, model)
+
+}
+
+func (app *App) ListOffersForRequest(c *gin.Context) {
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Retrieve region ID from request URL.
+	regionID := app.getUUID(c, "regionID")
+	if regionID == "" {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "regionID is no valid UUID",
+		})
+
+		return
+	}
+
+	var Region db.Region
+
+	// Select region based on supplied ID from database.
+	app.DB.First(&Region, "id = ?", regionID)
+
+	if Region.ID == "" {
+
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": "The region you requested does not exist.",
+		})
+
+		return
+	}
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, Region, "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Retrieve request ID from request URL.
+	requestID := app.getUUID(c, "requestID")
+	if requestID == "" {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "requestID is no valid UUID",
+		})
+
+		return
+	}
+
+	var Request db.Request
+
+	// Select region based on supplied ID from database.
+	app.DB.First(&Request, "id = ?", requestID)
+
+	if Request.ID == "" {
+
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": "The request you requested does not exist.",
+		})
+
+		return
+	}
+
+}
+
+func (app *App) ListRequestsForOffer(c *gin.Context) {
+	// Check authorization for this function.
+	ok, User, message := app.Authorize(c.Request)
+	if !ok {
+
+		// Signal client an error and expect authorization.
+		c.Header("WWW-Authenticate", fmt.Sprintf("Bearer realm=\"CaTUstrophy\", error=\"invalid_token\", error_description=\"%s\"", message))
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Retrieve region ID from request URL.
+	regionID := app.getUUID(c, "regionID")
+	if regionID == "" {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "regionID is no valid UUID",
+		})
+
+		return
+	}
+
+	var Region db.Region
+
+	// Select region based on supplied ID from database.
+	app.DB.First(&Region, "id = ?", regionID)
+
+	if Region.ID == "" {
+
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": "The region you requested does not exist.",
+		})
+
+		return
+	}
+
+	// Check if user permissions are sufficient (user is admin).
+	if ok := app.CheckScope(User, Region, "admin"); !ok {
+
+		// Signal client that the provided authorization was not sufficient.
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Status(http.StatusUnauthorized)
+
+		return
+	}
+
+	// Retrieve offer ID from request URL.
+	offerID := app.getUUID(c, "offerID")
+	if offerID == "" {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "offerID is no valid UUID",
+		})
+
+		return
+	}
+
+	var Offer db.Offer
+
+	// Select region based on supplied ID from database.
+	app.DB.First(&Offer, "id = ?", offerID)
+
+	if Offer.ID == "" {
+
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": "The offer you requested does not exist.",
+		})
+
+		return
+	}
+
+}

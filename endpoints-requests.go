@@ -182,7 +182,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 	}
 
 	// Try to map the provided location to all containing regions.
-	app.mapLocationToRegions(Request)
+	app.MapLocationToRegions(Request)
 
 	// Save request to database.
 	app.DB.Create(&Request)
@@ -363,7 +363,7 @@ func (app *App) UpdateRequest(c *gin.Context) {
 
 	// map into new regions
 	Request.Regions = []db.Region{}
-	app.mapLocationToRegions(Request)
+	app.MapLocationToRegions(Request)
 
 	app.DB.Model(&Request).Updates(Request)
 	model := CopyNestedModel(Request, fieldsRequestWithUser)

@@ -53,7 +53,7 @@ func (app *App) getUUID(c *gin.Context, par string) string {
 // Intersects the location of the provided item (offer or request)
 // with all regions available to determine to which region this
 // item should be mapped.
-func (app *App) mapLocationToRegions(item interface{}) {
+func (app *App) MapLocationToRegions(item interface{}) {
 
 	var itemType string
 	var location gormGIS.GeoPoint
@@ -68,7 +68,7 @@ func (app *App) mapLocationToRegions(item interface{}) {
 
 		asssertedItem, ok := item.(db.Offer)
 		if !ok {
-			log.Fatal("[mapLocationToRegions] Type assertion to db.Offer was unsuccessful. Returning from function.")
+			log.Fatal("[MapLocationToRegions] Type assertion to db.Offer was unsuccessful. Returning from function.")
 			return
 		}
 
@@ -79,14 +79,14 @@ func (app *App) mapLocationToRegions(item interface{}) {
 
 		asssertedItem, ok := item.(db.Request)
 		if !ok {
-			log.Fatal("[mapLocationToRegions] Type assertion to db.Request was unsuccessful. Returning from function.")
+			log.Fatal("[MapLocationToRegions] Type assertion to db.Request was unsuccessful. Returning from function.")
 			return
 		}
 
 		location = asssertedItem.Location
 	default:
 		itemType = "UNKNOWN"
-		log.Println("[mapLocationToRegions] itemType was UNKNOWN")
+		log.Println("[MapLocationToRegions] itemType was UNKNOWN")
 		return
 	}
 
@@ -126,7 +126,7 @@ func (app *App) mapLocationToRegions(item interface{}) {
 			app.DB.Save(&ContRegion)
 		}
 	} else {
-		log.Println("[mapLocationToRegions] No intersecting regions found.")
+		log.Println("[MapLocationToRegions] No intersecting regions found.")
 	}
 }
 

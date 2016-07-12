@@ -19,6 +19,14 @@ var fieldsUser = map[string]interface{}{
 	},
 }
 
+var fieldsRecommendations = map[string]interface{}{
+	"Region":        fieldsRegion,
+	"Request":       fieldsRequest,
+	"Offer":         fieldsOffer,
+	"MatchingScore": "MatchingScore",
+	"Recommended":   "Recommended",
+}
+
 var fieldsUserNoGroups = map[string]interface{}{
 	"ID":           "ID",
 	"Name":         "Name",
