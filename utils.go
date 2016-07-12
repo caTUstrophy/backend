@@ -135,6 +135,14 @@ func hsin(theta float64) float64 {
 	return math.Pow(math.Sin((theta / 2)), 2)
 }
 
+// Int max function
+func Max(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
+
 // Cosine similarity
 func cosineSimilarity() {
 	// TODO

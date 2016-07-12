@@ -97,6 +97,7 @@ func (app *App) CreateRegion(c *gin.Context) {
 	Region.ID = fmt.Sprintf("%s", uuid.NewV4())
 	Region.Name = Payload.Name
 	Region.Description = Payload.Description
+	Region.RecommendationUpdated = true // there are currently no offers or requests in this region, so there cant be a recommendation
 
 	if len(Payload.Boundaries.Points) == 0 {
 

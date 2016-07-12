@@ -85,13 +85,14 @@ type Matching struct {
 }
 
 type Region struct {
-	ID          string     `gorm:"primary_key"`
-	Name        string     `gorm:"not null"`
-	Boundaries  GeoPolygon `gorm:"not null" sql:"type:geometry(Geometry,4326)"`
-	Description string     `gorm:"not null"`
-	Matchings   []Matching
-	Offers      []Offer   `gorm:"many2many:region_offers"`
-	Requests    []Request `gorm:"many2many:region_requests"`
+	ID                    string     `gorm:"primary_key"`
+	Name                  string     `gorm:"not null"`
+	Boundaries            GeoPolygon `gorm:"not null" sql:"type:geometry(Geometry,4326)"`
+	Description           string     `gorm:"not null"`
+	Matchings             []Matching
+	Offers                []Offer   `gorm:"many2many:region_offers"`
+	Requests              []Request `gorm:"many2many:region_requests"`
+	RecommendationUpdated bool
 }
 
 type Notification struct {
@@ -111,6 +112,7 @@ type MatchingScore struct {
 	RequestID     string  `gorm:"primary_key"`
 	Request       Request `gorm:"ForeignKey:RequestID;AssociationForeignKey:Refer"`
 	MatchingScore float64 `gorm:"not null"`
+	Recommended   bool
 }
 
 // Helpers

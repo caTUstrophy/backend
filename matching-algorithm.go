@@ -6,6 +6,7 @@ import (
 
 	"github.com/allisonmorgan/tfidf"
 	"github.com/caTUstrophy/backend/db"
+	"github.com/clyphub/munkres"
 )
 
 // Functions
@@ -208,5 +209,52 @@ func (app *App) CalcMatchScoreForRequest(request db.Request) {
 			// request and all offers in region.
 			go app.CalculateMatchingScore(Region, offer, request)
 		}
+		app.DB.Model(Region).Update("RecommendationUpdated", false)
 	}
+
+}
+
+// Caclulate assignment problem for offers und requests of this region and set recommended flag to matching scores
+func (app *App) RecommendMatching(region db.Region) {
+	// load all scores for this region
+	var scores []db.MatchingScore
+	app.DB.Order("request_id, offer_id").Find(&scores, "region_id = ?", region.ID)
+	// get number of offers and request in order to get the matrix size
+	numOffers := 0
+	numRequests := 0
+	scoreValues := make([]int64, len(scores))
+	for i, score := range scores {
+		scoreValues[i] = 100 - int64(score.MatchingScore)
+		if i == 0 || scores[i].RequestID != scores[i-1].RequestID {
+			numRequests++
+			numOffers = 0
+		}
+		numOffers++
+	}
+	// create dummy rows and cols
+	size := Max(numOffers, numRequests)
+	scoreMatrixArray := make([]int64, size*size)
+	for row := 0; row < size; row++ {
+		for col := 0; col < size; col++ {
+			if row < numRequests && col < numOffers {
+				scoreMatrixArray[row*size+col] = scoreValues[row*numOffers+col]
+			} else {
+				scoreMatrixArray[row*size+col] = 100
+			}
+		}
+	}
+	// create Matrix and solve assignment problem
+	m := munkres.NewMatrix(4)
+	m.A = scoreMatrixArray
+	solution := munkres.ComputeMunkresMin(m)
+	// save recommendations to db
+	for _, recommendation := range solution {
+		if recommendation.Row < numRequests && recommendation.Col < numOffers {
+			index := recommendation.Row*numOffers + recommendation.Col
+			scores[index].Recommended = true
+			app.DB.Model(&scores[index]).Update("recommended", true)
+		}
+	}
+	// Save that this region has up to date recommendations
+	app.DB.Model(&region).Update("RecommendationUpdated", true)
 }
