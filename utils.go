@@ -143,9 +143,23 @@ func Max(x, y int) int {
 	return y
 }
 
-// Cosine similarity
-func cosineSimilarity() {
-	// TODO
+// Cosine similarity between two vectors of same(!) length.
+func cosineSimilarity(vec1, vec2 []float64) float64 {
+
+	var sum float64
+	var div1, div2 float64
+
+	sum = 0.0
+	div1 = 0.0
+	div2 = 0.0
+
+	for i := 0; i < len(vec1); i++ {
+		sum += vec1[i] * vec2[i]
+		div1 += math.Pow(vec1[i], 2)
+		div2 += math.Pow(vec2[i], 2)
+	}
+
+	return sum / (math.Sqrt(div1) * math.Sqrt(div2))
 }
 
 // Scaling function.
