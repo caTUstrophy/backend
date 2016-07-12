@@ -7,6 +7,7 @@ import (
 	"github.com/allisonmorgan/tfidf"
 	"github.com/caTUstrophy/backend/db"
 	"github.com/caTUstrophy/munkres"
+	"github.com/numbleroot/go-tfidf"
 )
 
 // Functions
@@ -77,14 +78,24 @@ func CalculateDescriptionSimilarity(descChannel chan float64, offerDesc, request
 	frequency.AddDocument(requestDesc)
 	frequencyRequest.AddDocument(requestDesc)
 
-	fmt.Printf("ALL    : %v\n", frequency.TermMap)
-	fmt.Printf("OFFER  : %v\n", frequencyOffer.TermMap)
-	fmt.Printf("REQUEST: %v\n", frequencyRequest.TermMap)
+	// Own implementation:
+	tokOfferDesc := gotfidf.TokenizeDocument(offerDesc)
+	tokRequestDesc := gotfidf.TokenizeDocument(requestDesc)
+
+	fmt.Printf("ALL        : %v\n", frequency.TermMap)
+	fmt.Printf("OFFER      : %v\n", frequencyOffer.TermMap)
+	fmt.Printf("REQUEST    : %v\n", frequencyRequest.TermMap)
+	fmt.Printf("OWN OFFER  : %v\n", tokOfferDesc)
+	fmt.Printf("OWN REQUEST: %v\n", tokRequestDesc)
 
 	// Calculate the inverse document frequency.
 	frequency.InverseDocumentFrequency()
+	fmt.Printf("\nidf           : %v\n", frequency.InverseDocMap)
 
-	fmt.Printf("idf    : %v\n", frequency.InverseDocMap)
+	// Own implementation:
+	docs := [][]string{tokOfferDesc, tokRequestDesc}
+	idfs := gotfidf.InverseDocumentFrequencies(docs, gotfidf.InvDocWeightingLog)
+	fmt.Printf("OWN IDF VECTOR: %v\n", idfs)
 
 	i := 0
 	tfidf := make([][]float64, 2)
@@ -101,11 +112,29 @@ func CalculateDescriptionSimilarity(descChannel chan float64, offerDesc, request
 	tfidf[0] = tfidfOffer
 	tfidf[1] = tfidfRequest
 
-	fmt.Printf("\ntfidf matrix: %v\n", tfidf)
+	fmt.Printf("\ntfidf matrix    : %v\n", tfidf)
+
+	// OWN
+	i = 0
+	tfidfOwn := make([][]float64, 2)
+	tfidfOfferOwn := make([]float64, len(idfs))
+	tfidfRequestOwn := make([]float64, len(idfs))
+
+	for term, idf := range idfs {
+		tfidfOfferOwn[i] = gotfidf.TermFrequency(term, tokOfferDesc, gotfidf.TermWeightingLog) * idf
+		tfidfRequestOwn[i] = gotfidf.TermFrequency(term, tokRequestDesc, gotfidf.TermWeightingLog) * idf
+		i++
+	}
+
+	// Final matrix.
+	tfidfOwn[0] = tfidfOfferOwn
+	tfidfOwn[1] = tfidfRequestOwn
+
+	fmt.Printf("OWN tfidf matrix: %v\n", tfidfOwn)
 
 	// Compute cosine similarity between both tf-idf vectors.
-
-	fmt.Printf("Real description similarity value (SHOULD NOT BE NaN!): %f\n", cosineSimilarity(tfidf[0], tfidf[1]))
+	fmt.Printf("\nReal description similarity value     (SHOULD NOT BE NaN!): %f\n", cosineSimilarity(tfidf[0], tfidf[1]))
+	fmt.Printf("OWN Real description similarity value (SHOULD NOT BE NaN!): %f\n", cosineSimilarity(tfidfOwn[0], tfidfOwn[1]))
 
 	descSimilarity := 0.75
 
