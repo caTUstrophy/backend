@@ -1,4 +1,5 @@
 // Very heavily inspired by https://github.com/nferruzzi/gormGIS
+// Therefore credit is due to nferruzzi. Thank you!
 package db
 
 import (

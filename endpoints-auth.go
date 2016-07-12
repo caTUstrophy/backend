@@ -176,8 +176,6 @@ func (app *App) makeToken(c *gin.Context, user *db.User) string {
 	claims := sessionJWT.Claims.(jwt.MapClaims)
 
 	// Add these claims.
-	// TODO: Add important claims for security!
-	//       Hash(PasswordHash)? Needs database call, which is what we want to avoid.
 	claims["iss"] = user.Mail
 	claims["iat"] = nowTime.Format(time.RFC3339)
 	claims["nbf"] = nowTime.Add((-1 * time.Minute)).Format(time.RFC3339)
