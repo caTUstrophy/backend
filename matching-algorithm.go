@@ -65,19 +65,47 @@ func CalculateTagSimilarity(tagChannel chan float64, offerTags, requestTags []db
 // of offer and request. Result is normalized to be within [0, 1].
 func CalculateDescriptionSimilarity(descChannel chan float64, offerDesc, requestDesc string) {
 
-	// Create new tf-idf struct.
+	// Create new tf-idf structs.
 	frequency := tfidf.NewTermFrequencyStruct()
+	frequencyOffer := tfidf.NewTermFrequencyStruct()
+	frequencyRequest := tfidf.NewTermFrequencyStruct()
 
 	// Insert the offer's and the request's description fields as new documents.
 	frequency.AddDocument(offerDesc)
+	frequencyOffer.AddDocument(offerDesc)
 	frequency.AddDocument(requestDesc)
+	frequencyRequest.AddDocument(requestDesc)
+
+	fmt.Printf("ALL    : %v\n", frequency.TermMap)
+	fmt.Printf("OFFER  : %v\n", frequencyOffer.TermMap)
+	fmt.Printf("REQUEST: %v\n", frequencyRequest.TermMap)
 
 	// Calculate the inverse document frequency.
 	frequency.InverseDocumentFrequency()
 
-	fmt.Printf("tf-idf for '%s' and '%s': %v.\n", offerDesc, requestDesc, frequency.InverseDocMap)
+	fmt.Printf("idf    : %v\n", frequency.InverseDocMap)
+
+	i := 0
+	tfidf := make([][]float64, 2)
+	tfidfOffer := make([]float64, len(frequency.InverseDocMap))
+	tfidfRequest := make([]float64, len(frequency.InverseDocMap))
+
+	for term, idf := range frequency.InverseDocMap {
+		tfidfOffer[i] = (1.0 + math.Log(float64(frequencyOffer.TermMap[term]))) * idf
+		tfidfRequest[i] = (1.0 + math.Log(float64(frequencyRequest.TermMap[term]))) * idf
+		i++
+	}
+
+	// Final matrix.
+	tfidf[0] = tfidfOffer
+	tfidf[1] = tfidfRequest
+
+	fmt.Printf("\ntfidf matrix: %v\n", tfidf)
 
 	// Compute cosine similarity between both tf-idf vectors.
+
+	fmt.Printf("Real description similarity value (SHOULD NOT BE NaN!): %f\n", cosineSimilarity(tfidf[0], tfidf[1]))
+
 	descSimilarity := 0.75
 
 	// Normalize similarity value to be within [0, 1].
