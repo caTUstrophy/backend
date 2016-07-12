@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -163,111 +162,4 @@ func AddDefaultData(db *gorm.DB) {
 	for _, Tag := range Tags {
 		db.Create(&Tag)
 	}
-
-	// Add some requests and offers
-	req1 := Request{
-		ID:             fmt.Sprintf("%s", uuid.NewV4()),
-		Name:           "Toothbrushes",
-		UserID:         UserAdmin.ID,
-		User:           UserAdmin,
-		Radius:         10.0,
-		Tags:           []Tag{TagMedical},
-		Location:       gormGIS.GeoPoint{13.326863, 52.513142},
-		Description:    "I need toothbrushes for me and my family, we are four peaple but if necessary we can share! Toothpaste would also be really nice!",
-		ValidityPeriod: time.Now().Add(time.Hour * 1000),
-		Matched:        false,
-		Expired:        false,
-	}
-	req2 := Request{
-		ID:             fmt.Sprintf("%s", uuid.NewV4()),
-		Name:           "Mini USB charger",
-		UserID:         UserAdmin.ID,
-		Radius:         10,
-		Tags:           []Tag{TagTool, TagOther},
-		Location:       gormGIS.GeoPoint{13.326860, 52.513142},
-		Description:    "Hey everyone, I lost my charger and would love to get exchange for it as I really need my phone, as fast as possible. We have electricity here, you can use it; my phone has a mini usb plot",
-		ValidityPeriod: time.Now().Add(time.Hour * 1000),
-		Matched:        false,
-		Expired:        false,
-	}
-	req3 := Request{
-		ID:             fmt.Sprintf("%s", uuid.NewV4()),
-		Name:           "A 2 meters sized chocolate letter",
-		UserID:         UserAdmin.ID,
-		Radius:         10,
-		Tags:           []Tag{TagFood, TagChildren},
-		Location:       gormGIS.GeoPoint{13.326859, 52.513143},
-		Description:    "Sorry guys I lost my 3 meter sized chocolate 'A'. Its dark chocolate wih I guess 60percent cacao. I am very sad and if this cant be found another big sized chocolate letter would help, but i really want to eat chocolate",
-		ValidityPeriod: time.Now().Add(time.Hour * 1000),
-		Matched:        false,
-		Expired:        false,
-	}
-	off1 := Offer{
-		ID:             fmt.Sprintf("%s", uuid.NewV4()),
-		Name:           "hygiene stuff",
-		UserID:         UserAdmin.ID,
-		Radius:         10,
-		Tags:           []Tag{TagMedical},
-		Location:       gormGIS.GeoPoint{13.326861, 52.513145},
-		Description:    "hey, i have some toothbrushes, toothpasta, cacao shampoo and a electric shaver to offer",
-		ValidityPeriod: time.Now().Add(time.Hour * 1000),
-		Matched:        false,
-		Expired:        false,
-	}
-	off2 := Offer{
-		ID:             fmt.Sprintf("%s", uuid.NewV4()),
-		Name:           "phone charger",
-		UserID:         UserAdmin.ID,
-		Radius:         10,
-		Tags:           []Tag{TagOther},
-		Location:       gormGIS.GeoPoint{13.326861, 52.513142},
-		Description:    "i have a charger for mobile phones, but no public electricity around",
-		ValidityPeriod: time.Now().Add(time.Hour * 1000),
-		Matched:        false,
-		Expired:        false,
-	}
-	off3 := Offer{
-		ID:             fmt.Sprintf("%s", uuid.NewV4()),
-		Name:           "Children stuff",
-		UserID:         UserAdmin.ID,
-		Radius:         10,
-		Tags:           []Tag{TagChildren},
-		Location:       gormGIS.GeoPoint{13.326862, 52.513143},
-		Description:    "Hey, I have some stuff kids like to eat, choco sweets and chips",
-		ValidityPeriod: time.Now().Add(time.Hour * 1000),
-		Matched:        false,
-		Expired:        false,
-	}
-	off4 := Offer{
-		ID:             fmt.Sprintf("%s", uuid.NewV4()),
-		Name:           "This is a very bad offer",
-		UserID:         UserAdmin.ID,
-		Radius:         0.0001,
-		Tags:           []Tag{TagOther},
-		Location:       gormGIS.GeoPoint{13.326861, 52.513143},
-		Description:    "Extraordnariy unusefullness that does not fit anything really good.",
-		ValidityPeriod: time.Now().Add(time.Hour * 1000),
-		Matched:        false,
-		Expired:        false,
-	}
-
-	log.Println(req1)
-
-	db.Create(req1)
-	db.Create(req2)
-	db.Create(req3)
-	db.Create(off1)
-	db.Create(off2)
-	db.Create(off3)
-	db.Create(off4)
-
-	RegionTU.Offers = append(RegionTU.Offers, off1)
-	RegionTU.Offers = append(RegionTU.Offers, off2)
-	RegionTU.Offers = append(RegionTU.Offers, off3)
-	RegionTU.Offers = append(RegionTU.Offers, off4)
-	RegionTU.Requests = append(RegionTU.Requests, req1)
-	RegionTU.Requests = append(RegionTU.Requests, req2)
-	RegionTU.Requests = append(RegionTU.Requests, req3)
-	db.Save(&RegionTU)
-
 }
