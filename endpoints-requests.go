@@ -25,7 +25,7 @@ type CreateRequestPayload struct {
 	} `validate:"dive,required"`
 	Radius         float64  `validate:"required"`
 	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Description    string   `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Description    string   `conform:"trim"`
 	ValidityPeriod string   `conform:"trim" validate:"required"`
 }
 
@@ -37,7 +37,7 @@ type UpdateRequestPayload struct {
 	} `validate:"dive,required"`
 	Radius         float64  `validate:"required"`
 	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Description    string   `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Description    string   `conform:"trim"`
 	ValidityPeriod string   `conform:"trim" validate:"required"`
 	Matched        bool     `conform:"trim" validate:"exists"`
 }
@@ -357,15 +357,23 @@ func (app *App) UpdateRequest(c *gin.Context) {
 		Request.Expired = false
 	}
 
-	// delete all regions associated with request
+	// Delete all regions associated with request.
 	app.DB.Exec("DELETE FROM region_requests WHERE request_id = ?", Request.ID)
-	// Try to map the provided location to all containing regions.
-
-	// map into new regions
 	Request.Regions = []db.Region{}
+
+	// Try to map the provided location to all containing regions.
 	app.mapLocationToRegions(Request)
 
+	// Update request in database.
 	app.DB.Model(&Request).Updates(Request)
+
+	// Load all regions to which we just mapped the request's location.
+	app.DB.Preload("Regions").First(&Request)
+
+	// Calculate the matching score of this request with all possible offers.
+	go app.CalcMatchScoreForRequest(Request)
+
 	model := CopyNestedModel(Request, fieldsRequestWithUser)
+
 	c.JSON(http.StatusOK, model)
 }

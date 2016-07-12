@@ -25,7 +25,7 @@ type CreateOfferPayload struct {
 	} `validate:"dive,required"`
 	Radius         float64  `validate:"required"`
 	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Description    string   `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Description    string   `conform:"trim"`
 	ValidityPeriod string   `conform:"trim" validate:"required"`
 }
 
@@ -37,7 +37,7 @@ type UpdateOfferPayload struct {
 	} `validate:"dive,required"`
 	Radius         float64  `validate:"required"`
 	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
-	Description    string   `conform:"trim" validate:"excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Description    string   `conform:"trim"`
 	ValidityPeriod string   `conform:"trim" validate:"required"`
 	Matched        bool     `conform:"trim" validate:"exists"`
 }
@@ -360,16 +360,23 @@ func (app *App) UpdateOffer(c *gin.Context) {
 		Offer.Expired = false
 	}
 
-	// delete all regions associated with request
+	// Delete all regions associated with request.
 	app.DB.Exec("DELETE FROM region_requests WHERE request_id = ?", Offer.ID)
-	// Try to map the provided location to all containing regions.
-
-	// map into new regions
 	Offer.Regions = []db.Region{}
+
+	// Try to map the provided location to all containing regions.
 	app.mapLocationToRegions(Offer)
 
+	// Update offer in database.
 	app.DB.Model(&Offer).Updates(Offer)
-	model := CopyNestedModel(Offer, fieldsRequestWithUser)
-	c.JSON(http.StatusOK, model)
 
+	// Load all regions to which we just mapped the offer's location.
+	app.DB.Preload("Regions").First(&Offer)
+
+	// Calculate the matching score of this offer with all possible requests.
+	go app.CalcMatchScoreForOffer(Offer)
+
+	model := CopyNestedModel(Offer, fieldsRequestWithUser)
+
+	c.JSON(http.StatusOK, model)
 }

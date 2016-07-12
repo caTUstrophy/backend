@@ -82,23 +82,22 @@ func CalculateDescriptionSimilarity(descChannel chan float64, offerDesc, request
 	tokOfferDesc := gotfidf.TokenizeDocument(offerDesc)
 	tokRequestDesc := gotfidf.TokenizeDocument(requestDesc)
 
-	fmt.Printf("ALL        : %v\n", frequency.TermMap)
-	fmt.Printf("OFFER      : %v\n", frequencyOffer.TermMap)
-	fmt.Printf("REQUEST    : %v\n", frequencyRequest.TermMap)
-	fmt.Printf("OWN OFFER  : %v\n", tokOfferDesc)
-	fmt.Printf("OWN REQUEST: %v\n", tokRequestDesc)
+	// fmt.Printf("ALL        : %v\n", frequency.TermMap)
+	// fmt.Printf("OFFER      : %v\n", frequencyOffer.TermMap)
+	// fmt.Printf("REQUEST    : %v\n", frequencyRequest.TermMap)
+	// fmt.Printf("OWN OFFER  : %v\n", tokOfferDesc)
+	// fmt.Printf("OWN REQUEST: %v\n", tokRequestDesc)
 
 	// Calculate the inverse document frequency.
 	frequency.InverseDocumentFrequency()
-	fmt.Printf("\nidf           : %v\n", frequency.InverseDocMap)
+	// fmt.Printf("\nidf           : %v\n", frequency.InverseDocMap)
 
 	// Own implementation:
 	docs := [][]string{tokOfferDesc, tokRequestDesc}
 	idfs := gotfidf.InverseDocumentFrequencies(docs, gotfidf.InvDocWeightingLog)
-	fmt.Printf("OWN IDF VECTOR: %v\n", idfs)
+	// fmt.Printf("OWN IDF VECTOR: %v\n", idfs)
 
 	i := 0
-	tfidf := make([][]float64, 2)
 	tfidfOffer := make([]float64, len(frequency.InverseDocMap))
 	tfidfRequest := make([]float64, len(frequency.InverseDocMap))
 
@@ -108,15 +107,8 @@ func CalculateDescriptionSimilarity(descChannel chan float64, offerDesc, request
 		i++
 	}
 
-	// Final matrix.
-	tfidf[0] = tfidfOffer
-	tfidf[1] = tfidfRequest
-
-	fmt.Printf("\ntfidf matrix    : %v\n", tfidf)
-
-	// OWN
+	// Own implementation:
 	i = 0
-	tfidfOwn := make([][]float64, 2)
 	tfidfOfferOwn := make([]float64, len(idfs))
 	tfidfRequestOwn := make([]float64, len(idfs))
 
@@ -126,20 +118,14 @@ func CalculateDescriptionSimilarity(descChannel chan float64, offerDesc, request
 		i++
 	}
 
-	// Final matrix.
-	tfidfOwn[0] = tfidfOfferOwn
-	tfidfOwn[1] = tfidfRequestOwn
-
-	fmt.Printf("OWN tfidf matrix: %v\n", tfidfOwn)
+	// fmt.Printf("tfidfOfferOwn:   %v\n", tfidfOfferOwn)
+	// fmt.Printf("tfidfRequestOwn: %v\n", tfidfRequestOwn)
 
 	// Compute cosine similarity between both tf-idf vectors.
-	fmt.Printf("\nReal description similarity value     (SHOULD NOT BE NaN!): %f\n", cosineSimilarity(tfidf[0], tfidf[1]))
-	fmt.Printf("OWN Real description similarity value (SHOULD NOT BE NaN!): %f\n", cosineSimilarity(tfidfOwn[0], tfidfOwn[1]))
+	// fmt.Printf("\nReal description similarity value     (SHOULD NOT BE NaN!): %f\n", cosineSimilarity(tfidfOffer, tfidfRequest))
+	// fmt.Printf("OWN Real description similarity value (SHOULD NOT BE NaN!): %f\n", cosineSimilarity(tfidfOfferOwn, tfidfRequestOwn))
 
 	descSimilarity := 0.75
-
-	// Normalize similarity value to be within [0, 1].
-	descSimilarity = scale(descSimilarity, 1, 1, 0, 1)
 
 	// Pass result into description channel.
 	descChannel <- descSimilarity
@@ -205,6 +191,8 @@ func (app *App) CalculateMatchingScore(region db.Region, offer db.Offer, request
 	// Final score is the product of content similarity and distance.
 	finalScore := contentSimilarity * locDistance
 
+	fmt.Printf("tagSimilarity: %f - descSimilarity: %f - locDistance: %f\n", tagSimilarity, descSimilarity, locDistance)
+
 	MatchingScore := db.MatchingScore{
 		RegionID:      region.ID,
 		Region:        region,
@@ -246,6 +234,9 @@ func (app *App) CalcMatchScoreForOffer(offer db.Offer) {
 			// offer and all requests in region.
 			go app.CalculateMatchingScore(Region, offer, request)
 		}
+
+		// Tell database that region has an updated recommendation calculation.
+		app.DB.Model(&Region).Update("RecommendationUpdated", false)
 	}
 }
 
@@ -266,33 +257,46 @@ func (app *App) CalcMatchScoreForRequest(request db.Request) {
 			// request and all offers in region.
 			go app.CalculateMatchingScore(Region, offer, request)
 		}
-		app.DB.Model(Region).Update("RecommendationUpdated", false)
+
+		// Tell database that region has an updated recommendation calculation.
+		app.DB.Model(&Region).Update("RecommendationUpdated", false)
 	}
 
 }
 
-// Caclulate assignment problem for offers und requests of this region and set recommended flag to matching scores
+// Caclulate assignment problem for offers und requests of this region
+// and set recommended flag to matching scores.
 func (app *App) RecommendMatching(region db.Region) {
+
 	// load all scores for this region
 	var scores []db.MatchingScore
 	app.DB.Order("request_id, offer_id").Find(&scores, "region_id = ?", region.ID)
+
 	// get number of offers and request in order to get the matrix size
 	numOffers := 0
 	numRequests := 0
 	scoreValues := make([]int64, len(scores))
+
 	for i, score := range scores {
+
 		scoreValues[i] = 100 - int64(score.MatchingScore)
+
 		if i == 0 || scores[i].RequestID != scores[i-1].RequestID {
 			numRequests++
 			numOffers = 0
 		}
+
 		numOffers++
 	}
+
 	// create dummy rows and cols
 	size := Max(numOffers, numRequests)
 	scoreMatrixArray := make([]int64, size*size)
+
 	for row := 0; row < size; row++ {
+
 		for col := 0; col < size; col++ {
+
 			if row < numRequests && col < numOffers {
 				scoreMatrixArray[row*size+col] = scoreValues[row*numOffers+col]
 			} else {
@@ -300,18 +304,22 @@ func (app *App) RecommendMatching(region db.Region) {
 			}
 		}
 	}
+
 	// create Matrix and solve assignment problem
 	m := munkres.NewMatrix(4)
 	m.A = scoreMatrixArray
 	solution := munkres.ComputeMunkresMin(m)
+
 	// save recommendations to db
 	for _, recommendation := range solution {
+
 		if recommendation.Row < numRequests && recommendation.Col < numOffers {
 			index := recommendation.Row*numOffers + recommendation.Col
 			scores[index].Recommended = true
 			app.DB.Model(&scores[index]).Update("recommended", true)
 		}
 	}
+
 	// Save that this region has up to date recommendations
 	app.DB.Model(&region).Update("RecommendationUpdated", true)
 }
