@@ -182,7 +182,7 @@ func (app *App) CreateOffer(c *gin.Context) {
 	}
 
 	// Try to map the provided location to all containing regions.
-	app.mapLocationToRegions(Offer)
+	app.MapLocationToRegions(Offer)
 
 	// Save offer to database.
 	app.DB.Create(&Offer)
@@ -365,7 +365,7 @@ func (app *App) UpdateOffer(c *gin.Context) {
 	Offer.Regions = []db.Region{}
 
 	// Try to map the provided location to all containing regions.
-	app.mapLocationToRegions(Offer)
+	app.MapLocationToRegions(Offer)
 
 	// Update offer in database.
 	app.DB.Model(&Offer).Updates(Offer)

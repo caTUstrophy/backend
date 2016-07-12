@@ -125,8 +125,11 @@ func AddDefaultData(db *gorm.DB) {
 	TagVehicle := Tag{Name: "Vehicle"}
 	TagTool := Tag{Name: "Tool"}
 	TagInformation := Tag{Name: "Information"}
+	TagChildren := Tag{Name: "Children"}
+	TagOther := Tag{Name: "Other"}
+	TagMedical := Tag{Name: "Medical"}
 
-	Tags := []Tag{TagFood, TagWater, TagVehicle, TagTool, TagInformation}
+	Tags := []Tag{TagFood, TagWater, TagVehicle, TagTool, TagInformation, TagChildren, TagOther, TagMedical}
 
 	// Two default phone numbers.
 	PhoneNumbers := new(PhoneNumbers)

@@ -85,6 +85,9 @@ func InitApp() *App {
 	app.Router.GET("/regions/:regionID/matchings", app.ListMatchingsForRegion)
 	app.Router.GET("/regions/:regionID/admins", app.ListAdminsForRegion)
 	app.Router.POST("/regions/:regionID/admins", app.PromoteToRegionAdmin)
+	app.Router.GET("/regions/:regionID/recommendations", app.ListRecommendationsForRegion)
+	app.Router.GET("/regions/:regionID/requests/:requestID/recommendations", app.ListOffersForRequest)
+	app.Router.GET("/regions/:regionID/offers/:offerID/recommendations", app.ListRequestsForOffer)
 
 	app.Router.GET("/system/admins", app.ListSystemAdmins) // The endpoint might change
 	app.Router.POST("/system/admins", app.PromoteToSystemAdmin)

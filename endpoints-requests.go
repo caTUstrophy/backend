@@ -182,7 +182,7 @@ func (app *App) CreateRequest(c *gin.Context) {
 	}
 
 	// Try to map the provided location to all containing regions.
-	app.mapLocationToRegions(Request)
+	app.MapLocationToRegions(Request)
 
 	// Save request to database.
 	app.DB.Create(&Request)
@@ -362,7 +362,7 @@ func (app *App) UpdateRequest(c *gin.Context) {
 	Request.Regions = []db.Region{}
 
 	// Try to map the provided location to all containing regions.
-	app.mapLocationToRegions(Request)
+	app.MapLocationToRegions(Request)
 
 	// Update request in database.
 	app.DB.Model(&Request).Updates(Request)
