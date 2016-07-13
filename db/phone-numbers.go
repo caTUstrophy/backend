@@ -1,6 +1,5 @@
 // Based on: http://www.booneputney.com/development/gorm-golang-jsonb-value-copy/
 // Therefore credit is due to Boone Putney. Thank you!
-
 package db
 
 import (

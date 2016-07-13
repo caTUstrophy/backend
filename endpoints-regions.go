@@ -26,13 +26,13 @@ type Boundaries struct {
 
 type CreateRegionPayload struct {
 	Name        string     `conform:"trim" validate:"required"`
-	Description string     `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Description string     `conform:"trim" validate:"required"`
 	Boundaries  Boundaries `conform:"trim" validate:"required"`
 }
 
 type UpdateRegionPayload struct {
 	Name        string     `conform:"trim" validate:"required"`
-	Description string     `conform:"trim" validate:"required,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
+	Description string     `conform:"trim" validate:"required"`
 	Boundaries  Boundaries `conform:"trim" validate:"required"`
 }
 
@@ -92,12 +92,14 @@ func (app *App) CreateRegion(c *gin.Context) {
 		return
 	}
 
-	// Save Region
+	// Save region.
 	var Region db.Region
 	Region.ID = fmt.Sprintf("%s", uuid.NewV4())
 	Region.Name = Payload.Name
 	Region.Description = Payload.Description
-	Region.RecommendationUpdated = true // there are currently no offers or requests in this region, so there cant be a recommendation
+
+	// There are currently no offers or requests in this region, so there can't be a recommendation.
+	Region.RecommendationUpdated = true
 
 	if len(Payload.Boundaries.Points) == 0 {
 
@@ -120,7 +122,7 @@ func (app *App) CreateRegion(c *gin.Context) {
 
 	app.DB.Create(&Region)
 
-	// Create admin group for this region
+	// Create admin group for this region.
 	var admins db.Group
 	admins.RegionId = Region.ID
 	admins.AccessRight = "admin"
@@ -567,6 +569,7 @@ func (app *App) PromoteToRegionAdmin(c *gin.Context) {
 }
 
 func (app *App) ListRecommendationsForRegion(c *gin.Context) {
+
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
 	if !ok {
@@ -626,11 +629,11 @@ func (app *App) ListRecommendationsForRegion(c *gin.Context) {
 
 	model := CopyNestedModel(recommendations, fieldsRecommendations)
 
-	c.JSON(200, model)
-
+	c.JSON(http.StatusOK, model)
 }
 
 func (app *App) ListOffersForRequest(c *gin.Context) {
+
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
 	if !ok {
@@ -702,9 +705,11 @@ func (app *App) ListOffersForRequest(c *gin.Context) {
 		return
 	}
 
+	// TODO: finish.
 }
 
 func (app *App) ListRequestsForOffer(c *gin.Context) {
+
 	// Check authorization for this function.
 	ok, User, message := app.Authorize(c.Request)
 	if !ok {
@@ -776,4 +781,5 @@ func (app *App) ListRequestsForOffer(c *gin.Context) {
 		return
 	}
 
+	// TODO: finish.
 }

@@ -139,8 +139,7 @@ func AddDefaultData(db *gorm.DB) {
 	}
 
 	// Create default admin user ('admin@example.org', 'CaTUstrophyAdmin123$').
-	// TODO: Replace this with an interactive dialog, when starting
-	//       the backend for the first time.
+	// MAKE SURE NOT TO CREATE THIS USER ON YOUR PRODUCTION SYSTEM.
 	UserAdmin := User{
 		ID:            fmt.Sprintf("%s", uuid.NewV4()),
 		Name:          "admin",

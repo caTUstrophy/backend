@@ -14,6 +14,7 @@ import (
 func (app *App) GetGroupObject(groupID string) db.Group {
 
 	var Group db.Group
+
 	app.DB.Preload("Users").First(&Group, "id = ?", groupID)
 	app.DB.Model(&Group).Related(&Group.Region)
 

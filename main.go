@@ -29,7 +29,7 @@ type App struct {
 	DescWeightBeta    float64
 }
 
-// Main
+// Functions
 
 func InitApp() *App {
 
@@ -37,8 +37,6 @@ func InitApp() *App {
 	app := InitAndConfig()
 
 	// Enable compliance to CORS.
-	// TODO: Keep the values in check when this backend gets deployed (Origins!).
-	//       Put this config into config.go and make it environment loadable.
 	app.Router.Use(cors.Middleware(cors.Config{
 		Origins:         "*",
 		Methods:         "GET, PUT, POST, DELETE",
@@ -60,7 +58,8 @@ func InitApp() *App {
 	app.Router.GET("/users", app.ListUsers)
 	app.Router.GET("/users/:userID", app.GetUser)
 	app.Router.PUT("/users/:userID", app.UpdateUser)
-	app.Router.POST("/users/admins", app.PromoteToSystemAdmin) // The endpoint might change
+	// This endpoint might change.
+	app.Router.POST("/users/admins", app.PromoteToSystemAdmin)
 
 	app.Router.GET("/groups", app.GetGroups)
 	app.Router.GET("/tags", app.GetTags)
@@ -90,7 +89,8 @@ func InitApp() *App {
 	app.Router.GET("/regions/:regionID/requests/:requestID/recommendations", app.ListOffersForRequest)
 	app.Router.GET("/regions/:regionID/offers/:offerID/recommendations", app.ListRequestsForOffer)
 
-	app.Router.GET("/system/admins", app.ListSystemAdmins) // The endpoint might change
+	// This endpoint might change.
+	app.Router.GET("/system/admins", app.ListSystemAdmins)
 	app.Router.POST("/system/admins", app.PromoteToSystemAdmin)
 
 	app.Router.GET("/me", app.GetMe)
