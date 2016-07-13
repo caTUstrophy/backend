@@ -287,22 +287,22 @@ func (app *App) RecommendMatching(region db.Region) {
 	// get number of offers and request in order to get the matrix size
 	numOffers := 0
 	numRequests := 0
+
+	app.DB.Raw("SELECT COUNT (DISTINCT request_id) FROM matching_scores WHERE region_id = '" + region.ID + "'").Row().Scan(&numRequests)
+	app.DB.Raw("SELECT COUNT (DISTINCT offer_id) FROM matching_scores WHERE region_id = '" + region.ID + "'").Row().Scan(&numOffers)
+
 	scoreValues := make([]int64, len(scores))
+
+	size := Max(numOffers, numRequests)
+	fmt.Printf("Score Values len: %d \nNumOffers: %d\nNumRequests: %d\n Num*Num: %d\n size: %d\n", len(scoreValues), numOffers, numRequests, numRequests*numOffers, size)
 
 	for i, score := range scores {
 
 		scoreValues[i] = 100 - int64(score.MatchingScore)
 
-		if i == 0 || scores[i].RequestID != scores[i-1].RequestID {
-			numRequests++
-			numOffers = 0
-		}
-
-		numOffers++
 	}
+	// create dummy rows and cols; rows: request; cols: offers
 
-	// create dummy rows and cols
-	size := Max(numOffers, numRequests)
 	scoreMatrixArray := make([]int64, size*size)
 
 	for row := 0; row < size; row++ {
@@ -318,7 +318,7 @@ func (app *App) RecommendMatching(region db.Region) {
 	}
 
 	// create Matrix and solve assignment problem
-	m := munkres.NewMatrix(4)
+	m := munkres.NewMatrix(size)
 	m.A = scoreMatrixArray
 	solution := munkres.ComputeMunkresMin(m)
 
