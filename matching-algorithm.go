@@ -204,7 +204,7 @@ func (app *App) CalculateMatchingScore(region db.Region, offer db.Offer, request
 
 	// Final score is the product of content similarity and distance.
 	finalScore := contentSimilarity * locDistance
-
+	fmt.Printf("Request: %s \n Offer: %s \n", request.Name, offer.Name)
 	fmt.Printf("tagSimilarity: %f - descSimilarity: %f - locDistance: %f\n", tagSimilarity, descSimilarity, locDistance)
 
 	MatchingScore := db.MatchingScore{
