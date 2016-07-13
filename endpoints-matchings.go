@@ -192,6 +192,10 @@ func (app *App) CreateMatching(c *gin.Context) {
 	app.DB.Model(&Matching).Related(&Matching.Request)
 	app.DB.Model(&Matching.Request).Related(&Matching.Request.User)
 
+	// Set recommendation of optimal matchings to false due to new matching.
+	// AKTUELL: ÜBER ALLE REGIONS VON OFFER UND REQUEST ITERIEREN UND ALLE AUF UPDATED = FALSE SETZEN.
+	// app.DB.Model({ alle concerned regions }).Update("RecommendationUpdated", false)
+
 	// Only expose fields that are necessary.
 	model := CopyNestedModel(Matching, fieldsMatching)
 

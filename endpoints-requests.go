@@ -30,16 +30,16 @@ type CreateRequestPayload struct {
 }
 
 type UpdateRequestPayload struct {
-	Name     string `conform:"trim" validate:"required"`
+	Name     string `conform:"trim"`
 	Location struct {
 		Longitude float64 `json:"lng" conform:"trim"`
 		Latitude  float64 `json:"lat" conform:"trim"`
-	} `validate:"dive,required"`
-	Radius         float64  `validate:"required"`
+	} `validate:"dive"`
+	Radius         float64
 	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 	Description    string   `conform:"trim"`
-	ValidityPeriod string   `conform:"trim" validate:"required"`
-	Matched        bool     `conform:"trim" validate:"exists"`
+	ValidityPeriod string   `conform:"trim"`
+	Matched        bool     `conform:"trim"`
 }
 
 // Functions
@@ -270,10 +270,10 @@ func (app *App) UpdateRequest(c *gin.Context) {
 
 	// Load request from database.
 	var Request db.Request
-	app.DB.Preload("Regions").Preload("Tags").First(&Request, "id = ?", requestID)
+	app.DB.Preload("Regions").Preload("Tags").First(&Request, "\"id\" = ?", requestID)
 	app.DB.Model(&Request).Related(&Request.User)
 
-	// check scope for user / admin on request
+	// Check scope for user / admin on request.
 	if ok := ((Request.UserID == User.ID) || app.CheckScopes(User, Request.Regions, "admin")); !ok {
 
 		// Signal client that the provided authorization was not sufficient.
@@ -294,14 +294,15 @@ func (app *App) UpdateRequest(c *gin.Context) {
 	Request.Radius = Payload.Radius
 	Request.Description = Payload.Description
 
-	// Delete all tags associated with request.
-	for _, Tag := range Request.Tags {
-		app.DB.Exec("DELETE FROM request_tags WHERE \"request_id\" = ? AND \"tag_name\" = ?", Request.ID, Tag.Name)
-	}
-
-	Request.Tags = make([]db.Tag, 0)
 	// If tags were supplied, check if they exist in our system.
 	if len(Payload.Tags) > 0 {
+
+		// Delete all tags associated with request.
+		for _, Tag := range Request.Tags {
+			app.DB.Exec("DELETE FROM \"request_tags\" WHERE \"request_id\" = ? AND \"tag_name\" = ?", Request.ID, Tag.Name)
+		}
+
+		Request.Tags = make([]db.Tag, 0)
 
 		allTagsExist := true
 
@@ -310,7 +311,7 @@ func (app *App) UpdateRequest(c *gin.Context) {
 			var Tag db.Tag
 
 			// Count number of results for query of name of tags.
-			app.DB.First(&Tag, "name = ?", tag)
+			app.DB.First(&Tag, "\"name\" = ?", tag)
 
 			// Set flag to false, if one tag was not found.
 			if Tag.Name == "" {
@@ -333,36 +334,45 @@ func (app *App) UpdateRequest(c *gin.Context) {
 		Request.Tags = nil
 	}
 
-	// Check if supplied date is a RFC3339 compliant date.
-	PayloadTime, err := time.Parse(time.RFC3339, Payload.ValidityPeriod)
-	if err != nil {
+	if Payload.ValidityPeriod != "" {
 
-		c.JSON(http.StatusBadRequest, gin.H{
-			"ValidityPeriod": "Request has to be a RFC3339 compliant date",
-		})
+		// Check if supplied date is a RFC3339 compliant date.
+		PayloadTime, err := time.Parse(time.RFC3339, Payload.ValidityPeriod)
+		if err != nil {
 
-		return
+			c.JSON(http.StatusBadRequest, gin.H{
+				"ValidityPeriod": "Request has to be a RFC3339 compliant date",
+			})
+
+			return
+		}
+
+		// Check if validity period is yet to come.
+		if PayloadTime.Unix() <= time.Now().Unix() {
+
+			c.JSON(http.StatusBadRequest, gin.H{
+				"ValidityPeriod": "Request has to be valid until a date in the future",
+			})
+
+			return
+		} else {
+			Request.ValidityPeriod = PayloadTime
+			Request.Expired = false
+		}
 	}
 
-	// Check if validity period is yet to come.
-	if PayloadTime.Unix() <= time.Now().Unix() {
+	// With this check we discriminate the one position on earth
+	// where latitude = 0 and longitude = 0 as an update. I am really
+	// sorry for this, but that is the only reasonable check here.
+	if Payload.Location.Latitude != 0.0 || Payload.Location.Longitude != 0.0 {
 
-		c.JSON(http.StatusBadRequest, gin.H{
-			"ValidityPeriod": "Request has to be valid until a date in the future",
-		})
+		// Delete all regions associated with request.
+		app.DB.Exec("DELETE FROM \"region_requests\" WHERE \"request_id\" = ?", Request.ID)
+		Request.Regions = []db.Region{}
 
-		return
-	} else {
-		Request.ValidityPeriod = PayloadTime
-		Request.Expired = false
+		// Try to map the provided location to all containing regions.
+		app.MapLocationToRegions(Request)
 	}
-
-	// Delete all regions associated with request.
-	app.DB.Exec("DELETE FROM region_requests WHERE request_id = ?", Request.ID)
-	Request.Regions = []db.Region{}
-
-	// Try to map the provided location to all containing regions.
-	app.MapLocationToRegions(Request)
 
 	// Update request in database.
 	app.DB.Model(&Request).Updates(Request)

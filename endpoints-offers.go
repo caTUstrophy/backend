@@ -30,16 +30,16 @@ type CreateOfferPayload struct {
 }
 
 type UpdateOfferPayload struct {
-	Name     string `conform:"trim" validate:"required"`
+	Name     string `conform:"trim"`
 	Location struct {
 		Longitude float64 `json:"lng" conform:"trim"`
 		Latitude  float64 `json:"lat" conform:"trim"`
-	} `validate:"dive,required"`
-	Radius         float64  `validate:"required"`
+	} `validate:"dive"`
+	Radius         float64
 	Tags           []string `conform:"trim" validate:"dive,excludesall=!@#$%^&*()_+-=:;?/0x2C0x7C"`
 	Description    string   `conform:"trim"`
-	ValidityPeriod string   `conform:"trim" validate:"required"`
-	Matched        bool     `conform:"trim" validate:"exists"`
+	ValidityPeriod string   `conform:"trim"`
+	Matched        bool     `conform:"trim"`
 }
 
 // Functions
@@ -271,7 +271,7 @@ func (app *App) UpdateOffer(c *gin.Context) {
 
 	// Retrieve corresponding entry from database.
 	var Offer db.Offer
-	app.DB.Preload("Regions").Preload("Tags").First(&Offer, "id = ?", offerID)
+	app.DB.Preload("Regions").Preload("Tags").First(&Offer, "\"id\" = ?", offerID)
 	app.DB.Model(&Offer).Related(&Offer.User)
 
 	// Validity check:
@@ -297,14 +297,15 @@ func (app *App) UpdateOffer(c *gin.Context) {
 	Offer.Radius = Payload.Radius
 	Offer.Description = Payload.Description
 
-	// Delete all tags associated with request.
-	for _, Tag := range Offer.Tags {
-		app.DB.Exec("DELETE FROM offer_tags WHERE \"request_id\" = ? AND \"tag_name\" = ?", Offer.ID, Tag.Name)
-	}
-
-	Offer.Tags = make([]db.Tag, 0)
 	// If tags were supplied, check if they exist in our system.
 	if len(Payload.Tags) > 0 {
+
+		// Delete all tags associated with offer.
+		for _, Tag := range Offer.Tags {
+			app.DB.Exec("DELETE FROM \"offer_tags\" WHERE \"offer_id\" = ? AND \"tag_name\" = ?", Offer.ID, Tag.Name)
+		}
+
+		Offer.Tags = make([]db.Tag, 0)
 
 		allTagsExist := true
 
@@ -313,7 +314,7 @@ func (app *App) UpdateOffer(c *gin.Context) {
 			var Tag db.Tag
 
 			// Count number of results for query of name of tags.
-			app.DB.First(&Tag, "name = ?", tag)
+			app.DB.First(&Tag, "\"name\" = ?", tag)
 
 			// Set flag to false, if one tag was not found.
 			if Tag.Name == "" {
@@ -336,36 +337,45 @@ func (app *App) UpdateOffer(c *gin.Context) {
 		Offer.Tags = nil
 	}
 
-	// Check if supplied date is a RFC3339 compliant date.
-	PayloadTime, err := time.Parse(time.RFC3339, Payload.ValidityPeriod)
-	if err != nil {
+	if Payload.ValidityPeriod != "" {
 
-		c.JSON(http.StatusBadRequest, gin.H{
-			"ValidityPeriod": "Request has to be a RFC3339 compliant date",
-		})
+		// Check if supplied date is a RFC3339 compliant date.
+		PayloadTime, err := time.Parse(time.RFC3339, Payload.ValidityPeriod)
+		if err != nil {
 
-		return
+			c.JSON(http.StatusBadRequest, gin.H{
+				"ValidityPeriod": "Offer has to be a RFC3339 compliant date",
+			})
+
+			return
+		}
+
+		// Check if validity period is yet to come.
+		if PayloadTime.Unix() <= time.Now().Unix() {
+
+			c.JSON(http.StatusBadRequest, gin.H{
+				"ValidityPeriod": "Offer has to be valid until a date in the future",
+			})
+
+			return
+		} else {
+			Offer.ValidityPeriod = PayloadTime
+			Offer.Expired = false
+		}
 	}
 
-	// Check if validity period is yet to come.
-	if PayloadTime.Unix() <= time.Now().Unix() {
+	// With this check we discriminate the one position on earth
+	// where latitude = 0 and longitude = 0 as an update. I am really
+	// sorry for this, but that is the only reasonable check here.
+	if Payload.Location.Latitude != 0.0 || Payload.Location.Longitude != 0.0 {
 
-		c.JSON(http.StatusBadRequest, gin.H{
-			"ValidityPeriod": "Request has to be valid until a date in the future",
-		})
+		// Delete all regions associated with offer.
+		app.DB.Exec("DELETE FROM \"region_offers\" WHERE \"offer_id\" = ?", Offer.ID)
+		Offer.Regions = []db.Region{}
 
-		return
-	} else {
-		Offer.ValidityPeriod = PayloadTime
-		Offer.Expired = false
+		// Try to map the provided location to all containing regions.
+		app.MapLocationToRegions(Offer)
 	}
-
-	// Delete all regions associated with request.
-	app.DB.Exec("DELETE FROM region_requests WHERE request_id = ?", Offer.ID)
-	Offer.Regions = []db.Region{}
-
-	// Try to map the provided location to all containing regions.
-	app.MapLocationToRegions(Offer)
 
 	// Update offer in database.
 	app.DB.Model(&Offer).Updates(Offer)
