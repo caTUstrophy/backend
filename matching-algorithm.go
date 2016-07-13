@@ -261,7 +261,6 @@ func (app *App) CalcMatchScoreForRequest(request db.Request) {
 		// Tell database that region has an updated recommendation calculation.
 		app.DB.Model(&Region).Update("RecommendationUpdated", false)
 	}
-
 }
 
 // Caclulate assignment problem for offers und requests of this region

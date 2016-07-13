@@ -117,7 +117,21 @@ type MatchingScore struct {
 
 // Helpers
 
-// Make tags model sortable.
+// Make offers list sortable.
+type OffersByUUID []Offer
+
+func (o OffersByUUID) Len() int           { return len(o) }
+func (o OffersByUUID) Swap(i, j int)      { o[i], o[j] = o[j], o[i] }
+func (o OffersByUUID) Less(i, j int) bool { return o[i].ID < o[j].ID }
+
+// Make requests list sortable.
+type RequestsByUUID []Request
+
+func (r RequestsByUUID) Len() int           { return len(r) }
+func (r RequestsByUUID) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
+func (r RequestsByUUID) Less(i, j int) bool { return r[i].ID < r[j].ID }
+
+// Make tags list sortable.
 type TagsByName []Tag
 
 func (t TagsByName) Len() int           { return len(t) }

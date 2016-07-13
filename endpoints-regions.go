@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 
 	"net/http"
 
@@ -659,8 +660,13 @@ func (app *App) ListOffersForRequest(c *gin.Context) {
 
 	var Region db.Region
 
-	// Select region based on supplied ID from database.
-	app.DB.First(&Region, "id = ?", regionID)
+	// Load all offers for specified region that are
+	// - not yet expired
+	// - and not yet matched.
+	app.DB.Preload("Offers", "\"expired\" = ? AND \"matched\" = ?", false, false).First(&Region, "\"id\" = ?", regionID)
+
+	// Sort offers by UUID.
+	sort.Sort(db.OffersByUUID(Region.Offers))
 
 	if Region.ID == "" {
 
@@ -695,7 +701,7 @@ func (app *App) ListOffersForRequest(c *gin.Context) {
 	var Request db.Request
 
 	// Select region based on supplied ID from database.
-	app.DB.First(&Request, "id = ?", requestID)
+	app.DB.First(&Request, "\"id\" = ?", requestID)
 
 	if Request.ID == "" {
 
@@ -706,7 +712,31 @@ func (app *App) ListOffersForRequest(c *gin.Context) {
 		return
 	}
 
-	// TODO: finish.
+	// Retrieve matching scores from database table for (Region, *, Request).
+	var MatchingScores []db.MatchingScore
+	app.DB.Order("\"matching_score\" DESC").Find(&MatchingScores, "\"region_id\" = ? AND \"request_id\" = ?", Region.ID, Request.ID)
+
+	model := make([]map[string]interface{}, len(Region.Offers))
+
+	// Iterate over all found elements in matching scores list.
+	for _, matchingScore := range MatchingScores {
+
+		// Find offer that matches MatchingScores.OfferID in sorted offers list.
+		i := sort.Search(len(Region.Offers), func(i int) bool {
+			return Region.Offers[i].ID >= matchingScore.OfferID
+		})
+
+		if i < len(Region.Offers) && Region.Offers[i].ID == matchingScore.OfferID {
+
+			// We found the correct offer, add it to result list
+			model[i] = CopyNestedModel(Region.Offers[i], fieldsOffer).(map[string]interface{})
+
+			// TODO: Add matching score field and recommended field.
+		}
+	}
+
+	// Send back results to client.
+	c.JSON(http.StatusOK, model)
 }
 
 func (app *App) ListRequestsForOffer(c *gin.Context) {
@@ -782,5 +812,5 @@ func (app *App) ListRequestsForOffer(c *gin.Context) {
 		return
 	}
 
-	// TODO: finish.
+	// TODO: finish. See above function for reference.
 }
