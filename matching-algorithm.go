@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/allisonmorgan/tfidf"
 	"github.com/caTUstrophy/backend/db"
 	"github.com/caTUstrophy/munkres"
 	"github.com/numbleroot/go-tfidf"
@@ -14,8 +13,10 @@ import (
 
 // Functions
 func (app *App) getScoreMatrix(c *gin.Context) {
+
 	var recommendations []db.MatchingScore
 	app.DB.Find(&recommendations)
+
 	for i, rec := range recommendations {
 		app.DB.Model(&rec).Related(&recommendations[i].Offer)
 		app.DB.Model(&rec).Related(&recommendations[i].Request)
@@ -81,65 +82,17 @@ func CalculateTagSimilarity(tagChannel chan float64, offerTags, requestTags []db
 // of offer and request. Result is normalized to be within [0, 1].
 func CalculateDescriptionSimilarity(descChannel chan float64, offerDesc, requestDesc string) {
 
-	// Create new tf-idf structs.
-	frequency := tfidf.NewTermFrequencyStruct()
-	frequencyOffer := tfidf.NewTermFrequencyStruct()
-	frequencyRequest := tfidf.NewTermFrequencyStruct()
-
-	// Insert the offer's and the request's description fields as new documents.
-	frequency.AddDocument(offerDesc)
-	frequencyOffer.AddDocument(offerDesc)
-	frequency.AddDocument(requestDesc)
-	frequencyRequest.AddDocument(requestDesc)
-
 	// Own implementation:
-	tokOfferDesc := gotfidf.TokenizeDocument(offerDesc)
-	tokRequestDesc := gotfidf.TokenizeDocument(requestDesc)
-
-	// fmt.Printf("ALL        : %v\n", frequency.TermMap)
-	// fmt.Printf("OFFER      : %v\n", frequencyOffer.TermMap)
-	// fmt.Printf("REQUEST    : %v\n", frequencyRequest.TermMap)
-	// fmt.Printf("OWN OFFER  : %v\n", tokOfferDesc)
-	// fmt.Printf("OWN REQUEST: %v\n", tokRequestDesc)
-
-	// Calculate the inverse document frequency.
-	frequency.InverseDocumentFrequency()
-	// fmt.Printf("\nidf           : %v\n", frequency.InverseDocMap)
-
-	// Own implementation:
+	tokOfferDesc := tfidf.TokenizeDocument(offerDesc)
+	tokRequestDesc := tfidf.TokenizeDocument(requestDesc)
 	docs := [][]string{tokOfferDesc, tokRequestDesc}
-	idfs := gotfidf.InverseDocumentFrequencies(docs, gotfidf.InvDocWeightingLog)
-	// fmt.Printf("OWN IDF VECTOR: %v\n", idfs)
 
-	i := 0
-	tfidfOffer := make([]float64, len(frequency.InverseDocMap))
-	tfidfRequest := make([]float64, len(frequency.InverseDocMap))
+	tfOffer := tfidf.TermFrequencies(tokOfferDesc, docs)
+	tfRequest := tfidf.TermFrequencies(tokRequestDesc, docs)
 
-	for term, idf := range frequency.InverseDocMap {
-		tfidfOffer[i] = (1.0 + math.Log(float64(frequencyOffer.TermMap[term]))) * idf
-		tfidfRequest[i] = (1.0 + math.Log(float64(frequencyRequest.TermMap[term]))) * idf
-		i++
-	}
-
-	// Own implementation:
-	i = 0
-	tfidfOfferOwn := make([]float64, len(idfs))
-	tfidfRequestOwn := make([]float64, len(idfs))
-
-	for term, idf := range idfs {
-		tfidfOfferOwn[i] = gotfidf.TermFrequency(term, tokOfferDesc, gotfidf.TermWeightingLog) * idf
-		tfidfRequestOwn[i] = gotfidf.TermFrequency(term, tokRequestDesc, gotfidf.TermWeightingLog) * idf
-		i++
-	}
-
-	// fmt.Printf("tfidfOfferOwn:   %v\n", tfidfOfferOwn)
-	// fmt.Printf("tfidfRequestOwn: %v\n", tfidfRequestOwn)
-
-	// Compute cosine similarity between both tf-idf vectors.
-	// fmt.Printf("\nReal description similarity value     (SHOULD NOT BE NaN!): %f\n", cosineSimilarity(tfidfOffer, tfidfRequest))
-	// fmt.Printf("OWN Real description similarity value (SHOULD NOT BE NaN!): %f\n", cosineSimilarity(tfidfOfferOwn, tfidfRequestOwn))
-
-	descSimilarity := 0.75
+	// Compute cosine similarity between both tf vectors.
+	descSimilarity := 4 * math.Pow(cosineSimilarity(tfOffer, tfRequest), 2)
+	descSimilarity = math.Min(1, descSimilarity)
 
 	// Pass result into description channel.
 	descChannel <- descSimilarity
