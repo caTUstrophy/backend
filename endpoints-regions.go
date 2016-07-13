@@ -619,9 +619,9 @@ func (app *App) ListRecommendationsForRegion(c *gin.Context) {
 
 	var recommendations []db.MatchingScore
 	app.DB.Find(&recommendations, "recommended = ?", true)
-	for _, rec := range recommendations {
-		app.DB.Model(&rec).Related(&rec.Offer)
-		app.DB.Model(&rec).Related(&rec.Request)
+	for i, rec := range recommendations {
+		app.DB.Model(&rec).Related(&recommendations[i].Offer)
+		app.DB.Model(&rec).Related(&recommendations[i].Request)
 	}
 
 	model := CopyNestedModel(recommendations, fieldsRecommendations)
