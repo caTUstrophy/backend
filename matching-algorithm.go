@@ -8,9 +8,23 @@ import (
 	"github.com/caTUstrophy/backend/db"
 	"github.com/caTUstrophy/munkres"
 	"github.com/numbleroot/go-tfidf"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Functions
+func (app *App) getScoreMatrix(c *gin.Context) {
+	var recommendations []db.MatchingScore
+	app.DB.Find(&recommendations)
+	for i, rec := range recommendations {
+		app.DB.Model(&rec).Related(&recommendations[i].Offer)
+		app.DB.Model(&rec).Related(&recommendations[i].Request)
+	}
+
+	model := CopyNestedModel(recommendations, fieldsRecommendations)
+
+	c.JSON(200, model)
+}
 
 // Returns the similarity between the tags' and the requests'
 // tag sets. Result is normalized to be within [0, 1].
@@ -190,7 +204,7 @@ func (app *App) CalculateMatchingScore(region db.Region, offer db.Offer, request
 
 	// Final score is the product of content similarity and distance.
 	finalScore := contentSimilarity * locDistance
-
+	fmt.Printf("Request: %s \n Offer: %s \n", request.Name, offer.Name)
 	fmt.Printf("tagSimilarity: %f - descSimilarity: %f - locDistance: %f\n", tagSimilarity, descSimilarity, locDistance)
 
 	MatchingScore := db.MatchingScore{
@@ -244,7 +258,6 @@ func (app *App) CalcMatchScoreForOffer(offer db.Offer) {
 func (app *App) CalcMatchScoreForRequest(request db.Request) {
 
 	for _, Region := range request.Regions {
-
 		// Load all offers in this region.
 		app.DB.Preload("Offers").First(&Region)
 

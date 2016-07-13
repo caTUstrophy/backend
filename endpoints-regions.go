@@ -273,7 +273,7 @@ func (app *App) ListOffersForRegion(c *gin.Context) {
 	// - not yet expired
 	// - and not yet matched.
 	var Region db.Region
-	app.DB.Preload("Offers", "\"expired\" = ? AND \"matched\" = ?", false, false).First(&Region, "id = ?", regionID)
+	app.DB.Preload("Offers.Tags").Preload("Offers", "\"expired\" = ? AND \"matched\" = ?", false, false).First(&Region, "id = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
@@ -286,7 +286,6 @@ func (app *App) ListOffersForRegion(c *gin.Context) {
 	}
 
 	model := make([]map[string]interface{}, len(Region.Offers))
-
 	for i, offer := range Region.Offers {
 		model[i] = CopyNestedModel(offer, fieldsOffer).(map[string]interface{})
 	}
@@ -322,7 +321,7 @@ func (app *App) ListRequestsForRegion(c *gin.Context) {
 	// - not yet expired
 	// - and not yet matched.
 	var Region db.Region
-	app.DB.Preload("Requests", "\"expired\" = ? AND \"matched\" = ?", false, false).First(&Region, "id = ?", regionID)
+	app.DB.Preload("Requests.Tags").Preload("Requests", "\"expired\" = ? AND \"matched\" = ?", false, false).First(&Region, "id = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
@@ -623,10 +622,9 @@ func (app *App) ListRecommendationsForRegion(c *gin.Context) {
 
 	var recommendations []db.MatchingScore
 	app.DB.Find(&recommendations, "recommended = ?", true)
-
-	for _, rec := range recommendations {
-		app.DB.Model(&rec).Related(&rec.Offer)
-		app.DB.Model(&rec).Related(&rec.Request)
+	for i, rec := range recommendations {
+		app.DB.Model(&rec).Preload("Tags").Related(&recommendations[i].Offer)
+		app.DB.Model(&rec).Preload("Tags").Related(&recommendations[i].Request)
 	}
 
 	model := CopyNestedModel(recommendations, fieldsRecommendations)

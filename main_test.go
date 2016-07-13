@@ -157,18 +157,34 @@ func AddDataTest(t *testing.T) {
 	app.DB.Create(&off3)
 	app.DB.Create(&off4)
 
-	app.CalcMatchScoreForRequest(req1)
-	app.CalcMatchScoreForRequest(req2)
-	app.CalcMatchScoreForRequest(req3)
+	app.MapLocationToRegions(req1)
+	app.MapLocationToRegions(req2)
+	app.MapLocationToRegions(req3)
+	app.MapLocationToRegions(off1)
+	app.MapLocationToRegions(off2)
+	app.MapLocationToRegions(off3)
+	app.MapLocationToRegions(off4)
 
-	RegionTU.Offers = append(RegionTU.Offers, off1)
+	app.DB.Preload("Regions").First(&req1, "id = ?", req1.ID)
+	app.DB.Preload("Regions").First(&req2, "id = ?", req2.ID)
+	app.DB.Preload("Regions").First(&req3, "id = ?", req3.ID)
+	app.DB.Preload("Regions").First(&off1, "id = ?", off1.ID)
+	app.DB.Preload("Regions").First(&off2, "id = ?", off2.ID)
+	app.DB.Preload("Regions").First(&off3, "id = ?", off3.ID)
+	app.DB.Preload("Regions").First(&off4, "id = ?", off4.ID)
+
+	/*RegionTU.Offers = append(RegionTU.Offers, off1)
 	RegionTU.Offers = append(RegionTU.Offers, off2)
 	RegionTU.Offers = append(RegionTU.Offers, off3)
 	RegionTU.Offers = append(RegionTU.Offers, off4)
 	RegionTU.Requests = append(RegionTU.Requests, req1)
 	RegionTU.Requests = append(RegionTU.Requests, req2)
 	RegionTU.Requests = append(RegionTU.Requests, req3)
-	app.DB.Save(&RegionTU)
+	app.DB.Save(&RegionTU)*/
+
+	app.CalcMatchScoreForRequest(req1)
+	app.CalcMatchScoreForRequest(req2)
+	app.CalcMatchScoreForRequest(req3)
 }
 
 func DistanceTest(t *testing.T, request db.Request, offer db.Offer, AssertDistance float64, epsilon float64) float64 {
