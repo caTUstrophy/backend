@@ -79,6 +79,9 @@ func CalculateTagSimilarity(tagChannel chan float64, offerTags, requestTags []db
 	tagSimilarity = scale(tagSimilarity, 2, 0.5, 0, 1)
 
 	// Pass result into tag channel.
+	if math.IsNaN(tagSimilarity) {
+		tagChannel <- 0.5
+	}
 	tagChannel <- tagSimilarity
 }
 
@@ -99,6 +102,9 @@ func CalculateDescriptionSimilarity(descChannel chan float64, offerDesc, request
 	descSimilarity = math.Min(1, descSimilarity)
 
 	// Pass result into description channel.
+	if math.IsNaN(descSimilarity) {
+		descChannel <- 0.5
+	}
 	descChannel <- descSimilarity
 }
 
@@ -108,11 +114,18 @@ func CalculateLocationDistance(distChannel chan float64, offer db.Offer, request
 
 	// Calculate distance between offer's and request's location.
 	distance := distance(offer.Location, request.Location)
+	if distance == 0.0 {
+		distChannel <- 10.0
+	}
 
 	// Depending on result, pass normalized distance into channel.
 	if distance > (request.Radius + offer.Radius) {
 		distChannel <- 0.0
 	} else {
+		loc := scale(((request.Radius + offer.Radius) / distance), 1, 1, 0, 10)
+		if math.IsNaN(loc) {
+			distChannel <- 5.0
+		}
 		distChannel <- scale(((request.Radius + offer.Radius) / distance), 1, 1, 0, 10)
 	}
 }
@@ -161,6 +174,9 @@ func (app *App) CalculateMatchingScore(region db.Region, offer db.Offer, request
 
 	// Final score is the product of content similarity and distance.
 	finalScore := contentSimilarity * locDistance
+	if math.IsNaN(finalScore) {
+		finalScore = 20
+	}
 	fmt.Printf("Request: %s\n  Offer: %s \n", request.Name, offer.Name)
 	fmt.Printf("((alpha: %f * tagSimilarity: %f) + (beta: %f * descSimilarity: %f)) * locDistance: %f = %f\n", app.TagsWeightAlpha, tagSimilarity, app.DescWeightBeta, descSimilarity, locDistance, finalScore)
 
