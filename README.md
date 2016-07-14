@@ -75,6 +75,9 @@ To be able to use this backend during development we provide a default admin acc
 
 **Please make sure you don't create this default admin user in production!**
 
+## Matching Algorithm
+
+We implemented an algorithm that helps to recommend matches - its aim is to find pairs of offers and requests that share similar content. If you are interested, you can read about our basic thoughts here: https://www.overleaf.com/read/tgkyxfzcptgf. This document is not a complete report of what we have actually done, you will have to look this up in matching-algorithm.go, but it might help to get into it or inspire you for your own project.
 
 ## API documentation
 
