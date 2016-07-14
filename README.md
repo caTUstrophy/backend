@@ -114,8 +114,13 @@ The coloumn `Role` denotes the minimum needed privilege to use the endpoint.
 | [List offers in region `regionID`](#list-offers-in-region-with-regionid) | A | GET | /regions/:regionID/offers    | 2.0         | ✔    |
 | [List requests in region `regionID`](#list-requests-in-region-with-regionid) | A | GET | /regions/:regionID/requests | 2.0      | ✔    |
 | [List matchings in region `regionID`](#list-matchings-in-region-with-regionid) | A | GET | /regions/:regionID/matchings | 2.0   | ✔    |
+| [List recommendations for region `regionID`](#list-recommendations-for-region) | A | GET | /regions/:regionID/recommendations | 4.0   | ✔    |
+| [List recommendations for offer](#list-recommendations-for-offer) | A | GET | /regions/:ID/offers/:ID/recommendations | 4.0   | ✔    |
+| [List recommendations for request](#list-recommendations-for-request) | A | GET | /regions/:ID/requests/:ID/recommendations | 4.0   | ✔    |
 | [Promote user to admin for region `regionID`](#promote-user-to-admin-in-region-with-regionid) | A | POST | /regions/:regionID/admins | 3.0 | ✔ |
 | [List admins for region `regionID`](#list-admins-in-region-with-regionid) | A | GET | /regions/:regionID/admins   | 3.0         | ✔    |
+| [Promote user to system admin](#promote-user-to-system-admin) | S | POST | /system/admins | 3.0 | ✔ |
+| [List admins for system](#list-system-admins) | A | GET | /system/admins   | 3.0         | ✔    |
 | [Own profile](#own-profile)                                     | L    | GET       | /me                          | 2.0         | ✔    |
 | [Update own profile](#update-own-profile)                       | L    | PUT       | /me                          | 3.0         | ✔    |
 | [List own offers](#list-own-offers)                             | L    | GET       | /me/offers                   | 2.0         | ✔    |
@@ -645,6 +650,38 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 [Matching list](#matching-list)
 
+#### List recommendations for region
+
+**Request:**
+```
+GET /regions/:regionID/recommendations
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+[Match partner list](#match-partner-list)
+
+#### List recommendations for offer
+
+**Request:**
+```
+GET /regions/:ID/offers/:ID/recommendations
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+[Request list with matching score](#request-with-matching-score)
+
+#### List recommendations for request
+
+**Request:**
+```
+GET /regions/:ID/requests/:ID/recommendations
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+[Offer list with matching score](#offers-with-matching-score)
 
 #### Promote user to admin in region with `regionID`
 
@@ -677,7 +714,36 @@ Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
 
 [List of users without their groups](#list-of-users-without-groups)
 
+#### Promote user to system admin
 
+**Request:**
+
+```
+POST /system/admins
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+
+{
+    "Mail": required, string
+}
+```
+
+**Response:**
+
+[User without groups](#user-without-groups)
+
+
+#### List system admins
+
+**Request**
+
+```
+GET /system/admins
+Authorization: Bearer <USER'S ACCESS TOKEN AS JWT>
+```
+
+**Response:**
+
+[List of users without their groups](#list-of-users-without-groups)
 #### Own profile
 
 **Request:**
@@ -796,6 +862,7 @@ or in case that this specific notification is meant for a matching:
 [Single matching notification](#notification-object-for-matching-notification)
 
 
+
 ### Responses
 
 #### Single user complete
@@ -898,8 +965,10 @@ or in case that this specific notification is meant for a matching:
 		"lng": "float64"
 	},
 	"Matched": "bool",
+	"MatchingScore": "float64",
 	"Name": "string",
 	"Radius": "float64",
+	"Recommended": "bool",
 	"Tags": [
 		{
 			"Name": "string"
@@ -922,8 +991,10 @@ or in case that this specific notification is meant for a matching:
 			"lng": "float64"
 		},
 		"Matched": "bool",
+		"MatchingScore": "float64",
 		"Name": "string",
 		"Radius": "float64",
+		"Recommended": "bool",
 		"Tags": [
 			{
 				"Name": "string"
@@ -946,8 +1017,10 @@ or in case that this specific notification is meant for a matching:
 		"lng": "float64"
 	},
 	"Matched": "bool",
+	"MatchingScore": "float64",
 	"Name": "string",
 	"Radius": "float64",
+	"Recommended": "bool",
 	"Tags": [
 		{
 			"Name": "string"
@@ -970,8 +1043,10 @@ or in case that this specific notification is meant for a matching:
 			"lng": "float64"
 		},
 		"Matched": "bool",
+		"MatchingScore": "float64",
 		"Name": "string",
 		"Radius": "float64",
+		"Recommended": "bool",
 		"Tags": [
 			{
 				"Name": "string"
@@ -1268,6 +1343,117 @@ or in case that this specific notification is meant for a matching:
 			}
 		},
 		"Type": "string"
+	}
+]
+```
+
+#### Match partner list
+
+```
+[
+	{
+		"MatchingScore": "float64",
+		"Offer": {
+			"Description": "string",
+			"Expired": "bool",
+			"ID": "UUID v4",
+			"Location": {
+				"lat": "float64",
+				"lng": "float64"
+			},
+			"Matched": "bool",
+			"Name": "string",
+			"Radius": "float64",
+			"Tags": [
+				{
+					"Name": "string"
+				}
+			],
+			"ValidityPeriod": "RFC3339 date"
+		},
+		"Recommended": "bool",
+		"Region": {
+			"Boundaries": {
+				"Points": [
+					null
+				]
+			},
+			"Description": "string",
+			"ID": "UUID v4",
+			"Name": "string"
+		},
+		"Request": {
+			"Description": "string",
+			"Expired": "bool",
+			"ID": "UUID v4",
+			"Location": {
+				"lat": "float64",
+				"lng": "float64"
+			},
+			"Matched": "bool",
+			"Name": "string",
+			"Radius": "float64",
+			"Tags": [
+				{
+					"Name": "string"
+				}
+			],
+			"ValidityPeriod": "RFC3339 date"
+		}
+	}
+]
+```
+
+#### Offers with matching score
+
+```
+[
+	{
+		"Description": "string",
+		"Expired": "bool",
+		"ID": "UUID v4",
+		"Location": {
+			"lat": "float64",
+			"lng": "float64"
+		},
+		"Matched": "bool",
+		"MatchingScore": "float64",
+		"Name": "string",
+		"Radius": "float64",
+		"Recommended": "bool",
+		"Tags": [
+			{
+				"Name": "string"
+			}
+		],
+		"ValidityPeriod": "RFC3339 date"
+	}
+]
+```
+
+#### Requests with matching score
+
+```
+[
+	{
+		"Description": "string",
+		"Expired": "bool",
+		"ID": "UUID v4",
+		"Location": {
+			"lat": "float64",
+			"lng": "float64"
+		},
+		"Matched": "bool",
+		"MatchingScore": "float64",
+		"Name": "string",
+		"Radius": "float64",
+		"Recommended": "bool",
+		"Tags": [
+			{
+				"Name": "string"
+			}
+		],
+		"ValidityPeriod": "RFC3339 date"
 	}
 ]
 ```

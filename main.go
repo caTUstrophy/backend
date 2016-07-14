@@ -48,7 +48,6 @@ func InitApp() *App {
 	}))
 
 	// Define our endpoints.
-	app.Router.GET("/matrix", app.getScoreMatrix)
 
 	app.Router.POST("/auth", app.Login)
 	app.Router.GET("/auth", app.RenewToken)

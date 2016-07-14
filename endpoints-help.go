@@ -180,6 +180,32 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	notificationsForMatchings[0] = allResponses["Notification for matching"].(map[string]interface{})
 	allResponses["Notifications for matchings"] = notificationsForMatchings
 
+	// Matching Score List
+	var recommendation db.MatchingScore
+	app.DB.First(&recommendation, "recommended = ?", true)
+	app.DB.Model(&recommendation).Preload("Tags").Related(&recommendation.Offer)
+	app.DB.Model(&recommendation).Preload("Tags").Related(&recommendation.Request)
+	currResponseMap = getJSONResponseInfo(recommendation, fieldsRecommendations)
+	var matchingScores [1]map[string]interface{}
+	matchingScores[0] = currResponseMap
+	allResponses["Match partner list"] = matchingScores
+
+	// Offers with matchig score
+	currResponseMap = allResponses["Offer"].(map[string]interface{})
+	currResponseMap["MatchingScore"] = "float64"
+	currResponseMap["Recommended"] = "bool"
+	var offersWithScore [1]map[string]interface{}
+	offersWithScore[0] = currResponseMap
+	allResponses["Offers with matching score"] = offersWithScore
+
+	// Requests with matchig score
+	currResponseMap = allResponses["Request"].(map[string]interface{})
+	currResponseMap["MatchingScore"] = "float64"
+	currResponseMap["Recommended"] = "bool"
+	var requestsWithScore [1]map[string]interface{}
+	requestsWithScore[0] = currResponseMap
+	allResponses["Requests with matching score"] = requestsWithScore
+
 	// Generate text from that map that can be copied to README.
 	// Open file for writing footer.
 	f, err := os.Create("README_footer.md")
@@ -211,6 +237,9 @@ func (app *App) GetJsonResponseInfo(c *gin.Context) {
 	writeFooterSection(f, "\n#### Notification object for matching notification\n", allResponses["Notification for matching"])
 	writeFooterSection(f, "\n#### Notification list\n", allResponses["Notifications"])
 	writeFooterSection(f, "\n#### Notification list for matching notifications\n", allResponses["Notifications for matchings"])
+	writeFooterSection(f, "\n#### Match partner list\n", allResponses["Match partner list"])
+	writeFooterSection(f, "\n#### Offers with matching score\n", allResponses["Offers with matching score"])
+	writeFooterSection(f, "\n#### Requests with matching score\n", allResponses["Requests with matching score"])
 
 	// Send as HTTP response.
 	c.JSON(http.StatusOK, allResponses)

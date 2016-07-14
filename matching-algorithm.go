@@ -6,11 +6,13 @@ import (
 
 	"github.com/caTUstrophy/backend/db"
 	"github.com/caTUstrophy/munkres"
-	"github.com/gin-gonic/gin"
 	"github.com/numbleroot/go-tfidf"
 )
 
 // Functions
+
+/*
+// This is helpful for developing the matching algorithm but mustn't be available in deployment
 func (app *App) getScoreMatrix(c *gin.Context) {
 
 	var recommendations []db.MatchingScore
@@ -25,6 +27,7 @@ func (app *App) getScoreMatrix(c *gin.Context) {
 
 	c.JSON(200, model)
 }
+*/
 
 // Returns the similarity between the tags' and the requests'
 // tag sets. Result is normalized to be within [0, 1].
