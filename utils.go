@@ -145,6 +145,16 @@ func Max(x, y int) int {
 	return y
 }
 
+// Int min function
+func min(x, y int) int {
+
+	if x < y {
+		return x
+	}
+
+	return y
+}
+
 // Cosine similarity between two vectors of same(!) length.
 func cosineSimilarity(vec1, vec2 []float64) float64 {
 

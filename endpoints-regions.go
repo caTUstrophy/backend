@@ -769,7 +769,7 @@ func (app *App) ListRequestsForOffer(c *gin.Context) {
 		return
 	}
 
-	// Retrieve region ID from request URL.
+	// Retrieve region ID from offer URL.
 	regionID := app.getUUID(c, "regionID")
 	if regionID == "" {
 
@@ -782,8 +782,15 @@ func (app *App) ListRequestsForOffer(c *gin.Context) {
 
 	var Region db.Region
 
-	// Select region based on supplied ID from database.
-	app.DB.First(&Region, "id = ?", regionID)
+	// Load all requests for specified region that are
+	// - not yet expired
+	// - and not yet matched.
+	app.DB.Preload("Requests", "\"expired\" = ? AND \"matched\" = ?", false, false).First(&Region, "\"id\" = ?", regionID)
+	if !Region.RecommendationUpdated {
+		app.RecommendMatching(Region)
+	}
+	// Sort requests by UUID.
+	sort.Sort(db.RequestsByUUID(Region.Requests))
 
 	if Region.ID == "" {
 
@@ -798,13 +805,13 @@ func (app *App) ListRequestsForOffer(c *gin.Context) {
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
 
 		// Signal client that the provided authorization was not sufficient.
-		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the request\"")
+		c.Header("WWW-Authenticate", "Bearer realm=\"CaTUstrophy\", error=\"authentication_failed\", error_description=\"Could not authenticate the offer\"")
 		c.Status(http.StatusUnauthorized)
 
 		return
 	}
 
-	// Retrieve offer ID from request URL.
+	// Retrieve offer ID from offer URL.
 	offerID := app.getUUID(c, "offerID")
 	if offerID == "" {
 
@@ -818,16 +825,57 @@ func (app *App) ListRequestsForOffer(c *gin.Context) {
 	var Offer db.Offer
 
 	// Select region based on supplied ID from database.
-	app.DB.First(&Offer, "id = ?", offerID)
+	app.DB.First(&Offer, "\"id\" = ?", offerID)
 
 	if Offer.ID == "" {
 
 		c.JSON(http.StatusNotFound, gin.H{
-			"Error": "The offer you requested does not exist.",
+			"Error": "The offer you offered does not exist.",
 		})
 
 		return
 	}
 
-	// TODO: finish. See above function for reference.
+	// Retrieve matching scores from database table for (Region, *, Offer).
+	var MatchingScores []db.MatchingScore
+	app.DB.Order("\"matching_score\" DESC").Find(&MatchingScores, "\"region_id\" = ? AND \"offer_id\" = ?", Region.ID, Offer.ID)
+	model := make([]map[string]interface{}, len(Region.Requests))
+	fmt.Println("Matching Scores:")
+	for _, m := range MatchingScores {
+		var of db.Request
+		app.DB.First(&of, "id = ?", m.RequestID)
+		fmt.Println(of.Name)
+	}
+	fmt.Println("Requests")
+	for _, of := range Region.Requests {
+		fmt.Println(of.Name)
+	}
+	// Iterate over all found elements in matching scores list.
+	addIndex := 0
+	for _, matchingScore := range MatchingScores {
+
+		// Find request that matches MatchingScores.RequestID in sorted requests list.
+		i := sort.Search(len(Region.Requests), func(i int) bool {
+			return Region.Requests[i].ID >= matchingScore.RequestID
+		})
+
+		if i < len(Region.Requests) && Region.Requests[i].ID == matchingScore.RequestID {
+			// We found the correct request, add it to result list
+			model[addIndex] = CopyNestedModel(Region.Requests[i], fieldsRequest).(map[string]interface{})
+			// Add matching score field and recommended field.
+			model[addIndex]["MatchingScore"] = matchingScore.MatchingScore
+			model[addIndex]["Recommended"] = matchingScore.Recommended
+			fmt.Println("Score: ", matchingScore.MatchingScore, "\nRecommended: ", matchingScore.Recommended)
+			addIndex++
+		} else {
+			fmt.Println("Not inserted:\nScore: ", matchingScore.MatchingScore, "\nRecommended: ", matchingScore.Recommended)
+			if !(i < len(Region.Requests)) {
+				fmt.Println("because i is out of range: ", i, "length of Requests[]: ", len(Region.Requests))
+			} else {
+				fmt.Println("Because ID doesnt match\nRequest id: ", Region.Requests[i].ID, "\n Matching Score ID", matchingScore.RequestID)
+			}
+		}
+	}
+	// Send back results to client.
+	c.JSON(http.StatusOK, model)
 }

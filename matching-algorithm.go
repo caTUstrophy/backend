@@ -6,9 +6,8 @@ import (
 
 	"github.com/caTUstrophy/backend/db"
 	"github.com/caTUstrophy/munkres"
-	"github.com/numbleroot/go-tfidf"
-
 	"github.com/gin-gonic/gin"
+	"github.com/numbleroot/go-tfidf"
 )
 
 // Functions
@@ -71,7 +70,9 @@ func CalculateTagSimilarity(tagChannel chan float64, offerTags, requestTags []db
 	}
 
 	// Calculate similarity and normalize it to be within [0, 1].
-	tagSimilarity := float64(len(tagsIntersection)) / math.Pow(float64(len(tagsUnion)), exp)
+	numIntersect := len(tagsIntersection)
+	numUnion := min(len(tagsUnion), 1)
+	tagSimilarity := float64(numIntersect) / math.Pow(float64(numUnion), exp)
 	tagSimilarity = scale(tagSimilarity, 2, 0.5, 0, 1)
 
 	// Pass result into tag channel.
@@ -187,6 +188,10 @@ func (app *App) CalculateMatchingScore(region db.Region, offer db.Offer, request
 // Wrapper function to simplify usage of main calculation method.
 func (app *App) CalcMatchScoreForOffer(offer db.Offer) {
 
+	if len(offer.Regions) == 0 {
+		app.DB.Preload("Regions").First(&offer, "id = ?", offer.ID)
+	}
+
 	for _, Region := range offer.Regions {
 
 		// Load all requests in this region.
@@ -209,6 +214,9 @@ func (app *App) CalcMatchScoreForOffer(offer db.Offer) {
 
 // Wrapper function to simplify usage of main calculation method.
 func (app *App) CalcMatchScoreForRequest(request db.Request) {
+	if len(request.Regions) == 0 {
+		app.DB.Preload("Regions").First(&request, "id = ?", request.ID)
+	}
 
 	for _, Region := range request.Regions {
 		// Load all offers in this region.
@@ -236,19 +244,37 @@ func (app *App) RecommendMatching(region db.Region) {
 	// load all scores for this region
 	var scores []db.MatchingScore
 	app.DB.Order("request_id, offer_id").Find(&scores, "region_id = ?", region.ID)
-
 	// get number of offers and request in order to get the matrix size
 	numOffers := 0
 	numRequests := 0
+	app.DB.Raw("SELECT COUNT (*) FROM region_requests WHERE region_id = '" + region.ID + "'").Row().Scan(&numRequests)
+	app.DB.Raw("SELECT COUNT (*) FROM region_offers WHERE region_id = '" + region.ID + "'").Row().Scan(&numOffers)
 
-	app.DB.Raw("SELECT COUNT (DISTINCT request_id) FROM matching_scores WHERE region_id = '" + region.ID + "'").Row().Scan(&numRequests)
-	app.DB.Raw("SELECT COUNT (DISTINCT offer_id) FROM matching_scores WHERE region_id = '" + region.ID + "'").Row().Scan(&numOffers)
-
-	scoreValues := make([]int64, len(scores))
+	// Check db for inkonsistence and try to recover it if necessary. Debug states can stay as this implies something went wrong before
+	if numRequests*numOffers != len(scores) {
+		fmt.Println("Inkonsistent data in DB! In region ", region.Name, " is the number of matching scores not as expected. Calculate all new :(")
+		app.DB.Delete(&scores)
+		app.DB.Preload("Offers.Tags").Preload("Offers").Preload("Requests.Tags").Preload("Requests").First(&region, "id = ?", region.ID)
+		for _, request := range region.Requests {
+			app.MapLocationToRegions(request)
+			for _, offer := range region.Offers {
+				app.MapLocationToRegions(offer)
+				fmt.Println("Calculate for ", offer.Name, "/", offer.ID, "and ", request.Name, "/", request.ID)
+				app.CalculateMatchingScore(region, offer, request)
+			}
+		}
+		app.DB.Order("request_id, offer_id").Find(&scores, "region_id = ?", region.ID)
+		app.DB.Raw("SELECT COUNT (*) FROM region_requests WHERE region_id = '" + region.ID + "'").Row().Scan(&numRequests)
+		app.DB.Raw("SELECT COUNT (*) FROM region_offers WHERE region_id = '" + region.ID + "'").Row().Scan(&numOffers)
+	}
+	if numRequests*numOffers != len(scores) {
+		fmt.Println("Could not fix inkonsistent data. Please contact more skilled developers\n\nNumRequests: ", numRequests, "\nnumOffers: ", numOffers, "num scores: ", len(scores))
+		panic("Inkonsistent data could not be fixed")
+	}
 
 	size := Max(numOffers, numRequests)
-	fmt.Printf("Score Values len: %d \nNumOffers: %d\nNumRequests: %d\n Num*Num: %d\n size: %d\n", len(scoreValues), numOffers, numRequests, numRequests*numOffers, size)
 
+	scoreValues := make([]int64, len(scores))
 	for i, score := range scores {
 
 		scoreValues[i] = 100 - int64(score.MatchingScore)
