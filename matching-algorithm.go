@@ -260,35 +260,44 @@ func (app *App) CalcMatchScoreForRequest(request db.Request) {
 // and set recommended flag to matching scores.
 func (app *App) RecommendMatching(region db.Region) {
 
-	// load all scores for this region
+	// Load all scores for this region.
 	var scores []db.MatchingScore
 	app.DB.Order("request_id, offer_id").Find(&scores, "region_id = ?", region.ID)
-	// get number of offers and request in order to get the matrix size
+
+	// Get number of offers and request in order to get the matrix size.
 	numOffers := 0
 	numRequests := 0
 	app.DB.Raw("SELECT COUNT (*) FROM region_requests WHERE region_id = '" + region.ID + "'").Row().Scan(&numRequests)
 	app.DB.Raw("SELECT COUNT (*) FROM region_offers WHERE region_id = '" + region.ID + "'").Row().Scan(&numOffers)
 
-	// Check db for inkonsistence and try to recover it if necessary. Debug states can stay as this implies something went wrong before
-	if numRequests*numOffers != len(scores) {
-		fmt.Println("Inkonsistent data in DB! In region ", region.Name, " is the number of matching scores not as expected. Calculate all new :(")
+	// Check db for inkonsistence and try to recover it if necessary.
+	// Debug states can stay as this implies something went wrong before.
+	if (numRequests * numOffers) != len(scores) {
+
+		fmt.Println("Inconsistent data in DB! In region ", region.Name, " is the number of matching scores not as expected. Calculate all new :(")
+
 		app.DB.Delete(&scores)
 		app.DB.Preload("Offers.Tags").Preload("Offers").Preload("Requests.Tags").Preload("Requests").First(&region, "id = ?", region.ID)
+
 		for _, request := range region.Requests {
+
 			app.MapLocationToRegions(request)
+
 			for _, offer := range region.Offers {
 				app.MapLocationToRegions(offer)
 				fmt.Println("Calculate for ", offer.Name, "/", offer.ID, "and ", request.Name, "/", request.ID)
 				app.CalculateMatchingScore(region, offer, request)
 			}
 		}
+
 		app.DB.Order("request_id, offer_id").Find(&scores, "region_id = ?", region.ID)
 		app.DB.Raw("SELECT COUNT (*) FROM region_requests WHERE region_id = '" + region.ID + "'").Row().Scan(&numRequests)
 		app.DB.Raw("SELECT COUNT (*) FROM region_offers WHERE region_id = '" + region.ID + "'").Row().Scan(&numOffers)
 	}
+
 	if numRequests*numOffers != len(scores) {
-		fmt.Println("Could not fix inkonsistent data. Please contact more skilled developers\n\nNumRequests: ", numRequests, "\nnumOffers: ", numOffers, "num scores: ", len(scores))
-		panic("Inkonsistent data could not be fixed")
+		fmt.Println("Could not fix inconsistent data. Please contact more skilled developers\n\nNumRequests: ", numRequests, "\nnumOffers: ", numOffers, "num scores: ", len(scores))
+		panic("Inconsistent data could not be fixed")
 	}
 
 	size := Max(numOffers, numRequests)
@@ -315,12 +324,16 @@ func (app *App) RecommendMatching(region db.Region) {
 		}
 	}
 
-	// create Matrix and solve assignment problem
+	// Create matrix and solve assignment problem.
 	m := munkres.NewMatrix(size)
 	m.A = scoreMatrixArray
 	solution := munkres.ComputeMunkresMin(m)
 
-	// save recommendations to db
+	// Set all recommended fields to false in concerned region.
+	// The correct one will get recommended afterwards.
+	app.DB.Model(&scores).Where("\"region_id\" = ?", region.ID).Update("recommended", false)
+
+	// Save recommendations to db.
 	for _, recommendation := range solution {
 
 		if recommendation.Row < numRequests && recommendation.Col < numOffers {
@@ -330,6 +343,6 @@ func (app *App) RecommendMatching(region db.Region) {
 		}
 	}
 
-	// Save that this region has up to date recommendations
+	// Save that this region has up to date recommendations.
 	app.DB.Model(&region).Update("RecommendationUpdated", true)
 }
