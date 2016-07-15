@@ -272,12 +272,14 @@ func (app *App) RecommendMatching(region db.Region) {
 	// Check db for inkonsistence and try to recover it if necessary. Debug states can stay as this implies something went wrong before
 	if numRequests*numOffers != len(scores) {
 		fmt.Println("Inkonsistent data in DB! In region ", region.Name, " is the number of matching scores not as expected. Calculate all new :(")
-		app.DB.Delete(&scores)
+		app.DB.Delete(&db.MatchingScore{}, "region_id = ?", region.ID)
 		app.DB.Preload("Offers.Tags").Preload("Offers").Preload("Requests.Tags").Preload("Requests").First(&region, "id = ?", region.ID)
+		for _, offer := range region.Offers {
+			app.MapLocationToRegions(offer)
+		}
 		for _, request := range region.Requests {
 			app.MapLocationToRegions(request)
 			for _, offer := range region.Offers {
-				app.MapLocationToRegions(offer)
 				fmt.Println("Calculate for ", offer.Name, "/", offer.ID, "and ", request.Name, "/", request.ID)
 				app.CalculateMatchingScore(region, offer, request)
 			}
