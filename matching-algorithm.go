@@ -276,23 +276,30 @@ func (app *App) RecommendMatching(region db.Region) {
 		fmt.Println("Inkonsistent data in DB! In region ", region.Name, " is the number of matching scores not as expected. Calculate all new :(")
 		app.DB.Delete(&db.MatchingScore{}, "region_id = ?", region.ID)
 		app.DB.Preload("Offers.Tags").Preload("Offers").Preload("Requests.Tags").Preload("Requests").First(&region, "id = ?", region.ID)
+
+		// Make mapping from items to region correct
 		for _, offer := range region.Offers {
 			app.MapLocationToRegions(offer)
 		}
-
 		for _, request := range region.Requests {
-
 			app.MapLocationToRegions(request)
+		}
 
+		// Load new mapped items to apply changes
+		app.DB.Preload("Offers.Tags").Preload("Offers").Preload("Requests.Tags").Preload("Requests").First(&region, "id = ?", region.ID)
+
+		// Calculate all matches
+		for _, request := range region.Requests {
 			for _, offer := range region.Offers {
 				fmt.Println("Calculate for ", offer.Name, "/", offer.ID, "and ", request.Name, "/", request.ID)
 				app.CalculateMatchingScore(region, offer, request)
 			}
 		}
 
+		// determine number of requests and offers new
+		numRequests = len(region.Requests)
+		numOffers = len(region.Requests)
 		app.DB.Order("request_id, offer_id").Find(&scores, "region_id = ?", region.ID)
-		app.DB.Raw("SELECT COUNT (*) FROM region_requests WHERE region_id = '" + region.ID + "'").Row().Scan(&numRequests)
-		app.DB.Raw("SELECT COUNT (*) FROM region_offers WHERE region_id = '" + region.ID + "'").Row().Scan(&numOffers)
 	}
 
 	if numRequests*numOffers != len(scores) {
