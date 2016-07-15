@@ -665,6 +665,7 @@ func (app *App) ListOffersForRequest(c *gin.Context) {
 	if !Region.RecommendationUpdated {
 		app.RecommendMatching(Region)
 	}
+
 	// Sort offers by UUID.
 	sort.Sort(db.OffersByUUID(Region.Offers))
 
@@ -715,17 +716,21 @@ func (app *App) ListOffersForRequest(c *gin.Context) {
 	// Retrieve matching scores from database table for (Region, *, Request).
 	var MatchingScores []db.MatchingScore
 	app.DB.Order("\"matching_score\" DESC").Find(&MatchingScores, "\"region_id\" = ? AND \"request_id\" = ?", Region.ID, Request.ID)
+
 	model := make([]map[string]interface{}, len(Region.Offers))
+
 	fmt.Println("Matching Scores:")
 	for _, m := range MatchingScores {
 		var of db.Offer
 		app.DB.First(&of, "id = ?", m.OfferID)
 		fmt.Println(of.Name)
 	}
+
 	fmt.Println("Offers")
 	for _, of := range Region.Offers {
 		fmt.Println(of.Name)
 	}
+
 	// Iterate over all found elements in matching scores list.
 	addIndex := 0
 	for _, matchingScore := range MatchingScores {
@@ -736,15 +741,21 @@ func (app *App) ListOffersForRequest(c *gin.Context) {
 		})
 
 		if i < len(Region.Offers) && Region.Offers[i].ID == matchingScore.OfferID {
+
 			// We found the correct offer, add it to result list
 			model[addIndex] = CopyNestedModel(Region.Offers[i], fieldsOffer).(map[string]interface{})
+
 			// Add matching score field and recommended field.
 			model[addIndex]["MatchingScore"] = matchingScore.MatchingScore
 			model[addIndex]["Recommended"] = matchingScore.Recommended
+
 			fmt.Println("Score: ", matchingScore.MatchingScore, "\nRecommended: ", matchingScore.Recommended)
+
 			addIndex++
 		} else {
+
 			fmt.Println("Not inserted:\nScore: ", matchingScore.MatchingScore, "\nRecommended: ", matchingScore.Recommended)
+
 			if !(i < len(Region.Offers)) {
 				fmt.Println("because i is out of range: ", i, "length of Offers[]: ", len(Region.Offers))
 			} else {
@@ -752,6 +763,7 @@ func (app *App) ListOffersForRequest(c *gin.Context) {
 			}
 		}
 	}
+
 	// Send back results to client.
 	c.JSON(http.StatusOK, model)
 }
@@ -789,6 +801,7 @@ func (app *App) ListRequestsForOffer(c *gin.Context) {
 	if !Region.RecommendationUpdated {
 		app.RecommendMatching(Region)
 	}
+
 	// Sort requests by UUID.
 	sort.Sort(db.RequestsByUUID(Region.Requests))
 
@@ -839,17 +852,21 @@ func (app *App) ListRequestsForOffer(c *gin.Context) {
 	// Retrieve matching scores from database table for (Region, *, Offer).
 	var MatchingScores []db.MatchingScore
 	app.DB.Order("\"matching_score\" DESC").Find(&MatchingScores, "\"region_id\" = ? AND \"offer_id\" = ?", Region.ID, Offer.ID)
+
 	model := make([]map[string]interface{}, len(Region.Requests))
+
 	fmt.Println("Matching Scores:")
 	for _, m := range MatchingScores {
 		var of db.Request
 		app.DB.First(&of, "id = ?", m.RequestID)
 		fmt.Println(of.Name)
 	}
+
 	fmt.Println("Requests")
 	for _, of := range Region.Requests {
 		fmt.Println(of.Name)
 	}
+
 	// Iterate over all found elements in matching scores list.
 	addIndex := 0
 	for _, matchingScore := range MatchingScores {
@@ -860,15 +877,21 @@ func (app *App) ListRequestsForOffer(c *gin.Context) {
 		})
 
 		if i < len(Region.Requests) && Region.Requests[i].ID == matchingScore.RequestID {
-			// We found the correct request, add it to result list
+
+			// We found the correct request, add it to result list.
 			model[addIndex] = CopyNestedModel(Region.Requests[i], fieldsRequest).(map[string]interface{})
+
 			// Add matching score field and recommended field.
 			model[addIndex]["MatchingScore"] = matchingScore.MatchingScore
 			model[addIndex]["Recommended"] = matchingScore.Recommended
+
 			fmt.Println("Score: ", matchingScore.MatchingScore, "\nRecommended: ", matchingScore.Recommended)
+
 			addIndex++
 		} else {
+
 			fmt.Println("Not inserted:\nScore: ", matchingScore.MatchingScore, "\nRecommended: ", matchingScore.Recommended)
+
 			if !(i < len(Region.Requests)) {
 				fmt.Println("because i is out of range: ", i, "length of Requests[]: ", len(Region.Requests))
 			} else {
@@ -876,6 +899,7 @@ func (app *App) ListRequestsForOffer(c *gin.Context) {
 			}
 		}
 	}
+
 	// Send back results to client.
 	c.JSON(http.StatusOK, model)
 }
