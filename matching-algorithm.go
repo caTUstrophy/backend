@@ -177,8 +177,6 @@ func (app *App) CalculateMatchingScore(region db.Region, offer db.Offer, request
 	if math.IsNaN(finalScore) {
 		finalScore = 20
 	}
-	fmt.Printf("Request: %s\n  Offer: %s \n", request.Name, offer.Name)
-	fmt.Printf("((alpha: %f * tagSimilarity: %f) + (beta: %f * descSimilarity: %f)) * locDistance: %f = %f\n", app.TagsWeightAlpha, tagSimilarity, app.DescWeightBeta, descSimilarity, locDistance, finalScore)
 
 	MatchingScore := db.MatchingScore{
 		RegionID:      region.ID,
@@ -208,7 +206,7 @@ func (app *App) CalculateMatchingScore(region db.Region, offer db.Offer, request
 func (app *App) CalcMatchScoreForOffer(offer db.Offer) {
 
 	if len(offer.Regions) == 0 {
-		app.DB.Preload("Regions").First(&offer, "id = ?", offer.ID)
+		app.DB.Preload("Regions").First(&offer, "\"id\" = ?", offer.ID)
 	}
 
 	for _, Region := range offer.Regions {
@@ -233,8 +231,9 @@ func (app *App) CalcMatchScoreForOffer(offer db.Offer) {
 
 // Wrapper function to simplify usage of main calculation method.
 func (app *App) CalcMatchScoreForRequest(request db.Request) {
+
 	if len(request.Regions) == 0 {
-		app.DB.Preload("Regions").First(&request, "id = ?", request.ID)
+		app.DB.Preload("Regions").First(&request, "\"id\" = ?", request.ID)
 	}
 
 	for _, Region := range request.Regions {
@@ -264,15 +263,19 @@ func (app *App) RecommendMatching(region db.Region) {
 	var scores []db.MatchingScore
 	app.DB.Order("request_id, offer_id").Find(&scores, "region_id = ?", region.ID)
 
+	fmt.Println(scores)
+
 	// Get number of offers and request in order to get the matrix size.
 	numOffers := 0
 	numRequests := 0
-	app.DB.Raw("SELECT COUNT (*) FROM region_requests WHERE region_id = '" + region.ID + "'").Row().Scan(&numRequests)
+	app.DB.Raw("SELECT COUNT (*) FROM \"region_requests\" WHERE \"region_id\" = '" + region.ID + "'").Row().Scan(&numRequests)
 	app.DB.Raw("SELECT COUNT (*) FROM region_offers WHERE region_id = '" + region.ID + "'").Row().Scan(&numOffers)
 
-	// Check db for inkonsistence and try to recover it if necessary.
-	// Debug states can stay as this implies something went wrong before
-	if numRequests*numOffers != len(scores) {
+	fmt.Printf("numOffers: %d, numRequests: %d\n", numOffers, numRequests)
+
+	// Check db for inconsistence and try to recover it if necessary.
+	// Debug states can stay as this implies something went wrong before.
+	if (numRequests * numOffers) != len(scores) {
 		fmt.Println("Inkonsistent data in DB! In region ", region.Name, " is the number of matching scores not as expected. Calculate all new :(")
 		app.DB.Delete(&db.MatchingScore{}, "region_id = ?", region.ID)
 		app.DB.Preload("Offers.Tags").Preload("Offers").Preload("Requests.Tags").Preload("Requests").First(&region, "id = ?", region.ID)
@@ -295,7 +298,7 @@ func (app *App) RecommendMatching(region db.Region) {
 		app.DB.Raw("SELECT COUNT (*) FROM region_offers WHERE region_id = '" + region.ID + "'").Row().Scan(&numOffers)
 	}
 
-	if numRequests*numOffers != len(scores) {
+	if (numRequests * numOffers) != len(scores) {
 		fmt.Println("Could not fix inconsistent data. Please contact more skilled developers\n\nNumRequests: ", numRequests, "\nnumOffers: ", numOffers, "num scores: ", len(scores))
 		panic("Inconsistent data could not be fixed")
 	}
