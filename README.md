@@ -1471,6 +1471,7 @@ A probably incomplete list of used packages looks like:
 
 * [Gin](github.com/gin-gonic/gin)
 * [GORM](github.com/jinzhu/gorm)
+* [munkres](github.com/clyphub/munkres)
 * [JWT](github.com/dgrijalva/jwt-go)
 * [Validator](github.com/go-playground/validator)
 * [Conform](github.com/leebenson/conform)

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"math"
 
 	"github.com/caTUstrophy/backend/db"
@@ -10,24 +10,6 @@ import (
 )
 
 // Functions
-
-/*
-// This is helpful for developing the matching algorithm but mustn't be available in deployment
-func (app *App) getScoreMatrix(c *gin.Context) {
-
-	var recommendations []db.MatchingScore
-	app.DB.Find(&recommendations)
-
-	for i, rec := range recommendations {
-		app.DB.Model(&rec).Related(&recommendations[i].Offer)
-		app.DB.Model(&rec).Related(&recommendations[i].Request)
-	}
-
-	model := CopyNestedModel(recommendations, fieldsRecommendations)
-
-	c.JSON(200, model)
-}
-*/
 
 // Returns the similarity between the tags' and the requests'
 // tag sets. Result is normalized to be within [0, 1].
@@ -132,7 +114,7 @@ func CalculateLocationDistance(distChannel chan float64, offer db.Offer, request
 
 // This function calculates the possible matching score
 // between an offer and a request in a specified region.
-func (app *App) CalculateMatchingScore(region db.Region, offer db.Offer, request db.Request) {
+func (app *App) CalculateMatchingScore(done chan bool, region db.Region, offer db.Offer, request db.Request) {
 
 	// Create channels for synchronization of goroutines.
 	tagChannel := make(chan float64)
@@ -200,10 +182,17 @@ func (app *App) CalculateMatchingScore(region db.Region, offer db.Offer, request
 		// If it does not exist, create it.
 		app.DB.Create(&MatchingScore)
 	}
+
+	// Signal waiting processes that we are done.
+	done <- true
 }
 
 // Wrapper function to simplify usage of main calculation method.
 func (app *App) CalcMatchScoreForOffer(offer db.Offer) {
+
+	// Initialize a channel for CalculateMatchingScore
+	// to be able to wait for end of that function.
+	calcDone := make(chan bool)
 
 	if len(offer.Regions) == 0 {
 		app.DB.Preload("Regions").First(&offer, "\"id\" = ?", offer.ID)
@@ -211,125 +200,152 @@ func (app *App) CalcMatchScoreForOffer(offer db.Offer) {
 
 	for _, Region := range offer.Regions {
 
-		// Load all requests in this region.
-		app.DB.Preload("Requests").First(&Region)
+		// Load all requests in this region that are
+		// - not yet expired
+		// - and not yet matched.
+		app.DB.Preload("Requests", "\"requests\".\"expired\" = ? AND \"requests\".\"matched\" = ?", false, false).First(&Region)
 
 		// Preload needed tags.
 		app.DB.Preload("Tags").Find(&Region.Requests)
 
 		for _, request := range Region.Requests {
 
-			// Calculate pair wise matching score between
-			// offer and all requests in region.
-			go app.CalculateMatchingScore(Region, offer, request)
+			// Calculate pair-wise matching score between
+			// offer and all reasonable requests in region.
+			go app.CalculateMatchingScore(calcDone, Region, offer, request)
+		}
+
+		// Wait for all goroutines to finish.
+		for u := 0; u < len(Region.Requests); u++ {
+			_ = <-calcDone
 		}
 
 		// Tell database that region has an updated recommendation calculation.
-		app.DB.Model(&Region).Update("RecommendationUpdated", false)
+		app.DB.Model(&Region).Select("recommendation_updated").Update("RecommendationUpdated", false)
 	}
 }
 
 // Wrapper function to simplify usage of main calculation method.
 func (app *App) CalcMatchScoreForRequest(request db.Request) {
 
+	// Initialize a channel for CalculateMatchingScore
+	// to be able to wait for end of that function.
+	calcDone := make(chan bool)
+
 	if len(request.Regions) == 0 {
 		app.DB.Preload("Regions").First(&request, "\"id\" = ?", request.ID)
 	}
 
 	for _, Region := range request.Regions {
-		// Load all offers in this region.
-		app.DB.Preload("Offers").First(&Region)
+
+		// Load all offers in this region that are
+		// - not yet expired
+		// - and not yet matched.
+		app.DB.Preload("Offers", "\"offers\".\"expired\" = ? AND \"offers\".\"matched\" = ?", false, false).First(&Region)
 
 		// Preload needed tags.
 		app.DB.Preload("Tags").Find(&Region.Offers)
 
 		for _, offer := range Region.Offers {
 
-			// Calculate pair wise matching score between
-			// request and all offers in region.
-			go app.CalculateMatchingScore(Region, offer, request)
+			// Calculate pair-wise matching score between
+			// request and all reasonable offers in region.
+			go app.CalculateMatchingScore(calcDone, Region, offer, request)
+		}
+
+		// Wait for all goroutines to finish.
+		for u := 0; u < len(Region.Offers); u++ {
+			_ = <-calcDone
 		}
 
 		// Tell database that region has an updated recommendation calculation.
-		app.DB.Model(&Region).Update("RecommendationUpdated", false)
+		app.DB.Model(&Region).Select("recommendation_updated").Update("RecommendationUpdated", false)
 	}
 }
 
-// Caclulate assignment problem for offers und requests of this region
-// and set recommended flag to matching scores.
+// Caclulate assignment problem for offers und requests of
+// this region and set recommended flag to matching scores.
 func (app *App) RecommendMatching(region db.Region) {
 
 	// Load all scores for this region.
 	var scores []db.MatchingScore
-	app.DB.Order("request_id, offer_id").Find(&scores, "region_id = ?", region.ID)
+	app.DB.Order("\"request_id\", \"offer_id\"").Find(&scores, "\"region_id\" = ?", region.ID)
 
-	fmt.Println(scores)
-
-	// Get number of offers and request in order to get the matrix size.
+	// Get number of offers and request in region
+	// in order to get the matrix size.
 	numOffers := 0
 	numRequests := 0
-	app.DB.Raw("SELECT COUNT (*) FROM \"region_requests\" WHERE \"region_id\" = '" + region.ID + "'").Row().Scan(&numRequests)
-	app.DB.Raw("SELECT COUNT (*) FROM region_offers WHERE region_id = '" + region.ID + "'").Row().Scan(&numOffers)
-
-	fmt.Printf("numOffers: %d, numRequests: %d\n", numOffers, numRequests)
+	app.DB.Table("region_offers").Where("\"region_id\" = ?", region.ID).Count(&numOffers)
+	app.DB.Table("region_requests").Where("\"region_id\" = ?", region.ID).Count(&numRequests)
 
 	// Check db for inconsistence and try to recover it if necessary.
 	// Debug states can stay as this implies something went wrong before.
 	if (numRequests * numOffers) != len(scores) {
-		fmt.Println("Inkonsistent data in DB! In region ", region.Name, " is the number of matching scores not as expected. Calculate all new :(")
-		app.DB.Delete(&db.MatchingScore{}, "region_id = ?", region.ID)
-		app.DB.Preload("Offers.Tags").Preload("Offers").Preload("Requests.Tags").Preload("Requests").First(&region, "id = ?", region.ID)
 
-		// Make mapping from items to region correct
+		log.Printf("Inconsistent data in database! In region '%s' the number of matching scores is not the expected one. Recalculating all :(\n", region.Name)
+
+		app.DB.Delete(&db.MatchingScore{}, "\"region_id\" = ?", region.ID)
+		app.DB.Preload("Offers.Tags").Preload("Offers").Preload("Requests.Tags").Preload("Requests").First(&region, "\"id\" = ?", region.ID)
+
+		// Correct mapping from items to region.
 		for _, offer := range region.Offers {
 			app.MapLocationToRegions(offer)
 		}
+
 		for _, request := range region.Requests {
 			app.MapLocationToRegions(request)
 		}
 
-		// Load new mapped items to apply changes
-		app.DB.Preload("Offers.Tags").Preload("Offers").Preload("Requests.Tags").Preload("Requests").First(&region, "id = ?", region.ID)
+		// Load new mapped items to apply changes.
+		app.DB.Preload("Offers.Tags").Preload("Offers").Preload("Requests.Tags").Preload("Requests").First(&region, "\"id\" = ?", region.ID)
 
-		// Calculate all matches
+		// Initialize a channel for CalculateMatchingScore
+		// to be able to wait for end of that function.
+		calcDone := make(chan bool)
+
+		// Calculate all matching scores.
 		for _, request := range region.Requests {
+
 			for _, offer := range region.Offers {
-				fmt.Println("Calculate for ", offer.Name, "/", offer.ID, "and ", request.Name, "/", request.ID)
-				app.CalculateMatchingScore(region, offer, request)
+				go app.CalculateMatchingScore(calcDone, region, offer, request)
 			}
 		}
 
-		// determine number of requests and offers new
+		// Wait for all goroutines to finish.
+		for u := 0; u < (len(region.Requests) * len(region.Offers)); u++ {
+			_ = <-calcDone
+		}
+
+		// Determine number of requests and offers new.
 		numRequests = len(region.Requests)
-		numOffers = len(region.Requests)
-		app.DB.Order("request_id, offer_id").Find(&scores, "region_id = ?", region.ID)
+		numOffers = len(region.Offers)
+		app.DB.Order("\"request_id\", \"offer_id\"").Find(&scores, "\"region_id\" = ?", region.ID)
 	}
 
 	if (numRequests * numOffers) != len(scores) {
-		fmt.Println("Could not fix inconsistent data. Please contact more skilled developers\n\nNumRequests: ", numRequests, "\nnumOffers: ", numOffers, "num scores: ", len(scores))
-		panic("Inconsistent data could not be fixed")
+		log.Println("Could not fix inconsistent data. Please contact more skilled developers.")
+		log.Printf("NumRequests: %d\nNumOffers: %d\nNumScores: %s\n", numRequests, numOffers, len(scores))
+		panic("Inconsistent data could not be fixed.")
 	}
 
 	size := Max(numOffers, numRequests)
 
 	scoreValues := make([]int64, len(scores))
 	for i, score := range scores {
-
 		scoreValues[i] = 100 - int64(score.MatchingScore)
-
 	}
-	// create dummy rows and cols; rows: request; cols: offers
 
-	scoreMatrixArray := make([]int64, size*size)
+	// create dummy rows and cols; rows: request; cols: offers
+	scoreMatrixArray := make([]int64, (size * size))
 
 	for row := 0; row < size; row++ {
 
 		for col := 0; col < size; col++ {
 
 			if row < numRequests && col < numOffers {
-				scoreMatrixArray[row*size+col] = scoreValues[row*numOffers+col]
+				scoreMatrixArray[((row * size) + col)] = scoreValues[((row * numOffers) + col)]
 			} else {
-				scoreMatrixArray[row*size+col] = 100
+				scoreMatrixArray[((row * size) + col)] = 100
 			}
 		}
 	}
@@ -347,12 +363,14 @@ func (app *App) RecommendMatching(region db.Region) {
 	for _, recommendation := range solution {
 
 		if recommendation.Row < numRequests && recommendation.Col < numOffers {
-			index := recommendation.Row*numOffers + recommendation.Col
+
+			index := (recommendation.Row * numOffers) + recommendation.Col
 			scores[index].Recommended = true
-			app.DB.Model(&scores[index]).Update("recommended", true)
+
+			app.DB.Model(&scores[index]).Select("recommended").Update("Recommended", true)
 		}
 	}
 
 	// Save that this region has up to date recommendations.
-	app.DB.Model(&region).Update("RecommendationUpdated", true)
+	app.DB.Model(&region).Select("recommendation_updated").Update("RecommendationUpdated", true)
 }

@@ -107,23 +107,45 @@ func (app *App) MapLocationToRegions(item interface{}) {
 
 	if len(ContRegionIDs) > 0 {
 
+		log.Printf("Containing regions IDs: %q\n", ContRegionIDs)
+
 		var ContRegions []db.Region
 
 		// Retrieve all regions into above list of containing regions.
 		// Only regions with IDs from intersecting region list will be chosen.
-		app.DB.Where("id in (?)", ContRegionIDs).Preload("Offers").Preload("Requests").Find(&ContRegions)
+		app.DB.Find(&ContRegions, "\"id\" in (?)", ContRegionIDs)
 
 		for _, ContRegion := range ContRegions {
 
-			// Depending on type of item, save an offer or a request into list.
 			if itemType == "Offer" {
-				ContRegion.Offers = append(ContRegion.Offers, item.(db.Offer))
-			} else if itemType == "Request" {
-				ContRegion.Requests = append(ContRegion.Requests, item.(db.Request))
-			}
 
-			// Save changed offers or requests of a region to database.
-			app.DB.Save(&ContRegion)
+				// Preload corresponding offers.
+				app.DB.Preload("Offers").Find(&ContRegion)
+				log.Printf("ContRegion.Offers: %v\n", ContRegion.Offers)
+
+				// Append offer list in database.
+				app.DB.Model(&ContRegion).Association("Offers").Append(item.(db.Offer))
+
+				app.DB.Preload("Offers").Find(&ContRegion)
+				log.Println("ContRegion.Offers:")
+				for i, o := range ContRegion.Offers {
+					log.Printf("%d:   %v\n", i, o)
+				}
+			} else if itemType == "Request" {
+
+				// Preload corresponding requests.
+				app.DB.Preload("Requests").Find(&ContRegion)
+				log.Printf("ContRegion.Requests: %v\n", ContRegion.Requests)
+
+				// Update in database.
+				app.DB.Model(&ContRegion).Association("Requests").Append(item.(db.Request))
+
+				app.DB.Preload("Requests").Find(&ContRegion)
+				log.Println("ContRegion.Requests:")
+				for i, r := range ContRegion.Requests {
+					log.Printf("%d:   %v\n", i, r)
+				}
+			}
 		}
 	} else {
 		log.Println("[MapLocationToRegions] No intersecting regions found.")

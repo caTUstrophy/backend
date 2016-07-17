@@ -273,7 +273,7 @@ func (app *App) ListOffersForRegion(c *gin.Context) {
 	// - not yet expired
 	// - and not yet matched.
 	var Region db.Region
-	app.DB.Preload("Offers.Tags").Preload("Offers", "\"expired\" = ? AND \"matched\" = ?", false, false).First(&Region, "id = ?", regionID)
+	app.DB.Preload("Offers.Tags").Preload("Offers", "\"offers\".\"expired\" = ? AND \"offers\".\"matched\" = ?", false, false).First(&Region, "\"id\" = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
@@ -321,7 +321,7 @@ func (app *App) ListRequestsForRegion(c *gin.Context) {
 	// - not yet expired
 	// - and not yet matched.
 	var Region db.Region
-	app.DB.Preload("Requests.Tags").Preload("Requests", "\"expired\" = ? AND \"matched\" = ?", false, false).First(&Region, "id = ?", regionID)
+	app.DB.Preload("Requests.Tags").Preload("Requests", "\"requests\".\"expired\" = ? AND \"requests\".\"matched\" = ?", false, false).First(&Region, "\"id\" = ?", regionID)
 
 	// Check if user permissions are sufficient (user is admin).
 	if ok := app.CheckScope(User, Region, "admin"); !ok {
@@ -616,11 +616,10 @@ func (app *App) ListRecommendationsForRegion(c *gin.Context) {
 		return
 	}
 
+	// If there currently is no recommendation for this region,
+	// take the time to calculate one.
 	if !Region.RecommendationUpdated {
-		fmt.Println("--- Nau recommend in recommend started.")
-		fmt.Println("--- RecommendationUpdated:", Region.RecommendationUpdated)
 		app.RecommendMatching(Region)
-		fmt.Println("--- Nau recommend in recommend done.")
 	}
 
 	var recommendations []db.MatchingScore
@@ -664,12 +663,12 @@ func (app *App) ListOffersForRequest(c *gin.Context) {
 	// Load all offers for specified region that are
 	// - not yet expired
 	// - and not yet matched.
-	app.DB.Preload("Offers", "\"expired\" = ? AND \"matched\" = ?", false, false).First(&Region, "\"id\" = ?", regionID)
+	app.DB.Preload("Offers", "\"offers\".\"expired\" = ? AND \"offers\".\"matched\" = ?", false, false).First(&Region, "\"id\" = ?", regionID)
+
+	// If there currently is no recommendation for this region,
+	// take the time to calculate one.
 	if !Region.RecommendationUpdated {
-		fmt.Println("--- Nau recommend in offersForReq started.")
-		fmt.Println("--- RecommendationUpdated:", Region.RecommendationUpdated)
 		app.RecommendMatching(Region)
-		fmt.Println("--- Nau recommend in offersForReq done.")
 	}
 
 	// Sort offers by UUID.
@@ -744,15 +743,6 @@ func (app *App) ListOffersForRequest(c *gin.Context) {
 			model[addIndex]["Recommended"] = matchingScore.Recommended
 
 			addIndex++
-		} else {
-
-			fmt.Println("Not inserted:\nScore: ", matchingScore.MatchingScore, "\nRecommended: ", matchingScore.Recommended)
-
-			if !(i < len(Region.Offers)) {
-				fmt.Println("because i is out of range: ", i, "length of Offers[]: ", len(Region.Offers))
-			} else {
-				fmt.Println("Because ID doesnt match\nOffer id: ", Region.Offers[i].ID, "\n Matching Score ID", matchingScore.OfferID)
-			}
 		}
 	}
 
@@ -789,12 +779,12 @@ func (app *App) ListRequestsForOffer(c *gin.Context) {
 	// Load all requests for specified region that are
 	// - not yet expired
 	// - and not yet matched.
-	app.DB.Preload("Requests", "\"expired\" = ? AND \"matched\" = ?", false, false).First(&Region, "\"id\" = ?", regionID)
+	app.DB.Preload("Requests", "\"requests\".\"expired\" = ? AND \"requests\".\"matched\" = ?", false, false).First(&Region, "\"id\" = ?", regionID)
+
+	// If there currently is no recommendation for this region,
+	// take the time to calculate one.
 	if !Region.RecommendationUpdated {
-		fmt.Println("--- Nau recommend in reqForOffer started.")
-		fmt.Println("--- RecommendationUpdated:", Region.RecommendationUpdated)
 		app.RecommendMatching(Region)
-		fmt.Println("--- Nau recommend in reqForOffer done.")
 	}
 
 	// Sort requests by UUID.
@@ -869,15 +859,6 @@ func (app *App) ListRequestsForOffer(c *gin.Context) {
 			model[addIndex]["Recommended"] = matchingScore.Recommended
 
 			addIndex++
-		} else {
-
-			fmt.Println("Not inserted:\nScore: ", matchingScore.MatchingScore, "\nRecommended: ", matchingScore.Recommended)
-
-			if !(i < len(Region.Requests)) {
-				fmt.Println("because i is out of range: ", i, "length of Requests[]: ", len(Region.Requests))
-			} else {
-				fmt.Println("Because ID doesnt match\nRequest id: ", Region.Requests[i].ID, "\n Matching Score ID", matchingScore.RequestID)
-			}
 		}
 	}
 
